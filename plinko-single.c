@@ -29,7 +29,7 @@ int main(int argc, char **argv){
     double *bounces = malloc(sizeof(double)*2*TIMEPOINTS);
     t_result *res = malloc(sizeof(t_result));
 
-    double pos[2] = { wall / 2 - 0.213, 10.0 };
+    double pos[2] = { wall / 10., 10.0 };
     double vel[2] = { 0, 1e-4};
 
     build_hex_grid(pegs, &npegs, MAXPEGS, 4, 8);
