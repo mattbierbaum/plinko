@@ -6,7 +6,7 @@
 //========================================================
 #define XTOL 1e-14
 #define NMAX (1<<10)
-#define MAXBOUNCES (1<<10)
+#define MAXBOUNCES (1<<26)
 
 #define DEG     4
 #define DEGSIZE 5

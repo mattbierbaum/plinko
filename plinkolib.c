@@ -187,9 +187,11 @@ void build_hex_grid(double *pegs, int *npegs, int maxpegs, int rows, int cols){
                 *npegs += 1;
             }
 
-            pegs[2*(*npegs)+0] = (j+0.5)*a;
-            pegs[2*(*npegs)+1] = (i+0.5)*a*rt3;
-            *npegs += 1;
+            if (j != cols-1){
+                pegs[2*(*npegs)+0] = (j+0.5)*a;
+                pegs[2*(*npegs)+1] = (i+0.5)*a*rt3;
+                *npegs += 1;
+            }
         }
     }
 }
