@@ -45,7 +45,7 @@ int main(int argc, char **argv){
     build_hex_grid(pegs, &npegs, MAXPEGS, 4, 8);
 
     int clen = trackTrajectory(pos, vel, R, wall, damp,
-            pegs, npegs, res, TIMEPOINTS, bounces, 1, 0.08);
+            pegs, npegs, res, TIMEPOINTS, bounces, 0, 0.008);
 
     FILE *file = fopen(file_track, "wb");
     fwrite(bounces, sizeof(double), clen, file);

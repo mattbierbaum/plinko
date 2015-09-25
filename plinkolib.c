@@ -405,7 +405,7 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
         result = next_collision(tpos, tvel, R, pegs, npegs, wall, &tcoll, peg);
 
         tint = constant_interval ? tinterval : tcoll/TSAMPLES;
-        for (double t=tlastsave; t<(tlastbounce+tcoll); t+=tint){
+        for (double t=tlastsave+tint; t<(tlastbounce+tcoll); t+=tint){
             position(tpos, tvel, t-tlastbounce, ttpos);
             if (NT >= 0 && clen < NT/2-2){
                 temp_lastsave = t;
@@ -414,11 +414,6 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
             }
         }
         tlastsave = temp_lastsave;
-
-        /*tint = constant_interval ? tinterval : tcoll/TSAMPLES;
-        for (double t=timesave; t<(timereal+tcoll); t+=tint){
-
-        }*/
 
         if (result == RESULT_NOTHING) break;
         if (result == RESULT_DONE)    break;
@@ -429,11 +424,13 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
         vlen = dot(tvel, tvel);
 
         tlastbounce = tlastbounce + tcoll;
-        /*if (!constant_interval && NT >= 0 && clen < NT/2-2){
-            tlastsave = tlastbounce;
-            memcpy(traj+2*clen, tpos, sizeof(double)*2);
-            clen += 1;
-        }*/
+        if (!constant_interval){
+            if (NT >= 0 && clen < NT/2-2){
+                tlastsave = tlastbounce;
+                memcpy(traj+2*clen, tpos, sizeof(double)*2);
+                clen += 1;
+            }
+        }
 
         if (tpos[1] < 0 || vlen < EPS) break;
         if (result == RESULT_WALL_LEFT)  tvel[0] *= -1;
@@ -442,6 +439,7 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
             create_norm(peg, tpos, norm); 
             reflect_vector(tvel, norm, tvel);
 
+            // display the collision normals in the trajectory
             /*if (NT >= 0 && clen < NT/2-6){
                 memcpy(ttpos, tpos, sizeof(double)*2);
                 ttpos[0] -= R*norm[0]; ttpos[1] -= R*norm[1];
@@ -456,8 +454,6 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
         tvel[0] *= damp;
         tvel[1] *= damp;
         tbounces++;
-
-        if (tbounces > 2) break;
     }
 
     out->nbounces = tbounces;
