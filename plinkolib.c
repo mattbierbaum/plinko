@@ -387,10 +387,13 @@ int trackCollision(double *pos, double *vel, double R, double wall,
 }
 
 int trackTrajectory(double *pos, double *vel, double R, double wall,
-        double damp, double *pegs, int npegs, t_result *out, int NT, double *traj){
+        double damp, double *pegs, int npegs, t_result *out, int NT, double *traj,
+        int constant_interval, double tinterval){
     int result;
     int clen = 0;
-    double tcoll, vlen;
+    double tcoll=0.0, vlen=0.0, tlastbounce=0.0, tlastsave=0.0, temp_lastsave=0.0, tint;
+
+    //double timereal = 0.0, timesave = 0.0;
 
     double tpos[2], tvel[2], peg[2], ttpos[2], norm[2]; 
     memcpy(tpos, pos, sizeof(double)*2);
@@ -401,13 +404,21 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
     while (tbounces < MAXBOUNCES){
         result = next_collision(tpos, tvel, R, pegs, npegs, wall, &tcoll, peg);
 
-        for (double t=0; t<tcoll; t+=(tcoll/TSAMPLES)){
-            position(tpos, tvel, t, ttpos);
+        tint = constant_interval ? tinterval : tcoll/TSAMPLES;
+        for (double t=tlastsave; t<(tlastbounce+tcoll); t+=tint){
+            position(tpos, tvel, t-tlastbounce, ttpos);
             if (NT >= 0 && clen < NT/2-2){
+                temp_lastsave = t;
                 memcpy(traj+2*clen, ttpos, sizeof(double)*2);
                 clen += 1;
             }
         }
+        tlastsave = temp_lastsave;
+
+        /*tint = constant_interval ? tinterval : tcoll/TSAMPLES;
+        for (double t=timesave; t<(timereal+tcoll); t+=tint){
+
+        }*/
 
         if (result == RESULT_NOTHING) break;
         if (result == RESULT_DONE)    break;
@@ -417,10 +428,12 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
         velocity(tvel, tcoll, tvel);
         vlen = dot(tvel, tvel);
 
-        if (NT >= 0 && clen < NT/2-2){
+        tlastbounce = tlastbounce + tcoll;
+        /*if (!constant_interval && NT >= 0 && clen < NT/2-2){
+            tlastsave = tlastbounce;
             memcpy(traj+2*clen, tpos, sizeof(double)*2);
             clen += 1;
-        }
+        }*/
 
         if (tpos[1] < 0 || vlen < EPS) break;
         if (result == RESULT_WALL_LEFT)  tvel[0] *= -1;
@@ -443,6 +456,8 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
         tvel[0] *= damp;
         tvel[1] *= damp;
         tbounces++;
+
+        if (tbounces > 2) break;
     }
 
     out->nbounces = tbounces;

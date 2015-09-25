@@ -15,7 +15,7 @@ int main(int argc, char **argv){
 
     //double R = 0.999/2;
     double R = 0.75/2;
-    double damp = 0.8;
+    double damp = 0.99;
     double wall = 7;
     char filename[1024];
     strcpy(filename, argv[1]);
@@ -45,7 +45,7 @@ int main(int argc, char **argv){
     build_hex_grid(pegs, &npegs, MAXPEGS, 4, 8);
 
     int clen = trackTrajectory(pos, vel, R, wall, damp,
-            pegs, npegs, res, TIMEPOINTS, bounces);
+            pegs, npegs, res, TIMEPOINTS, bounces, 1, 0.08);
 
     FILE *file = fopen(file_track, "wb");
     fwrite(bounces, sizeof(double), clen, file);

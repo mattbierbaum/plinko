@@ -40,7 +40,8 @@ double ran_ran2();
 int trackCollision(double *pos, double *vel, double R, double wall,
         double damp, double *pegs, int npegs, t_result *out);
 int trackTrajectory(double *pos, double *vel, double R, double wall,
-        double damp, double *pegs, int npegs, t_result *out, int NT, double *traj);
+        double damp, double *pegs, int npegs, t_result *out, int NT, double *traj,
+        int constant_interval, double tinterval);
 
 //========================================================
 /* internal use functions only */
