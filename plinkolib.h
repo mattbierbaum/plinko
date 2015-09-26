@@ -63,6 +63,7 @@ void velocity(double *v0, double t, double *out);
 void build_hex_grid(double *pegs, int *npegs, int maxpegs, int rows, int cols);
 void reflect_vector(double *vec, double *normal, double *out);
 void collision_normal(double *pos, double h, double *peg, double *out);
+void apply_constraint(double *peg, double R, double *pos, double *norm);
 
 int collides_with_peg(double *pos, double *vel, double R,
         double *peg, double *tcoll);

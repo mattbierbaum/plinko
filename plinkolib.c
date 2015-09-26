@@ -424,20 +424,15 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
         vlen = dot(tvel, tvel);
 
         tlastbounce = tlastbounce + tcoll;
-        if (!constant_interval){
-            if (NT >= 0 && clen < NT/2-2){
-                tlastsave = tlastbounce;
-                memcpy(traj+2*clen, tpos, sizeof(double)*2);
-                clen += 1;
-            }
-        }
 
+        // react to the collision
         if (tpos[1] < 0 || vlen < EPS) break;
         if (result == RESULT_WALL_LEFT)  tvel[0] *= -1;
         if (result == RESULT_WALL_RIGHT) tvel[0] *= -1;
         if (result == RESULT_COLLISION){
             create_norm(peg, tpos, norm); 
             reflect_vector(tvel, norm, tvel);
+            //apply_constraint(peg, R, tpos, norm);
 
             // display the collision normals in the trajectory
             /*if (NT >= 0 && clen < NT/2-6){
@@ -449,6 +444,15 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
             }*/
         }
 
+        // if we are not doing constant interval saving, save the hit point
+        if (!constant_interval){
+            if (NT >= 0 && clen < NT/2-2){
+                tlastsave = tlastbounce;
+                memcpy(traj+2*clen, tpos, sizeof(double)*2);
+                clen += 1;
+            }
+        }
+
         position(tpos, tvel, EPS, tpos); 
         velocity(tvel, EPS, tvel);
         tvel[0] *= damp;
@@ -458,6 +462,18 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
 
     out->nbounces = tbounces;
     return 2*clen;
+}
+
+void apply_constraint(double *peg, double R, double *pos, double *norm){
+    const double eps = 1e-14;
+    double dist = 0.0;
+    dist += (pos[0] - peg[0])*(pos[0] - peg[0]);
+    dist += (pos[1] - peg[1])*(pos[1] - peg[1]);
+    dist = sqrt(dist);
+
+    double excess = dist - R - eps;
+    pos[0] -= excess*norm[0];
+    pos[1] -= excess*norm[1];
 }
 
 ullong vseed;
