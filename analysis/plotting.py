@@ -6,6 +6,18 @@ import matplotlib
 from matplotlib.collections import LineCollection
 import yaml
 
+def density_hist(base):
+    conf = yaml.load(open(base+".conf"))
+    track = np.fromfile(base+".density", dtype='float')
+    pegs =  np.fromfile(base+".pegs",  dtype='float')
+
+    track = track.reshape(-1, conf['timepoints']+1, 2)
+    pegs = pegs.reshape(pegs.shape[0]/2, 2)
+
+    h,_,_ = np.histogram2d(t[:,1:,0].flatten(), t[:,1:,1].flatten(), bins=100)
+    h[0,0] = 0
+    pl.imshow(h, cmap=cm.bone, interpolation='nearest')
+
 def plot_density(base, thin=False, start=0, size=14, save=False):
     conf = yaml.load(open(base+".conf"))
     track = np.fromfile(base+".density", dtype='float')
