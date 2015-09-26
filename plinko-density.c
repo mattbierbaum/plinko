@@ -16,12 +16,12 @@ int main(int argc, char **argv){
     ran_seed(123123);
     int clen = 0;
     double R = 0.75/2;
-    double damp = 1.0;
+    double damp = 0.9;
     double wall = 14;
 
     int MAXPEGS = 1 << 10;
-    int NPARTICLES = 1 << 20;
-    int TIMEPOINTS = 1 << 13;
+    int NPARTICLES = 1 << 10;
+    int TIMEPOINTS = 1 << 11;
 
     char filename[1024];
     char file_track[1024];
@@ -51,27 +51,30 @@ int main(int argc, char **argv){
     fwrite(pegs, sizeof(double), npegs*2, file);
     fclose(file);
 
-    double pos[2] = { wall / 2 - 0.213, 10.0 };
-    double vel[2] = { 0, 1e-4};
+    double pos[2] = { wall / 2, 10.0 };
+    double vel[2] = { 0, 1e-4 };
+    double len[2] = { 0, 0 };
 
     for (int i=0; i<NPARTICLES; i++){
         pos[0] = wall/2 - 0.5 + ran_ran2();
         pos[1] = 10.0;
+        vel[0] = 0.0;
+        vel[1] = 1e-4;
 
-        if (i % 10000 == 0)
-            printf("%i\n", i);
+        if (i % 100 == 0) printf("%i\n", i);
 
         for (int j=0; j<2*TIMEPOINTS; j++)
             bounces[j] = 0.0;
 
         clen = trackTrajectory(pos, vel, R, wall, damp,
-            pegs, npegs, res, TIMEPOINTS, bounces, 1, 0.01);
+            pegs, npegs, res, TIMEPOINTS, bounces, 1, 0.10);
 
-        if (clen == 0)
-            printf("!\n");
+        len[0] = len[1] = (double)clen/2;
 
         FILE *tfile = fopen(file_track, "ab");
+        fwrite(len, sizeof(double), 2, tfile);
         fwrite(bounces, sizeof(double), 2*TIMEPOINTS, tfile);
+        fflush(tfile);
         fclose(tfile);
     }
 

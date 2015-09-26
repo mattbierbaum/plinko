@@ -6,6 +6,29 @@ import matplotlib
 from matplotlib.collections import LineCollection
 import yaml
 
+def plot_density(base, thin=False, start=0, size=14, save=False):
+    conf = yaml.load(open(base+".conf"))
+    track = np.fromfile(base+".density", dtype='float')
+    pegs =  np.fromfile(base+".pegs",  dtype='float')
+
+    track = track.reshape(-1, conf['timepoints']+1, 2)
+    pegs = pegs.reshape(pegs.shape[0]/2, 2)
+
+    linethick = 2*0.0125 if thin else 0.3
+    fig = pl.figure(figsize=(size,size*10./conf['wall']))
+
+    for i in xrange(conf['nparticles']):
+        l = int(track[i,0,0])
+        pl.plot(track[i,1:l-2,0], track[i,1:l-2,1], 'k-', linewidth=linethick, alpha=0.01)
+
+    pl.xlim(0, conf['wall'])
+    pl.ylim(0, 10)
+    pl.show()
+    pl.xticks([])
+    pl.yticks([])
+    pl.tight_layout()
+    return track
+
 def plot_file(base, thin=True, start=0, size=14, save=False):
     conf = yaml.load(open(base+".conf"))
     track = np.fromfile(base+".track", dtype='float')
@@ -25,7 +48,7 @@ def plot_file(base, thin=True, start=0, size=14, save=False):
     pl.ylim(0, 10)
     pl.show()
     pl.xticks([])
-    pl.yticks([]) 
+    pl.yticks([])
     pl.tight_layout()
     if save:
         pl.savefig(base+".png", dpi=200)
@@ -55,7 +78,7 @@ def plot_file_color(base, thin=True, start=0, size=14, save=False):
     pl.xlim(0, conf['wall'])
     pl.ylim(0, 10)
     pl.xticks([])
-    pl.yticks([]) 
+    pl.yticks([])
     pl.tight_layout()
     pl.show()
     if save:
