@@ -35,7 +35,7 @@ def density_hist(base, bins=500):
     conf, track, pegs = load(base)
 
     h = hist(track, conf, bins)
-    pl.imshow(h**0.5, cmap=pl.cm.bone, interpolation='nearest', origin='lower')
+    pl.imshow(np.log(h+1), cmap=pl.cm.bone, interpolation='nearest', origin='lower')
 
 def density_hist_movie(base, bins=500, skip=1, frames=500, size=10):
     """
@@ -71,7 +71,7 @@ def tracks_movie(base, skip=1, frames=500, size=10):
 
     for t in xrange(1,max(frames, track.shape[1]/skip)):
         tmp = track[:,t*skip,:]
-        if not ((tmp > 0) & (tmp[:,0] < conf['wall']) & (temp[:,1] < conf['top'])).any():
+        if not ((tmp[:,0] > 0) & (tmp[:,1] > 0) & (tmp[:,0] < conf['wall']) & (tmp[:,1] < conf['top'])).any():
             continue
 
         if plot is None:
