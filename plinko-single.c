@@ -13,10 +13,10 @@ int main(int argc, char **argv){
         return 1;
     }
 
-    //double R = 0.999/2;
     double R = 0.75/2;
-    double damp = 0.99;
-    double wall = 7;
+    double damp = 1.0;
+    double wall = 7.0;
+    double top = 7.0;
     char filename[1024];
     strcpy(filename, argv[1]);
 
@@ -38,9 +38,9 @@ int main(int argc, char **argv){
     double vel[2] = { 0, 1e-4};
 
     pos[0] = M_PI;
-    pos[1] = 10.000000;
-    vel[0] = 0.000000;
-    vel[1] = 0.000100;
+    pos[1] = top;
+    vel[0] = 0.0;
+    vel[1] = 1e-4;
 
     build_hex_grid(pegs, &npegs, MAXPEGS, 4, 8);
 
@@ -59,6 +59,7 @@ int main(int argc, char **argv){
     fprintf(file, "radius: %f\n", R);
     fprintf(file, "damp: %f\n", damp);
     fprintf(file, "wall: %f\n", wall);
+    fprintf(file, "top: %f\n", top);
     fclose(file);
 
     free(bounces);

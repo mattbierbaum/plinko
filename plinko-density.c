@@ -18,9 +18,10 @@ int main(int argc, char **argv){
     double R = 0.75/2;
     double damp = 0.9;
     double wall = 14;
+    double top = 7.0;
 
     int MAXPEGS = 1 << 10;
-    int NPARTICLES = 1 << 10;
+    int NPARTICLES = 1 << 16;
     int TIMEPOINTS = 1 << 11;
 
     char filename[1024];
@@ -43,6 +44,7 @@ int main(int argc, char **argv){
     fprintf(file, "radius: %f\n", R);
     fprintf(file, "damp: %f\n", damp);
     fprintf(file, "wall: %f\n", wall);
+    fprintf(file, "top: %f\n", top);
     fprintf(file, "nparticles: %i\n", NPARTICLES);
     fprintf(file, "timepoints: %i\n", TIMEPOINTS);
     fclose(file);
@@ -57,7 +59,7 @@ int main(int argc, char **argv){
 
     for (int i=0; i<NPARTICLES; i++){
         pos[0] = wall/2 - 0.5 + ran_ran2();
-        pos[1] = 10.0;
+        pos[1] = top;
         vel[0] = 0.0;
         vel[1] = 1e-4;
 
