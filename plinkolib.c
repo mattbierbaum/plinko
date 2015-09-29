@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string.h>
 #include "plinkolib.h"
+#include "roots/quartic.h"
 
 /*===========================================================================
  *  Some notes:
@@ -11,106 +12,7 @@
  *          ( this will allow us to use very small pegs if we want )
  *      - still thinking about how to add wall friction
  *      - according to PisR, the ratio of the disc to spacing is 3/4
- *
- *  Two root finding methods are possible - Bairstow and direct quartic,
- *  I'm still reading about the latter, but it is write-down-able.
  *=========================================================================*/
-
-//============================================================================
-// Root finder.  These functions create and solve for the roots of an 4th
-// order polynomial which describes the intersection of a circle and parabola
-//============================================================================
-double polyeval(double *poly, int deg, double x){
-    int i;
-    double out = 0.0;
-    for (i=deg; i>=0; i--) out = out*x + poly[i];
-    return out;
-}
-
-void find_root_pair(double *poly, int deg, double *qpoly, 
-        double *r1, double *r2){
-    int i;
-    double c,d,g,h,u,v,det,err,vo,uo;
-    double rpoly[DEGSIZE];
-   
-    u = poly[deg-1] / poly[deg];
-    v = poly[deg-2] / poly[deg];
-
-    int nsteps = 0;  err = 10*XTOL;
-    while (err > XTOL && nsteps < NMAX){
-        qpoly[deg] = qpoly[deg-1] = 0;
-        for (i=deg-2; i>=0; i--)
-            qpoly[i] = poly[i+2] - u*qpoly[i+1] - v*qpoly[i+2];
-        c = poly[1] - u*qpoly[0] - v*qpoly[1];
-        d = poly[0] - v*qpoly[0];
-
-        rpoly[deg] = rpoly[deg-1] = 0;
-        for (i=deg-2; i>=0; i--)
-            rpoly[i] = qpoly[i+2] - u*rpoly[i+1] - v*rpoly[i+2];
-        g = qpoly[1] - u*rpoly[0] - v*rpoly[1];
-        h = qpoly[0] - v*rpoly[0];
-
-        det = 1.0/(v*g*g + h*(h-u*g));
-        uo = u; vo = v;
-        u = u - det*(g*d - c*h);
-        v = v - det*((g*u-h)*d - g*v*c);
-
-        err = sqrt((u-uo)*(u-uo)/(uo*uo) + (v-vo)*(v-vo)/(vo*vo));
-        nsteps++;
-    }
-
-    // b^2 - 4*a*c
-    double desc = u*u - 4*v; 
-
-    // if we have imaginery roots, quit now
-    if (desc < 0){
-        *r1 = NAN; *r2 = NAN;
-        return;
-    }
-
-    double sqt = 0.5*sqrt(desc);
-    double boa = -0.5*u;
-    
-    *r1 = (boa + sqt);
-    *r2 = (boa - sqt);
-}
-
-void find_all_roots(double *poly, int deg, double *roots, int *nroots){
-    int i;
-    double r1, r2;
-    double temppoly[DEGSIZE];
-
-    *nroots = 0;
-    for (i=deg; i>=1; i-=2){
-        find_root_pair(poly, i, temppoly, &r1, &r2);
-        memcpy(poly, temppoly, sizeof(double)*deg);
-
-        if (isnan(r1) || isnan(r2))
-            continue;
-
-        roots[*nroots] = r1; *nroots += 1;
-        roots[*nroots] = r2; *nroots += 1;
-    }
-}
-
-double find_smallest_root(double *poly, int deg){
-    int i=0, nroots=0;
-    double realroots[DEGSIZE];
-
-    find_all_roots(poly, deg, realroots, &nroots);
-
-    // if we didn't find any roots, return a nan (only special number)
-    if (nroots == 0) return NAN;
-
-    // otherwise, find the root closest to zero
-    double minroot = NAN;
-    for (i=0; i<nroots; i++)
-        if ((isnan(minroot) || minroot > realroots[i]) && realroots[i] > 0) 
-            minroot = realroots[i];
-
-    return minroot;
-}
-
 void build_peg_poly(double *pos, double *vel, double R, 
         double *peg, double *poly){
     // t^4 (0.25) - t^3 (vy) + t^2 (vx^2 + vy^2 - dy) +
@@ -132,17 +34,9 @@ void build_peg_poly(double *pos, double *vel, double R,
 // These are helper functions that calculate positions of pegs and 
 // the positions of trajectories
 //============================================================================
-inline double mymod(double a, double b){
-      return a - b*(int)(a/b) + b*(a<0);
-}
-
-inline double dot(double *r1, double *r2){
-    return r1[0]*r2[0] + r1[1]*r2[1];
-}
-
-inline double cross(double *a, double *b){
-    return a[0]*b[1]-a[1]*b[0];
-}
+inline double mymod(double a, double b){ return a - b*(int)(a/b) + b*(a<0); }
+inline double dot(double *r1, double *r2){ return r1[0]*r2[0] + r1[1]*r2[1]; }
+inline double cross(double *a, double *b){ return a[0]*b[1]-a[1]*b[0]; }
 
 inline void position(double *x0, double *v0, double t, double *out){
     out[0] = x0[0] + v0[0]*t;
@@ -237,23 +131,14 @@ int collides_with_peg(double *pos, double *vel, double R,
     double poly[DEGSIZE];
     
     build_peg_poly(pos, vel, R, peg, poly);
-    *tcoll = find_smallest_root(poly, DEG);
-    //*tcoll = quartic_smallest_root(poly);
+    *tcoll = bairstow_smallest_root(poly);
+    //*tcoll = durand_kerner_smallest_root(poly);
+    //*tcoll = quartic_exact1_smallest_root(poly);
+    //*tcoll = quartic_exact2_smallest_root(poly);
 
     if (isnan(*tcoll))
         return RESULT_NOTHING;
     return RESULT_COLLISION;
-
-    /*double roots[4];
-    int nroots = solveQuartic(poly, roots);
-    if (nroots == 0) return RESULT_NOTHING;
-    double small = 1e100;
-    for (int i=0; i<nroots; i++){
-        if (roots[i] > 0 && roots[i] < small)
-            small = roots[i];
-    }
-    *tcoll = small;
-    return RESULT_COLLISION;*/
 }
 
 int earliest_peg_collision(double *pos, double *vel, double R,
@@ -432,7 +317,7 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
         if (result == RESULT_COLLISION){
             create_norm(peg, tpos, norm); 
             reflect_vector(tvel, norm, tvel);
-            //apply_constraint(peg, R, tpos, norm);
+            apply_constraint(peg, R, tpos, norm);
 
             // display the collision normals in the trajectory
             /*if (NT >= 0 && clen < NT/2-6){

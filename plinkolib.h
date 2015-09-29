@@ -4,12 +4,8 @@
 //========================================================
 // global constants for the calculation
 //========================================================
-#define XTOL 1e-14
-#define NMAX (1<<10)
 #define MAXBOUNCES (1<<26)
 
-#define DEG     4
-#define DEGSIZE 5
 #define MAXCUPS 50
 #define TSAMPLES 25
 
