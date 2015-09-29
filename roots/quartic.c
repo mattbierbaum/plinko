@@ -78,6 +78,8 @@ void find_all_roots(double *poly, int deg, double *roots, int *nroots){
 double bairstow_smallest_root(double *poly){
     int i=0, nroots=0;
     double realroots[DEGSIZE];
+    double tpoly[DEGSIZE];
+    memcpy(tpoly, poly, sizeof(double)*DEGSIZE);
 
     find_all_roots(poly, 4, realroots, &nroots);
 
@@ -87,7 +89,8 @@ double bairstow_smallest_root(double *poly){
     // otherwise, find the root closest to zero
     double minroot = NAN;
     for (i=0; i<nroots; i++)
-        if ((isnan(minroot) || minroot > realroots[i]) && realroots[i] > 0)
+        if ((isnan(minroot) || minroot > realroots[i]) &&
+                realroots[i] > 0 && qvalr(tpoly, realroots[i]) < 1e-10)
             minroot = realroots[i];
 
     return minroot;
@@ -96,6 +99,10 @@ double bairstow_smallest_root(double *poly){
 //============================================================================
 // These functions are helper functions for quartics using Durand-Kerner
 //============================================================================
+double qvalr(double *poly, double x){
+    return poly[0]+x*(poly[1]+x*(poly[2]+x*(poly[3]+x*poly[4])));
+}
+
 double _Complex qval(double *poly, double _Complex x){
     return poly[0]+x*(poly[1]+x*(poly[2]+x*(poly[3]+x*poly[4])));
 }
