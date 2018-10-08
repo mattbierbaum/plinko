@@ -1,6 +1,8 @@
 #ifndef __PLINKO_H__
 #define __PLINKO_H__
 
+#include "drawinglib.h"
+
 //========================================================
 // global constants for the calculation
 //========================================================
@@ -37,6 +39,9 @@ int trackCollision(double *pos, double *vel, double R, double wall,
         double damp, double *pegs, int npegs, t_result *out);
 int trackTrajectory(double *pos, double *vel, double R, double wall,
         double damp, double *pegs, int npegs, t_result *out, int NT, double *traj,
+        int constant_interval, double tinterval);
+void trackTrajectoryImage(double *pos, double *vel, double R, double wall,
+        double damp, double *pegs, int npegs, t_density *density,
         int constant_interval, double tinterval);
 
 //========================================================

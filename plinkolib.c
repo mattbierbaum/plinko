@@ -280,7 +280,7 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
 
     //double timereal = 0.0, timesave = 0.0;
 
-    double tpos[2], tvel[2], peg[2], ttpos[2], norm[2]; 
+    double tpos[2], tvel[2], peg[2], ttpos[2], norm[2];
     memcpy(tpos, pos, sizeof(double)*2);
     memcpy(tvel, vel, sizeof(double)*2);
 
@@ -377,4 +377,66 @@ double ran_ran2(){
     return 5.42101086242752217e-20*t;
 }
 
+void trackTrajectoryImage(double *pos, double *vel, double R, double wall,
+        double damp, double *pegs, int npegs, t_density *density,
+        int constant_interval, double tinterval){
+    int result;
+    double tcoll=0.0, vlen=0.0, tlastbounce=0.0, tlastsave=0.0, temp_lastsave=0.0, tint;
+
+    //double timereal = 0.0, timesave = 0.0;
+
+    double tpos[2], tvel[2], peg[2], ttpos[2], norm[2], ppos[2];
+    memcpy(tpos, pos, sizeof(double)*2);
+    memcpy(tvel, vel, sizeof(double)*2);
+
+    peg[0] = peg[1] = 0.0;
+    printf("%f %f\n", tpos[0], tpos[1]);
+    int tbounces = 0;
+    while (tbounces < MAXBOUNCES){
+        result = next_collision(tpos, tvel, R, pegs, npegs, wall, &tcoll, peg);
+
+        printf("%i | %f | %f %f | %f %f\n", result, tcoll, tpos[0], tpos[1], tvel[0], tvel[1]);
+        tint = constant_interval ? tinterval : tcoll/TSAMPLES;
+        for (double t=tlastsave+tint; t<(tlastbounce+tcoll); t+=tint){
+            memcpy(ppos, tpos, sizeof(double)*2);
+            position(tpos, tvel, t-tlastbounce, ttpos);
+            printf("%f %f\n", ttpos[0], ttpos[1]);
+            temp_lastsave = t;
+            density_plot_line(density, ppos, ttpos);
+        }
+        tlastsave = temp_lastsave;
+
+        if (result == RESULT_NOTHING) break;
+        if (result == RESULT_DONE)    break;
+
+        // store the last position
+        memcpy(ppos, tpos, sizeof(double)*2);
+
+        // figure out where it hit and what speed
+        position(tpos, tvel, tcoll, tpos);
+        velocity(tvel, tcoll, tvel);
+        vlen = dot(tvel, tvel);
+
+        tlastbounce = tlastbounce + tcoll;
+
+        // react to the collision
+        if (tpos[1] < 0 || vlen < EPS) break;
+        if (result == RESULT_WALL_LEFT)  tvel[0] *= -1;
+        if (result == RESULT_WALL_RIGHT) tvel[0] *= -1;
+        if (result == RESULT_COLLISION){
+            create_norm(peg, tpos, norm);
+            reflect_vector(tvel, norm, tvel);
+            apply_constraint(peg, R, tpos, norm);
+        }
+
+        // if we are not doing constant interval saving, save the hit point
+        density_plot_line(density, ttpos, tpos);
+
+        position(tpos, tvel, EPS, tpos);
+        velocity(tvel, EPS, tvel);
+        tvel[0] *= damp;
+        tvel[1] *= damp;
+        tbounces++;
+    }
+}
 

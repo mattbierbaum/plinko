@@ -11,14 +11,14 @@ import time
 def load(base):
     conf = yaml.load(open(base+".conf"))
     pegs = np.fromfile(base+".pegs",  dtype='float')
-    pegs = pegs.reshape(pegs.shape[0]/2, 2)
+    pegs = pegs.reshape(pegs.shape[0]//2, 2)
 
     if os.path.exists(base+'.density'):
         track = np.fromfile(base+".density", dtype='float')
         track = track.reshape(-1, conf['timepoints']+1, 2)
     elif os.path.exists(base+'.track'):
         track = np.fromfile(base+".track", dtype='float')
-        track = track.reshape(track.shape[0]/2, 2)
+        track = track.reshape(track.shape[0]//2, 2)
 
     return conf, track, pegs
 
@@ -49,7 +49,7 @@ def density_hist_movie(base, bins=500, skip=1, frames=500, size=10):
 
     fig = pl.figure(figsize=(size,size*conf['top']/conf['wall']))
 
-    for t in xrange(max(frames, track.shape[1]/skip)):
+    for t in range(max(frames, track.shape[1]/skip)):
         tmp = track[:,t*skip+1,:]
         h,_,_ = np.histogram2d(tmp[:,1].flatten(), tmp[:,0].flatten(), bins=bins)
         h[0,0] = 0
@@ -69,7 +69,7 @@ def tracks_movie(base, skip=1, frames=500, size=10):
     fig = pl.figure(figsize=(size,size*conf['top']/conf['wall']))
     plot = None
 
-    for t in xrange(1,max(frames, track.shape[1]/skip)):
+    for t in range(1,max(frames, track.shape[1]/skip)):
         tmp = track[:,t*skip,:]
         if not ((tmp[:,0] > 0) & (tmp[:,1] > 0) & (tmp[:,0] < conf['wall']) & (tmp[:,1] < conf['top'])).any():
             continue
@@ -93,7 +93,10 @@ def plot_density(base, thin=False, start=0, size=14, save=False):
     linethick = 2*0.0125 if thin else 0.3
     fig = pl.figure(figsize=(size,size*conf['top']/conf['wall']))
 
-    for i in xrange(conf['nparticles']):
+    for i in range(conf['nparticles']):
+        if i % int(1e4) == 0:
+            print(i)
+
         l = int(track[i,0,0])
         pl.plot(track[i,1:l-2,0], track[i,1:l-2,1], 'k-', linewidth=linethick, alpha=0.01)
 

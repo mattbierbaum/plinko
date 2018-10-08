@@ -1,5 +1,5 @@
-EXE=plinko plinko-single plinko-density
-OBJECTS=plinkolib.o roots/quartic.o
+EXE=plinko plinko-single plinko-density plinko-directdraw
+OBJECTS=plinkolib.o roots/quartic.o drawinglib.o
 CFLAGS=-std=c99 -Wall -Wextra -Werror -pedantic -flto -O3 -m64 -Ofast -march=native -fopenmp -D_POSIX_C_SOURCE=199309L
 LDLIBS=-lm -lrt
 CC=c99
