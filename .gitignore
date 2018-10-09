@@ -3,3 +3,6 @@ plinko-single
 plinko-density
 plinko-directdraw
 *.o
+*.conf
+*.pegs
+*.npy

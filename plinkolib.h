@@ -6,7 +6,7 @@
 //========================================================
 // global constants for the calculation
 //========================================================
-#define MAXBOUNCES (1<<26)
+#define MAXBOUNCES (1<<12)
 
 #define MAXCUPS 50
 #define TSAMPLES 25

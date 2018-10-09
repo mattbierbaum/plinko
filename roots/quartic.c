@@ -133,8 +133,8 @@ double durand_kerner_smallest_root(double *poly){
 
         p = pn; r = rn; s = sn; t = tn;
 
-        err = (fabs(qval(poly, p)) + fabs(qval(poly, r))
-             + fabs(qval(poly, s)) + fabs(qval(poly, t)))/4;
+        err = (cabs(qval(poly, p)) + cabs(qval(poly, r))
+             + cabs(qval(poly, s)) + cabs(qval(poly, t)))/4;
 
         //printf("%e | %e %e %e %e\n", err, fabs(qval(poly, p)), fabs(qval(poly, r)), fabs(qval(poly, s)), fabs(qval(poly, t)));
     }

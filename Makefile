@@ -1,8 +1,8 @@
 EXE=plinko plinko-single plinko-density plinko-directdraw
 OBJECTS=plinkolib.o roots/quartic.o drawinglib.o
-CFLAGS=-std=c99 -Wall -Wextra -Werror -pedantic -flto -O3 -m64 -Ofast -march=native -fopenmp -D_POSIX_C_SOURCE=199309L
+CFLAGS=-std=c99 -Wall -Wextra -Werror -pedantic -flto -O2 -m64 -Ofast -fopenmp -D_POSIX_C_SOURCE=199309L
 LDLIBS=-lm -lrt
-CC=c99
+CC=clang
 
 WARNS=-Wwrite-strings -Winit-self -Wcast-align -Wcast-qual -Wpointer-arith -Wstrict-aliasing=2
 WARNS += -Wformat=2 -Wmissing-declarations -Wmissing-include-dirs -Wno-unused-parameter -Wuninitialized

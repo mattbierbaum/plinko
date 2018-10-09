@@ -21,7 +21,7 @@ int main(int argc, char **argv){
     double top = 7.0;
 
     int MAXPEGS = 1 << 10;
-    int NPARTICLES = 1; //1 << 1;
+    int NPARTICLES = 1 << 18;
     int TIMEPOINTS = 1 << 11;
 
     char filename[1024];
@@ -52,16 +52,12 @@ int main(int argc, char **argv){
     double pos[2] = { wall / 2, 10.0 };
     double vel[2] = { 0, 1e-4 };
 
-    double ppi = 100;
+    double ppi = 2000;
     double bds[] = {0.0, 0.0, wall, top};
     t_density *density = density_create(ppi, bds);
 
-    double p0[] = {0.0, 0.0};
-    double p1[] = {wall-1e-3, top-1e-3};
-    density_plot_line(density, p0, p1);
-    printf("%i %i\n", density->Nx, density->Ny);
     for (int i=0; i<NPARTICLES; i++){
-        pos[0] = 6.51; //wall/2 - 0.5 + ran_ran2();
+        pos[0] = wall/2 - 0.5 + ((double)i/NPARTICLES); //ran_ran2();
         pos[1] = top - 1e-3;
         vel[0] = 0.0;
         vel[1] = -1e-4;

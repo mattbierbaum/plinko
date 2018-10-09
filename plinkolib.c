@@ -390,34 +390,31 @@ void trackTrajectoryImage(double *pos, double *vel, double R, double wall,
     memcpy(tvel, vel, sizeof(double)*2);
 
     peg[0] = peg[1] = 0.0;
-    printf("%f %f\n", tpos[0], tpos[1]);
     int tbounces = 0;
     while (tbounces < MAXBOUNCES){
         result = next_collision(tpos, tvel, R, pegs, npegs, wall, &tcoll, peg);
 
-        printf("%i | %f | %f %f | %f %f\n", result, tcoll, tpos[0], tpos[1], tvel[0], tvel[1]);
         tint = constant_interval ? tinterval : tcoll/TSAMPLES;
+        memcpy(ppos, tpos, sizeof(double)*2);
         for (double t=tlastsave+tint; t<(tlastbounce+tcoll); t+=tint){
-            memcpy(ppos, tpos, sizeof(double)*2);
             position(tpos, tvel, t-tlastbounce, ttpos);
-            printf("%f %f\n", ttpos[0], ttpos[1]);
             temp_lastsave = t;
             density_plot_line(density, ppos, ttpos);
+            memcpy(ppos, ttpos, sizeof(double)*2);
         }
         tlastsave = temp_lastsave;
 
         if (result == RESULT_NOTHING) break;
         if (result == RESULT_DONE)    break;
 
-        // store the last position
-        memcpy(ppos, tpos, sizeof(double)*2);
-
         // figure out where it hit and what speed
         position(tpos, tvel, tcoll, tpos);
         velocity(tvel, tcoll, tvel);
         vlen = dot(tvel, tvel);
-
         tlastbounce = tlastbounce + tcoll;
+
+        // plot up to this point
+        density_plot_line(density, ttpos, tpos);
 
         // react to the collision
         if (tpos[1] < 0 || vlen < EPS) break;
@@ -428,9 +425,6 @@ void trackTrajectoryImage(double *pos, double *vel, double R, double wall,
             reflect_vector(tvel, norm, tvel);
             apply_constraint(peg, R, tpos, norm);
         }
-
-        // if we are not doing constant interval saving, save the hit point
-        density_plot_line(density, ttpos, tpos);
 
         position(tpos, tvel, EPS, tpos);
         velocity(tvel, EPS, tvel);

@@ -57,7 +57,6 @@ void density_plot_line(t_density *density, double *p0, double *p1) {
     double x1 = density->Nx * (p1[0] - density->x0) / (density->x1 - density->x0);
     double y1 = density->Ny * (p1[1] - density->y0) / (density->y1 - density->y0);
 
-    printf("%f %f %f %f\n", x0, y0, x1, y1);
     int steep = fabs(y1 - y0) > fabs(x1 - x0);
     
     if (steep) {
@@ -106,13 +105,13 @@ void density_plot_line(t_density *density, double *p0, double *p1) {
     
     // main loop
     if (steep) {
-        for (int x = xpxl1 + 1; x < xpxl2 - 1; x++) {
+        for (int x = xpxl1 + 1; x <= xpxl2 - 1; x++) {
             plot(density, ipart(intery)  , x, rfpart(intery));
             plot(density, ipart(intery)+1, x,  fpart(intery));
             intery = intery + gradient;
         }
     } else {
-        for (int x = xpxl1 + 1; x < xpxl2 - 1; x++) {
+        for (int x = xpxl1 + 1; x <= xpxl2 - 1; x++) {
             plot(density, x, ipart(intery),  rfpart(intery));
             plot(density, x, ipart(intery)+1, fpart(intery));
             intery = intery + gradient;
