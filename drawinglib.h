@@ -26,14 +26,12 @@ typedef struct {
     double x0, x1;
     double y0, y1;
 
+    int ncolors;
     double *counts;
-    double *color;
 } t_colorplot;
 
-t_colorplot *colorplot_create(double ppi, double *bds);
+t_colorplot *colorplot_create(double ppi, double *bds, int ncolors);
 void colorplot_savefile(t_colorplot *cp, char *prefix);
-void colorplot_plot_line(t_colorplot *cp, double *x0, double *x1, double *c);
-void colorplot_plot_line_aqua(t_colorplot *cp, double *x0, double *x1);
-void colorplot_plot_line_black(t_colorplot *cp, double *x0, double *x1);
+void colorplot_plot_line_index(t_colorplot *cp, double *x0, double *x1, int index);
 
 #endif

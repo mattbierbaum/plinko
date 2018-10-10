@@ -30,9 +30,10 @@ void plotter_color(void *obj, int x, int y, double intensity, double *color) {
         return;
 
     cp->counts[ind] += intensity;
-    cp->color[3*ind + 0] = intensity*color[0];
+    cp->counts[ind] += color[0];
+    /*cp->color[3*ind + 0] = intensity*color[0];
     cp->color[3*ind + 1] = intensity*color[1];
-    cp->color[3*ind + 2] = intensity*color[2];
+    cp->color[3*ind + 2] = intensity*color[2];*/
 }
 
 void plotter_color_black(void *obj, int x, int y, double intensity) {
@@ -44,6 +45,25 @@ void plotter_color_aqua(void *obj, int x, int y, double intensity) {
     double c[] = {0.4235, 0.7059, 0.9333};
     plotter_color(obj, x, y, intensity, c);
 }
+
+void plotter_color_index(void *obj, int x, int y, double intensity, int index) {
+    t_colorplot *cp = (t_colorplot*)obj;
+    int ind = x + y*cp->Nx;
+    if (ind >= cp->N)
+        return;
+
+    if (index >= cp->ncolors)
+        return;
+
+    cp->counts[cp->ncolors*ind + index] += intensity;
+}
+
+void plotter_color_index0(void *obj, int x, int y, double i) {plotter_color_index(obj, x, y, i, 0);}
+void plotter_color_index1(void *obj, int x, int y, double i) {plotter_color_index(obj, x, y, i, 1);}
+void plotter_color_index2(void *obj, int x, int y, double i) {plotter_color_index(obj, x, y, i, 2);}
+void plotter_color_index3(void *obj, int x, int y, double i) {plotter_color_index(obj, x, y, i, 3);}
+void plotter_color_index4(void *obj, int x, int y, double i) {plotter_color_index(obj, x, y, i, 4);}
+void plotter_color_index5(void *obj, int x, int y, double i) {plotter_color_index(obj, x, y, i, 5);}
 
 t_density *density_create(double ppi, double *bds) {
     t_density *out = (t_density*)malloc(sizeof(t_density));
@@ -70,7 +90,7 @@ void density_savefile(t_density *density, char *prefix) {
     fclose(tfile);
 }
 
-t_colorplot *colorplot_create(double ppi, double *bds) {
+t_colorplot *colorplot_create(double ppi, double *bds, int ncolors) {
     t_colorplot *out = (t_colorplot*)malloc(sizeof(t_colorplot));
     out->x0 = bds[0];
     out->y0 = bds[1];
@@ -79,11 +99,12 @@ t_colorplot *colorplot_create(double ppi, double *bds) {
     out->Nx = (int)(ppi * (out->x1 - out->x0));
     out->Ny = (int)(ppi * (out->y1 - out->y0));
     out->N = out->Nx * out->Ny;
-    out->counts = (double*)malloc(sizeof(double)*out->N);
-    out->color = (double*)malloc(sizeof(double)*out->N*3);
+    out->ncolors = ncolors;
+    out->counts = (double*)malloc(sizeof(double)*out->N*out->ncolors);
+    //out->color = (double*)malloc(sizeof(double)*out->N*3);
 
     memset(out->counts, 0, sizeof(double)*out->N);
-    memset(out->color, 0, sizeof(double)*out->N*3);
+    //memset(out->color, 0, sizeof(double)*out->N*3);
     return out;
 }
 
@@ -92,15 +113,15 @@ void colorplot_savefile(t_colorplot *cp, char *prefix) {
 
     sprintf(filename, "%s.%i-%i_double_count.npy", prefix, cp->Nx, cp->Ny);
     FILE *tfile = fopen(filename, "wb");
-    fwrite(cp->counts, sizeof(double), cp->Nx*cp->Ny, tfile);
+    fwrite(cp->counts, sizeof(double), cp->ncolors*cp->Nx*cp->Ny, tfile);
     fflush(tfile);
     fclose(tfile);
 
-    sprintf(filename, "%s.%i-%i_double_color.npy", prefix, cp->Nx, cp->Ny);
+    /*sprintf(filename, "%s.%i-%i_double_color.npy", prefix, cp->Nx, cp->Ny);
     tfile = fopen(filename, "wb");
     fwrite(cp->color, sizeof(double), 3*cp->Nx*cp->Ny, tfile);
     fflush(tfile);
-    fclose(tfile);
+    fclose(tfile);*/
 }
 
 void plot_line(void *obj, double *p0, double *p1, plotter_func func) {
@@ -176,11 +197,11 @@ void density_plot_line(t_density *density, double *p0, double *p1) {
     plot_line((void*)density, p0, p1, plotter_density);
 }
 
-void colorplot_plot_line_black(t_colorplot *density, double *p0, double *p1) {
-    plot_line((void*)density, p0, p1, plotter_color_black);
+void colorplot_plot_line_index(t_colorplot *density, double *p0, double *p1, int index) {
+    if (index == 0) plot_line((void*)density, p0, p1, plotter_color_index0);
+    if (index == 1) plot_line((void*)density, p0, p1, plotter_color_index1);
+    if (index == 2) plot_line((void*)density, p0, p1, plotter_color_index2);
+    if (index == 3) plot_line((void*)density, p0, p1, plotter_color_index3);
+    if (index == 4) plot_line((void*)density, p0, p1, plotter_color_index4);
+    if (index == 5) plot_line((void*)density, p0, p1, plotter_color_index5);
 }
-
-void colorplot_plot_line_aqua(t_colorplot *density, double *p0, double *p1) {
-    plot_line((void*)density, p0, p1, plotter_color_aqua);
-}
-

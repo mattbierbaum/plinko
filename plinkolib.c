@@ -459,8 +459,10 @@ void trackTrajectoryImageTwoTone(double *pos, double *vel, double R, double wall
             temp_lastsave = t;
             //density_plot_line(density, ppos, ttpos);
 
-            if (left) colorplot_plot_line_aqua(cp, ppos, ttpos);
-            else colorplot_plot_line_black(cp, ppos, ttpos);
+            if (tbounces > 0) {
+                if (left) colorplot_plot_line_index(cp, ppos, ttpos, 0);
+                else colorplot_plot_line_index(cp, ppos, ttpos, 1);
+            }
 
             memcpy(ppos, ttpos, sizeof(double)*2);
         }
@@ -477,8 +479,10 @@ void trackTrajectoryImageTwoTone(double *pos, double *vel, double R, double wall
 
         // plot up to this point
         //density_plot_line(density, ttpos, tpos);
-        if (left) colorplot_plot_line_aqua(cp, ttpos, tpos);
-        else colorplot_plot_line_black(cp, ttpos, tpos);
+        if (tbounces > 0) {
+            if (left) colorplot_plot_line_index(cp, ttpos, tpos, 0);
+            else colorplot_plot_line_index(cp, ttpos, tpos, 1);
+        }
 
         // react to the collision
         if (tpos[1] < 0 || vlen < EPS) break;
