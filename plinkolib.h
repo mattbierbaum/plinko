@@ -43,6 +43,9 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
 void trackTrajectoryImage(double *pos, double *vel, double R, double wall,
         double damp, double *pegs, int npegs, t_density *density,
         int constant_interval, double tinterval);
+void trackTrajectoryImageTwoTone(double *pos, double *vel, double R, double wall,
+        double damp, double *pegs, int npegs, t_colorplot *cp,
+        int constant_interval, double tinterval);
 
 //========================================================
 /* internal use functions only */

@@ -383,8 +383,6 @@ void trackTrajectoryImage(double *pos, double *vel, double R, double wall,
     int result;
     double tcoll=0.0, vlen=0.0, tlastbounce=0.0, tlastsave=0.0, temp_lastsave=0.0, tint;
 
-    //double timereal = 0.0, timesave = 0.0;
-
     double tpos[2], tvel[2], peg[2], ttpos[2], norm[2], ppos[2];
     memcpy(tpos, pos, sizeof(double)*2);
     memcpy(tvel, vel, sizeof(double)*2);
@@ -399,7 +397,9 @@ void trackTrajectoryImage(double *pos, double *vel, double R, double wall,
         for (double t=tlastsave+tint; t<(tlastbounce+tcoll); t+=tint){
             position(tpos, tvel, t-tlastbounce, ttpos);
             temp_lastsave = t;
-            density_plot_line(density, ppos, ttpos);
+
+            if (tbounces >= 1)
+                density_plot_line(density, ppos, ttpos);
             memcpy(ppos, ttpos, sizeof(double)*2);
         }
         tlastsave = temp_lastsave;
@@ -414,7 +414,71 @@ void trackTrajectoryImage(double *pos, double *vel, double R, double wall,
         tlastbounce = tlastbounce + tcoll;
 
         // plot up to this point
-        density_plot_line(density, ttpos, tpos);
+        if (tbounces >= 1)
+            density_plot_line(density, ttpos, tpos);
+
+        // react to the collision
+        if (tpos[1] < 0 || vlen < EPS) break;
+        if (result == RESULT_WALL_LEFT)  tvel[0] *= -1;
+        if (result == RESULT_WALL_RIGHT) tvel[0] *= -1;
+        if (result == RESULT_COLLISION){
+            create_norm(peg, tpos, norm);
+            reflect_vector(tvel, norm, tvel);
+            apply_constraint(peg, R, tpos, norm);
+        }
+
+        position(tpos, tvel, EPS, tpos);
+        velocity(tvel, EPS, tvel);
+        tvel[0] *= damp;
+        tvel[1] *= damp;
+        tbounces++;
+    }
+}
+
+void trackTrajectoryImageTwoTone(double *pos, double *vel, double R, double wall,
+        double damp, double *pegs, int npegs, t_colorplot *cp,
+        int constant_interval, double tinterval){
+    int result;
+    double tcoll=0.0, vlen=0.0, tlastbounce=0.0, tlastsave=0.0, temp_lastsave=0.0, tint;
+
+    double tpos[2], tvel[2], peg[2], ttpos[2], norm[2], ppos[2];
+    memcpy(tpos, pos, sizeof(double)*2);
+    memcpy(tvel, vel, sizeof(double)*2);
+
+    int left = pos[0] < wall/2;
+
+    peg[0] = peg[1] = 0.0;
+    int tbounces = 0;
+    while (tbounces < MAXBOUNCES){
+        result = next_collision(tpos, tvel, R, pegs, npegs, wall, &tcoll, peg);
+
+        tint = constant_interval ? tinterval : tcoll/TSAMPLES;
+        memcpy(ppos, tpos, sizeof(double)*2);
+        for (double t=tlastsave+tint; t<(tlastbounce+tcoll); t+=tint){
+            position(tpos, tvel, t-tlastbounce, ttpos);
+            temp_lastsave = t;
+            //density_plot_line(density, ppos, ttpos);
+
+            if (left) colorplot_plot_line_aqua(cp, ppos, ttpos);
+            else colorplot_plot_line_black(cp, ppos, ttpos);
+
+            memcpy(ppos, ttpos, sizeof(double)*2);
+        }
+        tlastsave = temp_lastsave;
+
+        if (result == RESULT_NOTHING) break;
+        if (result == RESULT_DONE)    break;
+
+        // figure out where it hit and what speed
+        position(tpos, tvel, tcoll, tpos);
+        velocity(tvel, tcoll, tvel);
+        vlen = dot(tvel, tvel);
+        tlastbounce = tlastbounce + tcoll;
+
+        // plot up to this point
+        //density_plot_line(density, ttpos, tpos);
+        if (left) colorplot_plot_line_aqua(cp, ttpos, tpos);
+        else colorplot_plot_line_black(cp, ttpos, tpos);
 
         // react to the collision
         if (tpos[1] < 0 || vlen < EPS) break;

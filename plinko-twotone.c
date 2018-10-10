@@ -21,7 +21,7 @@ int main(int argc, char **argv){
     double top = 10.0;
 
     int MAXPEGS = 1 << 10;
-    int NPARTICLES = 1 << 16;
+    int NPARTICLES = 1 << 13;
     int TIMEPOINTS = 1 << 11;
 
     char filename[1024];
@@ -52,9 +52,9 @@ int main(int argc, char **argv){
     double pos[2] = { wall / 2, 10.0 };
     double vel[2] = { 0, 1e-4 };
 
-    double ppi = 2000;
+    double ppi = 200;
     double bds[] = {0.0, 0.0, wall, top};
-    t_density *density = density_create(ppi, bds);
+    t_colorplot *cp = colorplot_create(ppi, bds);
 
     for (int i=0; i<NPARTICLES; i++){
         pos[0] = wall/2 - 0.5 + ((double)i/NPARTICLES); //ran_ran2();
@@ -64,9 +64,9 @@ int main(int argc, char **argv){
 
         if (i % 100 == 0) printf("%i\n", i);
 
-        trackTrajectoryImage(pos, vel, R, wall, damp, pegs, npegs, density, 1, 0.10);
+        trackTrajectoryImageTwoTone(pos, vel, R, wall, damp, pegs, npegs, cp, 1, 0.10);
     }
-    density_savefile(density, filename);
+    colorplot_savefile(cp, filename);
 
     return 0;
 }
