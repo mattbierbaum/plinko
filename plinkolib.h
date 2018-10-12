@@ -64,6 +64,7 @@ double cross(double *a, double *b);
 void position(double *x0, double *v0, double t, double *out);
 void velocity(double *v0, double t, double *out);
 
+void build_single_peg(double *pegs, int *npegs, int maxpegs, double x, double y);
 void build_hex_grid(double *pegs, int *npegs, int maxpegs, int rows, int cols);
 void reflect_vector(double *vec, double *normal, double *out);
 void collision_normal(double *pos, double h, double *peg, double *out);

@@ -8,6 +8,7 @@
 #define ISNAN(x) (isnan(x))
 
 void pegs_between(double *pos, double *pegs, int *npegs);
+int peg_collision_mask(double *peg, double *pos, double *vel, double tcoll);
 
 /*===========================================================================
  *  Some notes:
@@ -68,6 +69,12 @@ void pegs_between(double *pos, double *pegs, int *npegs){
     }
 }
 
+void build_single_peg(double *pegs, int *npegs, int maxpegs, double x, double y){
+    pegs[0] = x;
+    pegs[1] = y;
+    *npegs = 1;
+}
+
 void build_hex_grid(double *pegs, int *npegs, int maxpegs, int rows, int cols){
     *npegs = 0;
 
@@ -123,6 +130,22 @@ void reflect_vector(double *vec, double *normal, double *out){
 // finds the collision time for an initial condition
 // by finding the roots of a poly and finding the nearest collision
 //============================================================================
+int peg_collision_mask(double *peg, double *pos, double *vel, double tcoll){
+    double tpos[2];
+    position(pos, vel, tcoll, tpos);
+
+    double dx = tpos[0] - peg[0];
+    double dy = tpos[1] - peg[1];
+    double theta = atan2(-dy, -dx) + M_PI;
+
+    //double r = (theta - M_PI/6) / (M_PI/3);
+    //if (fabs(r - (int)r) < 1e-2)
+    //    return 0;
+    if (dy < 0 && fabs(theta - 3*M_PI/2) < 1e-2)
+        return 0;
+    return 1;
+}
+
 int collides_with_peg(double *pos, double *vel, double R,
         double *peg, double *tcoll){
     /* 
@@ -141,6 +164,8 @@ int collides_with_peg(double *pos, double *vel, double R,
     //*tcoll = quartic_exact2_smallest_root(poly);
 
     if (ISNAN(*tcoll))
+        return RESULT_NOTHING;
+    if (!peg_collision_mask(peg, pos, vel, *tcoll))
         return RESULT_NOTHING;
     return RESULT_COLLISION;
 }
