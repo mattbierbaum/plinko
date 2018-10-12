@@ -5,6 +5,10 @@
 #include "plinkolib.h"
 #include "roots/quartic.h"
 
+#define ISNAN(x) (isnan(x))
+
+void pegs_between(double *pos, double *pegs, int *npegs);
+
 /*===========================================================================
  *  Some notes:
  *      - the lattice constant for the pegs is the unit, so it is 1
@@ -136,7 +140,7 @@ int collides_with_peg(double *pos, double *vel, double R,
     //*tcoll = quartic_exact1_smallest_root(poly);
     //*tcoll = quartic_exact2_smallest_root(poly);
 
-    if (isnan(*tcoll))
+    if (ISNAN(*tcoll))
         return RESULT_NOTHING;
     return RESULT_COLLISION;
 }
@@ -152,7 +156,7 @@ int earliest_peg_collision(double *pos, double *vel, double R,
     for (i=0; i<npegs; i++){
         result = collides_with_peg(pos, vel, R, &pegs[2*i], tcoll);
         if (result == RESULT_COLLISION){
-            if ((isnan(tevent) || tevent > *tcoll) && *tcoll > 0){
+            if ((ISNAN(tevent) || tevent > *tcoll) && *tcoll > 0){
                 peg[0] = pegs[2*i+0];
                 peg[1] = pegs[2*i+1];
                 event = result;
@@ -164,6 +168,11 @@ int earliest_peg_collision(double *pos, double *vel, double R,
     return event;
 }
 
+int earliest_peg_collision_parametric(double *pos, double *vel, double R,
+        double *pegs, int npegs, double *tcoll, double *peg){
+    return 0;    
+}
+
 int next_collision(double *pos, double *vel, double R,
         double *pegs, double npegs, double wall, double *tcoll, double *peg){
     int result;
@@ -172,24 +181,24 @@ int next_collision(double *pos, double *vel, double R,
 
     result = earliest_peg_collision(pos, vel, R, pegs, npegs, tcoll, peg);
     if (result == RESULT_COLLISION){
-        if ((isnan(tevent) || tevent > *tcoll) && *tcoll > 0){
+        if ((ISNAN(tevent) || tevent > *tcoll) && *tcoll > 0){
             event = result;
             tevent = *tcoll;
         }
     }
 
     twall = -pos[0] / vel[0];
-    if (!isnan(twall) && (isnan(tevent) || tevent > twall) && twall > 0){
+    if (!ISNAN(twall) && (ISNAN(tevent) || tevent > twall) && twall > 0){
         event = RESULT_WALL_LEFT; tevent = twall;
     }
 
     twall = (wall-pos[0]) / vel[0];
-    if (!isnan(twall) && (isnan(tevent) || tevent > twall) && twall > 0){
+    if (!ISNAN(twall) && (ISNAN(tevent) || tevent > twall) && twall > 0){
         event = RESULT_WALL_RIGHT; tevent = twall;
     }
 
     twall = zero_cross_time(pos, vel);
-    if (!isnan(twall) && (isnan(tevent) || tevent > twall) && twall > 0){
+    if (!ISNAN(twall) && (ISNAN(tevent) || tevent > twall) && twall > 0){
         event = RESULT_DONE; tevent = twall;
     }
 
@@ -296,6 +305,8 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
                 temp_lastsave = t;
                 memcpy(traj+2*clen, ttpos, sizeof(double)*2);
                 clen += 1;
+            } else {
+                break;
             }
         }
         tlastsave = temp_lastsave;
@@ -335,6 +346,8 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
                 tlastsave = tlastbounce;
                 memcpy(traj+2*clen, tpos, sizeof(double)*2);
                 clen += 1;
+            } else {
+                break;
             }
         }
 
@@ -371,7 +384,7 @@ void ran_seed(long j){
   vran = vran * 2685821657736338717LL;
 }
 
-double ran_ran2(){
+double ran_ran2(void){
     vran ^= vran >> 21; vran ^= vran << 35; vran ^= vran >> 4;
     ullong t = vran * 2685821657736338717LL;
     return 5.42101086242752217e-20*t;
@@ -468,9 +481,6 @@ void trackTrajectoryImageTwoTone(double *pos, double *vel, double R, double wall
         }
         tlastsave = temp_lastsave;
 
-        if (result == RESULT_NOTHING) break;
-        if (result == RESULT_DONE)    break;
-
         // figure out where it hit and what speed
         position(tpos, tvel, tcoll, tpos);
         velocity(tvel, tcoll, tvel);
@@ -483,6 +493,9 @@ void trackTrajectoryImageTwoTone(double *pos, double *vel, double R, double wall
             if (left) colorplot_plot_line_index(cp, ttpos, tpos, 0);
             else colorplot_plot_line_index(cp, ttpos, tpos, 1);
         }
+
+        if (result == RESULT_NOTHING) break;
+        if (result == RESULT_DONE)    break;
 
         // react to the collision
         if (tpos[1] < 0 || vlen < EPS) break;

@@ -6,7 +6,7 @@
 //========================================================
 // global constants for the calculation
 //========================================================
-#define MAXBOUNCES (1<<12)
+#define MAXBOUNCES (1<<26)
 
 #define MAXCUPS 50
 #define TSAMPLES 25
@@ -31,7 +31,7 @@ typedef struct {
 
 typedef unsigned long long int ullong;
 void   ran_seed(long j);
-double ran_ran2();
+double ran_ran2(void);
 
 //========================================================
 /* These are functions that should be called externally */
@@ -72,6 +72,8 @@ void apply_constraint(double *peg, double R, double *pos, double *norm);
 int collides_with_peg(double *pos, double *vel, double R,
         double *peg, double *tcoll);
 int earliest_peg_collision(double *pos, double *vel, double R,
+        double *pegs, int npegs, double *tcoll, double *peg);
+int earliest_peg_collision_parametric(double *pos, double *vel, double R,
         double *pegs, int npegs, double *tcoll, double *peg);
 int next_collision(double *pos, double *vel, double R,
         double *pegs, double npegs, double wall, double *tcoll, double *peg);

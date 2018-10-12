@@ -6,6 +6,10 @@
 
 #define EPSILON 1e-10
 
+void find_root_pair(double *poly, int deg, double *qpoly, double *r1, double *r2);
+void find_all_roots(double *poly, int deg, double *roots, int *nroots);
+double _Complex qval(double *poly, double _Complex x);
+
 //============================================================================
 // These functions are helper functions for quartics using Bairstow's method
 //============================================================================

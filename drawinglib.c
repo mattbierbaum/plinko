@@ -4,9 +4,35 @@
 #include <string.h>
 #include "drawinglib.h"
 
-int ipart(double x) { return (int)x; }
-double fpart(double x)  { return x - (int)x; }
-double rfpart(double x) { return 1 - fpart(x); }
+int ipart(double x);
+double fpart(double x);
+double rfpart(double x);
+void swap(double *a, double *b);
+void plotter_density(void *obj, int x, int y, double intensity);
+void plotter_color(void *obj, int x, int y, double intensity, double *color);
+void plotter_color_black(void *obj, int x, int y, double intensity);
+void plotter_color_aqua(void *obj, int x, int y, double intensity);
+void plotter_color_index(void *obj, int x, int y, double intensity, int index);
+void plotter_color_index0(void *obj, int x, int y, double i);
+void plotter_color_index1(void *obj, int x, int y, double i);
+void plotter_color_index2(void *obj, int x, int y, double i);
+void plotter_color_index3(void *obj, int x, int y, double i);
+void plotter_color_index4(void *obj, int x, int y, double i);
+void plotter_color_index5(void *obj, int x, int y, double i);
+void plot_line(void *obj, double *p0, double *p1, plotter_func func);
+
+
+int ipart(double x) {
+    return (int)x;
+}
+
+double fpart(double x)  {
+    return x - (int)x;
+}
+
+double rfpart(double x) {
+    return 1 - fpart(x);
+}
 
 void swap(double *a, double *b){
     double t = *a;
@@ -145,7 +171,7 @@ void plot_line(void *obj, double *p0, double *p1, plotter_func func) {
     double dx = x1 - x0;
     double dy = y1 - y0;
     double gradient = dy / dx;
-    if (dx == 0.0) {
+    if (fabs(dx) <= 1e-12) {
         gradient = 1.0;
     }
 

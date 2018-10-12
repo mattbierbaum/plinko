@@ -16,12 +16,13 @@ int main(int argc, char **argv){
 
     ran_seed(123123);
     //int clen = 0;
-    double R = 0.75/2; double damp = 0.80;
+    double R = 0.75/2;
+    double damp = 0.80;
     double wall = 14;
     double top = 10.0;
 
     int MAXPEGS = 1 << 10;
-    int NPARTICLES = 1 << 16;
+    int NPARTICLES = 1 << 18;
     int TIMEPOINTS = 1 << 11;
 
     char filename[1024];
@@ -34,7 +35,7 @@ int main(int argc, char **argv){
     int npegs = 0;
     double *pegs = malloc(sizeof(double)*2*MAXPEGS);
 
-    build_hex_grid(pegs, &npegs, MAXPEGS, 4, 16);
+    build_hex_grid(pegs, &npegs, MAXPEGS, 1, 8);
 
     FILE *file = fopen(file_conf, "w");
     fprintf(file, "radius: %f\n", R);
@@ -52,12 +53,14 @@ int main(int argc, char **argv){
     double pos[2] = { wall / 2, 10.0 };
     double vel[2] = { 0, 1e-4 };
 
-    double ppi = 2000;
+    double ppi = 800;
     double bds[] = {0.0, 0.0, wall, top};
     t_density *density = density_create(ppi, bds);
 
     for (int i=0; i<NPARTICLES; i++){
-        pos[0] = wall/2 - 0.5 + ((double)i/NPARTICLES); //ran_ran2();
+        //pos[0] = 1e-3 + ((double)i/NPARTICLES);
+        //pos[0] = wall/2 - 0.5 + ((double)i/NPARTICLES);
+        pos[0] = wall/2 * ran_ran2(); //((double)i/NPARTICLES);
         pos[1] = top - 1e-3;
         vel[0] = 0.0;
         vel[1] = -1e-4;
