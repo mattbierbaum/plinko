@@ -7,3 +7,5 @@ plinko-twotone
 *.conf
 *.pegs
 *.npy
+*.track
+*.png
