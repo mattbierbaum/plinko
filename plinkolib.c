@@ -9,6 +9,8 @@
 
 void pegs_between(double *pos, double *pegs, int *npegs);
 int peg_collision_mask(double *peg, double *pos, double *vel, double tcoll);
+int peg_collision_mask_holes(double *peg, double *pos, double *vel, double tcoll);
+int peg_collision_mask_half(double *peg, double *pos, double *vel, double tcoll);
 
 /*===========================================================================
  *  Some notes:
@@ -130,7 +132,7 @@ void reflect_vector(double *vec, double *normal, double *out){
 // finds the collision time for an initial condition
 // by finding the roots of a poly and finding the nearest collision
 //============================================================================
-int peg_collision_mask(double *peg, double *pos, double *vel, double tcoll){
+int peg_collision_mask_holes(double *peg, double *pos, double *vel, double tcoll){
     double tpos[2];
     position(pos, vel, tcoll, tpos);
 
@@ -138,11 +140,25 @@ int peg_collision_mask(double *peg, double *pos, double *vel, double tcoll){
     double dy = tpos[1] - peg[1];
     double theta = atan2(-dy, -dx) + M_PI;
 
-    //double r = (theta - M_PI/6) / (M_PI/3);
-    //if (fabs(r - (int)r) < 1e-2)
-    //    return 0;
-    if (dy < 0 && fabs(theta - 3*M_PI/2) < 1e-2)
+    double eps = 1e-1;
+    if (fabs(theta - M_PI/2) < eps)
         return 0;
+    if (fabs(theta - 0) < eps || fabs(theta - 2*M_PI) < eps)
+        return 0;
+    if (fabs(theta - M_PI) < eps)
+        return 0;
+    return 1;
+}
+
+int peg_collision_mask_half(double *peg, double *pos, double *vel, double tcoll){
+    double tpos[2];
+    position(pos, vel, tcoll, tpos);
+
+    double dy = tpos[1] - peg[1];
+    return dy > 0 ? 0 : 1;
+}
+
+int peg_collision_mask(double *peg, double *pos, double *vel, double tcoll){
     return 1;
 }
 
@@ -156,18 +172,27 @@ int collides_with_peg(double *pos, double *vel, double R,
      * It does not modify the values of pos, vel; modified tcoll
     */
     double poly[DEGSIZE];
-    
     build_peg_poly(pos, vel, R, peg, poly);
     *tcoll = bairstow_smallest_root(poly);
-    //*tcoll = durand_kerner_smallest_root(poly);
-    //*tcoll = quartic_exact1_smallest_root(poly);
-    //*tcoll = quartic_exact2_smallest_root(poly);
 
     if (ISNAN(*tcoll))
         return RESULT_NOTHING;
-    if (!peg_collision_mask(peg, pos, vel, *tcoll))
-        return RESULT_NOTHING;
     return RESULT_COLLISION;
+
+    /*int nroots;
+    double roots[4];
+    bairstow_real_roots(poly, roots, &nroots);
+
+    if (nroots == 0)
+        return RESULT_NOTHING;
+
+    for (int i=0; i<nroots; i++){
+        if (peg_collision_mask(peg, pos, vel, roots[i])){
+            *tcoll = roots[i];
+            return RESULT_COLLISION;
+        }
+    }
+    return RESULT_NOTHING;*/
 }
 
 int earliest_peg_collision(double *pos, double *vel, double R,

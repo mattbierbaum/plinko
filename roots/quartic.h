@@ -11,6 +11,7 @@ double qvalr(double *poly, double x);
 double quartic_exact1_smallest_root(double *poly);
 double quartic_exact2_smallest_root(double *poly);
 double bairstow_smallest_root(double *poly);
+void bairstow_real_roots(double *poly, double *roots, int *n);
 double durand_kerner_smallest_root(double *poly);
 
 #endif

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <complex.h>
 #include <string.h>
@@ -6,6 +7,8 @@
 
 #define EPSILON 1e-10
 
+int compare_doubles(const void *a, const void *b);
+void conditional_swap(double *array, int a, int b);
 void find_root_pair(double *poly, int deg, double *qpoly, double *r1, double *r2);
 void find_all_roots(double *poly, int deg, double *roots, int *nroots);
 double _Complex qval(double *poly, double _Complex x);
@@ -98,6 +101,111 @@ double bairstow_smallest_root(double *poly){
             minroot = realroots[i];
 
     return minroot;
+}
+
+void conditional_swap(double *array, int a, int b){
+    if (array[a] > array[b]) {
+        double t = array[a];
+        array[a] = array[b];
+        array[b] = t;
+    }
+}
+
+int compare_doubles(const void *a, const void *b) {
+    const double *x = (const double*)a;
+    const double *y = (const double*)b;
+    return *x - *y;
+}
+
+void bairstow_real_roots(double *poly, double *roots, int *n){
+    *n = 0;
+
+    int i=0, nroots=0;
+    double realroots[DEGSIZE];
+    find_all_roots(poly, 4, realroots, &nroots);
+
+    //printf("%i\n", nroots);
+    if (nroots == 0) {
+        return;
+    }
+
+    // otherwise, check for positive roots (check val) and sort them
+    double tpoly[DEGSIZE];
+    memcpy(tpoly, poly, sizeof(double)*DEGSIZE);
+
+    for (i=0; i<nroots; i++){
+        //printf("%f ", realroots[i]);
+        //printf("%f | ", qvalr(poly, realroots[i]));
+        //if (realroots[i] > 0 && qvalr(tpoly, realroots[i]) < 1e-10){
+        if (realroots[i] > 0) {
+            //printf("%f ", realroots[i]);
+            roots[*n] = realroots[i];
+            *n += 1;
+        }
+    }
+
+#define S(a, b) (conditional_swap(roots, a, b))
+
+    // http://pages.ripco.net/~jgamble/nw.html
+    if (*n == 1) {}
+
+    else if (*n == 2) {
+        S(0, 1);
+    }
+
+    else if (*n == 3) {
+        S(1, 2);
+        S(0, 2);
+        S(0, 1);
+    }
+
+    else if (*n == 4) {
+        S(0, 1); S(2, 3);
+        S(0, 2); S(1, 3);
+        S(1, 2);
+    }
+
+    else if (*n == 5) {
+        S(0, 1); S(3, 4);
+        S(2, 4);
+        S(2, 3); S(1, 4);
+        S(0, 3);
+        S(0, 2); S(1, 3);
+        S(1, 2);
+    }
+
+    else if (*n == 6) {
+        S(1, 2); S(4, 5);
+        S(0, 2); S(3, 5);
+        S(0, 1); S(3, 4); S(2, 5);
+        S(0, 3); S(1, 4);
+        S(2, 4); S(1, 3);
+        S(2, 3);
+    }
+
+    else if (*n == 7) {
+        S(1, 2); S(3, 4); S(5, 6);
+        S(0, 2); S(3, 5); S(4, 6);
+        S(0, 1); S(4, 5); S(2, 6);
+        S(0, 4); S(1, 5);
+        S(0, 3); S(2, 5);
+        S(1, 3); S(2, 4);
+        S(2, 3);
+    }
+
+    else if (*n == 8) {
+        S(0, 1); S(2, 3); S(4, 5); S(6, 7);
+        S(0, 2); S(1, 3); S(4, 6); S(5, 7);
+        S(1, 2); S(5, 6); S(0, 4); S(3, 7);
+        S(1, 5); S(2, 6);
+        S(1, 4); S(3, 6);
+        S(2, 4); S(3, 5);
+        S(3, 4);
+    }
+
+    else {
+        qsort(roots, *n, sizeof(double), compare_doubles);
+    }
 }
 
 //============================================================================
