@@ -9,7 +9,8 @@
 
 void pegs_between(double *pos, double *pegs, int *npegs);
 int peg_collision_mask(double *peg, double *pos, double *vel, double tcoll);
-int peg_collision_mask_holes(double *peg, double *pos, double *vel, double tcoll);
+int peg_collision_mask_4holes(double *peg, double *pos, double *vel, double tcoll);
+int peg_collision_mask_nholes(double *peg, double *pos, double *vel, double tcoll, int n);
 int peg_collision_mask_half(double *peg, double *pos, double *vel, double tcoll);
 
 /*===========================================================================
@@ -132,7 +133,7 @@ void reflect_vector(double *vec, double *normal, double *out){
 // finds the collision time for an initial condition
 // by finding the roots of a poly and finding the nearest collision
 //============================================================================
-int peg_collision_mask_holes(double *peg, double *pos, double *vel, double tcoll){
+int peg_collision_mask_nholes(double *peg, double *pos, double *vel, double tcoll, int nholes){
     double tpos[2];
     position(pos, vel, tcoll, tpos);
 
@@ -140,7 +141,22 @@ int peg_collision_mask_holes(double *peg, double *pos, double *vel, double tcoll
     double dy = tpos[1] - peg[1];
     double theta = atan2(-dy, -dx) + M_PI;
 
-    double eps = 1e-1;
+    double r = nholes * theta / (2 * M_PI);
+    double eps = 1e-3;
+    if (fabs(r - round(r)) < eps)
+        return 0;
+    return 1;
+}
+
+int peg_collision_mask_4holes(double *peg, double *pos, double *vel, double tcoll){
+    double tpos[2];
+    position(pos, vel, tcoll, tpos);
+
+    double dx = tpos[0] - peg[0];
+    double dy = tpos[1] - peg[1];
+    double theta = atan2(-dy, -dx) + M_PI;
+
+    double eps = 1e-3;
     if (fabs(theta - M_PI/2) < eps)
         return 0;
     if (fabs(theta - 0) < eps || fabs(theta - 2*M_PI) < eps)
@@ -173,13 +189,13 @@ int collides_with_peg(double *pos, double *vel, double R,
     */
     double poly[DEGSIZE];
     build_peg_poly(pos, vel, R, peg, poly);
-    *tcoll = bairstow_smallest_root(poly);
+    /**tcoll = bairstow_smallest_root(poly);
 
     if (ISNAN(*tcoll))
         return RESULT_NOTHING;
-    return RESULT_COLLISION;
+    return RESULT_COLLISION;*/
 
-    /*int nroots;
+    int nroots;
     double roots[4];
     bairstow_real_roots(poly, roots, &nroots);
 
@@ -187,12 +203,12 @@ int collides_with_peg(double *pos, double *vel, double R,
         return RESULT_NOTHING;
 
     for (int i=0; i<nroots; i++){
-        if (peg_collision_mask(peg, pos, vel, roots[i])){
+        if (peg_collision_mask_nholes(peg, pos, vel, roots[i], 12)){
             *tcoll = roots[i];
             return RESULT_COLLISION;
         }
     }
-    return RESULT_NOTHING;*/
+    return RESULT_NOTHING;
 }
 
 int earliest_peg_collision(double *pos, double *vel, double R,
@@ -203,10 +219,12 @@ int earliest_peg_collision(double *pos, double *vel, double R,
     event = RESULT_NOTHING;
     tevent = NAN;
 
+    //printf("---------------\n");
     for (i=0; i<npegs; i++){
         result = collides_with_peg(pos, vel, R, &pegs[2*i], tcoll);
         if (result == RESULT_COLLISION){
             if ((ISNAN(tevent) || tevent > *tcoll) && *tcoll > 0){
+                //printf("tcoll: %f %f %f\n", *tcoll, pegs[2*i+0], pegs[2*i+1]);
                 peg[0] = pegs[2*i+0];
                 peg[1] = pegs[2*i+1];
                 event = result;
@@ -214,6 +232,7 @@ int earliest_peg_collision(double *pos, double *vel, double R,
             }
         }
     }
+    //printf("----------\n");
     *tcoll = tevent;
     return event;
 }
@@ -361,6 +380,9 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
         }
         tlastsave = temp_lastsave;
 
+        //printf("======================\n");
+        //printf("%f %f %f\n", tcoll, tpos[0], tpos[1]);
+
         if (result == RESULT_NOTHING) break;
         if (result == RESULT_DONE)    break;
 
@@ -368,6 +390,7 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
         position(tpos, tvel, tcoll, tpos);
         velocity(tvel, tcoll, tvel);
         vlen = dot(tvel, tvel);
+        //printf("%f %f %f\n", tcoll, tpos[0], tpos[1]);
 
         tlastbounce = tlastbounce + tcoll;
 
@@ -389,6 +412,7 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
                 memcpy(traj+2*clen, tpos, sizeof(double)*2); clen += 1;
             }*/
         }
+        //printf("%f %f %f\n", tcoll, tpos[0], tpos[1]);
 
         // if we are not doing constant interval saving, save the hit point
         if (!constant_interval){
@@ -406,6 +430,11 @@ int trackTrajectory(double *pos, double *vel, double R, double wall,
         tvel[0] *= damp;
         tvel[1] *= damp;
         tbounces++;
+
+        //printf("%f %f %f\n", tcoll, tpos[0], tpos[1]);
+        //if (tbounces > 0)
+        //    break;
+        //printf("======================\n");
     }
 
     out->nbounces = tbounces;

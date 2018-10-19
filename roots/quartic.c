@@ -134,14 +134,14 @@ void bairstow_real_roots(double *poly, double *roots, int *n){
     memcpy(tpoly, poly, sizeof(double)*DEGSIZE);
 
     for (i=0; i<nroots; i++){
-        //printf("%f ", realroots[i]);
-        //printf("%f | ", qvalr(poly, realroots[i]));
+        //printf("%f:(%f) ", realroots[i], qvalr(tpoly, realroots[i]));
         //if (realroots[i] > 0 && qvalr(tpoly, realroots[i]) < 1e-10){
-        if (realroots[i] > 0) {
+        if (realroots[i] > 0){
             //printf("%f ", realroots[i]);
             roots[*n] = realroots[i];
             *n += 1;
         }
+        //printf("\n");
     }
 
 #define S(a, b) (conditional_swap(roots, a, b))
