@@ -1,4 +1,4 @@
-EXE=plinko plinko-single plinko-density plinko-directdraw plinko-twotone
+EXE=plinko plinko-single plinko-density plinko-directdraw plinko-twotone plinko-nbounces
 OBJECTS=plinkolib.o roots/quartic.o drawinglib.o
 CFLAGS=-std=c99 -Wall -Wextra -Werror -pedantic -flto -O2 -m64 -march=native -fopenmp -D_POSIX_C_SOURCE=199309L
 LDLIBS=-lm -lrt

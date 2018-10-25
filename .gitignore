@@ -3,6 +3,7 @@ plinko-single
 plinko-density
 plinko-directdraw
 plinko-twotone
+plinko-nbounces
 *.o
 *.conf
 *.pegs

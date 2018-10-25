@@ -13,10 +13,10 @@ int main(int argc, char **argv){
         return 1;
     }
 
-    double R = 0.999/2;
+    double R = 0.5;
     double damp = 1.0;
     double wall = 7.0;
-    double top = 7.0;
+    double top = 6.5;
     char filename[1024];
     strcpy(filename, argv[1]);
 
@@ -37,10 +37,10 @@ int main(int argc, char **argv){
     double pos[2] = { wall / 3. + 1e-3, 10.0 };
     double vel[2] = { 0, 1e-4};
 
-    pos[0] = M_PI;
-    pos[1] = top;
-    vel[0] = 0.0;
-    vel[1] = 1e-4;
+    pos[0] = 3.201; //M_PI+.12;
+    pos[1] = 6.0; //top;
+    vel[0] = 1e-10;
+    vel[1] = 2e-4;
 
     build_hex_grid(pegs, &npegs, MAXPEGS, 4, 8);
 
