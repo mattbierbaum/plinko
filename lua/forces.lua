@@ -3,12 +3,16 @@ local util = require('util')
 
 local forces = {}
 
-function forces.force_gravity(...)
-    return {0, -1}
+function forces.force_gravity(particles)
+    for _, p in pairs(particles) do
+        p.acc = {0, -1}
+    end
 end
 
-function forces.force_none(...)
-    return {0, 0}
+function forces.force_none(particles)
+    for _, p in pairs(particles) do
+        p.acc = {0, 0}
+    end
 end
 
 function forces.integrate_euler(particle, dt)
