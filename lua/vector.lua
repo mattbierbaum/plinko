@@ -25,6 +25,10 @@ function vector.vnorm(v)
     return {v[1]*len, v[2]*len}
 end
 
+function vector.vneg(v)
+    return {-v[1], -v[2]}
+end
+
 function vector.reflect(v, n)
     -- v - 2*(v dot n) n
     local ddot = vector.vdotv(v, n)
@@ -39,8 +43,8 @@ end
 function vector.lerp(p0, p1, t)
     -- p0 + (p1 - p0) * t
     return {
-        p0[1] + (p1[1] - p0[1]) * t, 
-        p0[2] + (p1[2] - p0[2]) * t
+        (1 - t)*p0[1] + t*p1[1],
+        (1 - t)*p0[2] + t*p1[2]
     }
 end
 

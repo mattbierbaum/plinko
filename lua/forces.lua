@@ -3,6 +3,12 @@ local util = require('util')
 
 local forces = {}
 
+function forces.force_central(particles)
+    for _, p in pairs(particles) do
+        p.acc = vector.vsubv({0.5, 0.5}, p.pos)
+    end
+end
+
 function forces.force_gravity(particles)
     for _, p in pairs(particles) do
         p.acc = {0, -1}

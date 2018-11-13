@@ -66,9 +66,15 @@ function Circle:crosses(seg)
     return (dr0 < self.radsq and dr1 > self.radsq) or (dr0 > self.radsq and dr1 < self.radsq)
 end
 
-function Circle:normal(point)
-    local dr = vector.vsubv(point, self.pos)
-    return vector.vnorm(dr)
+function Circle:normal(seg)
+    local dr0 = vector.vsubv(seg.p0, self.pos)
+    local dr1 = vector.vsubv(seg.p1, self.pos)
+    local norm = vector.vnorm(dr1)
+
+    if vector.vlensq(dr0) <= self.radsq then
+        return vector.vneg(norm)
+    end
+    return norm
 end
 
 -- ----------------------------------------------------------------
@@ -103,7 +109,8 @@ function Segment:crosses(seg)
     return not self:intersection(seg) == nil
 end
 
-function Segment:normal(point)
+function Segment:normal(seg)
+    local point = seg.p1
     local center = vector.vmuls(vector.vaddv(self.p0, self.p1), 0.5)
     local newp0 = vector.vaddv(center, vector.rot90(vector.vsubv(self.p0, center)))
     local newp1 = vector.vaddv(center, vector.rot90(vector.vsubv(self.p1, center)))
