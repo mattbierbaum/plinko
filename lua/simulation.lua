@@ -3,7 +3,6 @@ local util = require('util')
 local vector = require('vector')
 local objects = require('objects')
 local forces = require('forces')
---local prof = require('profiler')
 
 Simulation = util.class()
 function Simulation:init(dt)
@@ -79,7 +78,7 @@ function Simulation:step(steps)
                     seg.p0 = segp.p1
                     seg.p1 = vector.vaddv(segp.p1, direction)
 
-                    vel = vector.reflect(vel, norm)
+                    vel = vector.vmuls(vector.reflect(vel, norm), 0.9995)
 
                     p[#p + 1] = segp.p1
                 else
@@ -100,18 +99,5 @@ function Simulation:step(steps)
     self:dump_trajectory(p)
 end
 
-local s = Simulation(1e-2)
-s:add_force(forces.force_central)
-s:add_object(objects.Box({0, 0}, {1, 1}))
-s:add_object(objects.Circle({0.5, 0.5}, 0.25))
-s:add_object(objects.Circle({0.3, 0.5}, 0.25))
-s:add_object(objects.Circle({0.6, 0.5}, 0.025))
-s:add_object(objects.Circle({0.58, 0.42}, 0.010))
-s:add_object(objects.Circle({0.58, 0.58}, 0.010))
-s:add_particle(objects.PointParticle({0.71, 0.6}, {0.1, 0}, {0, 0}))
-
---prof.start()
-for i = 1, 1 do
-    s:step(500)
-end
---prof.stop()
+local simulation = {Simulation=Simulation}
+return simulation
