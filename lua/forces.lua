@@ -23,8 +23,14 @@ end
 
 function forces.integrate_euler(particle, dt)
     local pos, vel, acc = particle.pos, particle.vel, particle.acc
-    local outv = vector.vaddv(vel, vector.vmuls(acc, dt))
-    local outp = vector.vaddv(pos, vector.vmuls(outv, dt))
+    local outv = {
+        vel[1] + acc[1] * dt,
+        vel[2] + acc[2] * dt
+    }
+    local outp = {
+        pos[1] + outv[1] * dt,
+        pos[2] + outv[2] * dt
+    }
 
     return {pos=outp; vel=outv; acc=acc}
 end

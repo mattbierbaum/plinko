@@ -10,3 +10,4 @@ plinko-nbounces
 *.npy
 *.track
 *.png
+data/

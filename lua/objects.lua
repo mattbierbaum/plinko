@@ -71,7 +71,7 @@ function Circle:normal(seg)
     local dr1 = vector.vsubv(seg.p1, self.pos)
     local norm = vector.vnorm(dr1)
 
-    if vector.vlensq(dr0) <= self.radsq then
+    if vector.vlensq(dr0) <= vector.vlensq(dr1) then
         return vector.vneg(norm)
     end
     return norm
@@ -93,10 +93,6 @@ function Segment:intersection(seg)
     local d1 = vector.vsubv(e1, s1)
     local cross = vector.vcrossv(d0, d1)
 
-    if math.abs(cross) < 1e-15 then
-        return nil, nil
-    end
-        
     local t = vector.vcrossv(vector.vsubv(s1, s0), d0) / cross 
     
     if 0 <= t and t <= 1 then
@@ -115,28 +111,41 @@ function Segment:normal(seg)
     local newp0 = vector.vaddv(center, vector.rot90(vector.vsubv(self.p0, center)))
     local newp1 = vector.vaddv(center, vector.rot90(vector.vsubv(self.p1, center)))
     local out = vector.vsubv(newp1, newp0)
-    return vector.vnorm(out)
+    return vector.vneg(vector.vnorm(out))
 end
 
 -- ---------------------------------------------------------------
 Box = util.class()
-function Box:init(ll, ur)
+function Box:init(ll, uu)
+    self.ll = {ll[1], ll[2]}
+    self.lu = {ll[1], uu[2]}
+    self.uu = {uu[1], uu[2]}
+    self.ul = {uu[1], ll[2]}
+
     self.segments = {
-        Segment({ll[1], ll[2]}, {ll[1], ur[2]}),
-        Segment({ll[1], ur[2]}, {ur[1], ur[2]}),
-        Segment({ur[1], ur[2]}, {ur[1], ll[2]}),
-        Segment({ur[1], ll[2]}, {ll[1], ll[2]})
+        Segment(self.ll, self.lu),
+        Segment(self.lu, self.uu),
+        Segment(self.uu, self.ul),
+        Segment(self.ul, self.ll)
     }
     self.c0 = ll
-    self.c1 = ur
+    self.c1 = uu
 end
 
 function Box:intersection(seg)
+    local min_time = 1e100
+    local min_seg = nil
+
     for _, line in pairs(self.segments) do
         local o, t = line:intersection(seg)
-        if t then
-            return o, t
+        if t and t < min_time and t > 0 then
+            min_time = t
+            min_seg = o
         end
+    end
+
+    if min_seg then
+        return min_seg, min_time
     end
     return nil, nil
 end
@@ -163,7 +172,10 @@ function PointParticle:init(pos, vel, acc)
 end
 
 function PointParticle:__tostring()
-    return string.format("<(%f, %f); (%f, %f)>", self.pos.x, self.pos.y, self.vel.x, self.vel.y)
+    return string.format(
+        "<(%f, %f); (%f, %f)>", self.pos.x, self.pos.y,
+        self.vel.x, self.vel.y
+    )
 end
 
 local objects = {

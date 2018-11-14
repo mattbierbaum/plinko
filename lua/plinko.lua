@@ -3,6 +3,7 @@ local util = require('util')
 local vector = require('vector')
 local objects = require('objects')
 local forces = require('forces')
+--local prof = require('profiler')
 
 Simulation = util.class()
 function Simulation:init(dt)
@@ -27,11 +28,19 @@ function Simulation:add_force(func)
     self.force_func[#self.force_func + 1] = func
 end
 
+function Simulation:dump_trajectory(p)
+    local txt = json.encode(p, {indent=true})
+    local file = io.open('./test.json', 'w')
+    file:write(txt)
+end
+
 function Simulation:step(steps)
     local p = {}
     local steps = steps or 1
     local seg = objects.Segment({0, 0}, {0, 0})
+    local segp = objects.Segment()
     local part1 = nil
+    local time = 0
 
     for i = 1, steps do
         self.force_func[1](self.particles)
@@ -44,43 +53,51 @@ function Simulation:step(steps)
             seg.p0 = part0.pos
             seg.p1 = part1.pos
 
+            local EPS = 1e-8
             local num = 1
             while true do
                 local mint = 2
                 local mino = nil
                 for _, obj in pairs(self.objects) do
                     local o, t = obj:intersection(seg)
-                    if t and t < mint and t < 1 and t > 0 then
+                    if t and t < mint and t <= 1 and t > 0 then
                         mint = t
                         mino = o
                     end
                 end
 
                 if mino then
-                    mint = mint - 1e-10*mint
-                    --time = time + (1 - time)*mint
-                    local newp = vector.lerp(seg.p0, seg.p1, mint)
-                    local norm = mino:normal(Segment(seg.p0, newp))
-                    local direction = vector.reflect(vector.vsubv(seg.p1, newp), norm)
-                    vel = vector.reflect(vel, norm)
-                    seg.p0 = newp
-                    seg.p1 = vector.vaddv(newp, direction)
+                    mint = (1 - EPS) * mint
+                    time = time + (1 - time)*mint
 
-                    p[#p + 1] = newp
+                    segp.p0 = seg.p1
+                    segp.p1 = vector.lerp(seg.p0, seg.p1, mint)
+
+                    local norm = mino:normal(segp)
+                    local direction = vector.reflect(vector.vsubv(seg.p1, segp.p1), norm)
+
+                    seg.p0 = segp.p1
+                    seg.p1 = vector.vaddv(segp.p1, direction)
+
+                    vel = vector.reflect(vel, norm)
+
+                    p[#p + 1] = segp.p1
                 else
                     break
                 end
 
                 num = num + 1
+                if num > 30 then
+                    print('*')
+                    break
+                end
             end
 
             part0.pos, part0.vel = seg.p1, vel
         end
     end
 
-    local txt = json.encode(p, {indent=true})
-    local file = io.open('./test.json', 'w')
-    file:write(txt)
+    self:dump_trajectory(p)
 end
 
 local s = Simulation(1e-2)
@@ -93,6 +110,8 @@ s:add_object(objects.Circle({0.58, 0.42}, 0.010))
 s:add_object(objects.Circle({0.58, 0.58}, 0.010))
 s:add_particle(objects.PointParticle({0.71, 0.6}, {0.1, 0}, {0, 0}))
 
+--prof.start()
 for i = 1, 1 do
-    s:step(300000)
+    s:step(500)
 end
+--prof.stop()
