@@ -1,3 +1,4 @@
+local math = require('math')
 local util = require('util')
 local vector = require('vector')
 
@@ -11,9 +12,16 @@ end
 
 function root_quadratic(poly)
     local a, b, c = poly[3], poly[2], poly[1]
-    local desc = b^2 - 4*a*c
 
-    if (desc < 0) then
+    if a == 0 then
+        if b == 0 then
+            return nil
+        end
+        return {-c / b, nan}
+    end
+
+    local desc = b*b - 4*a*c
+    if desc < 0 then
         return nil
     end
 
@@ -170,12 +178,6 @@ function PointParticle:init(pos, vel, acc)
     self.acc = acc or {0, 0}
 end
 
-function PointParticle:__tostring()
-    return string.format(
-        "<(%f, %f); (%f, %f)>", self.pos.x, self.pos.y,
-        self.vel.x, self.vel.y
-    )
-end
 
 local objects = {
     Circle=Circle,

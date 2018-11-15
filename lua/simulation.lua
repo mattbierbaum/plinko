@@ -36,68 +36,68 @@ end
 function Simulation:step(steps)
     local p = {}
     local steps = steps or 1
-    local seg = objects.Segment({0, 0}, {0, 0})
-    local segp = objects.Segment()
-    local part1 = nil
-    local time = 0
+    local seg0 = objects.Segment({0, 0}, {0, 0})
+    local seg1 = objects.Segment({0, 0}, {0, 0})
+    local part0 = objects.PointParticle()
+    local part1 = objects.PointParticle()
 
-    for i = 1, steps do
+    local time = 0
+    local EPS = 1e-8
+    local mint = 2
+    local mino = nil
+    local vel = {0, 0}
+
+    for step = 1, steps do
         self.force_func[1](self.particles)
 
-        for _, part0 in pairs(self.particles) do
-            p[#p + 1] = part0.pos
-            part1 = forces.integrate_euler(part0, self.dt)
+        for particle = 1, #self.particles do 
+            part0 = self.particles[particle]
+            forces.integrate_euler(part0, part1, self.dt)
 
             vel = part1.vel
-            seg.p0 = part0.pos
-            seg.p1 = part1.pos
+            vector.copy(part0.pos, seg0.p0)
+            vector.copy(part1.pos, seg0.p1)
 
-            local EPS = 1e-8
-            local num = 1
-            while true do
-                local mint = 2
-                local mino = nil
-                for _, obj in pairs(self.objects) do
-                    local o, t = obj:intersection(seg)
+            p[#p + 1] = {part0.pos[1], part0.pos[2]}
+            for collision = 1, 3 do
+                mint = 2
+                mino = nil
+                for ind = 1, #self.objects do
+                    local obj = self.objects[ind]
+                    local o, t = obj:intersection(seg0)
                     if t and t < mint and t <= 1 and t > 0 then
                         mint = t
                         mino = o
                     end
                 end
 
-                if mino then
-                    mint = (1 - EPS) * mint
-                    time = time + (1 - time)*mint
-
-                    segp.p0 = seg.p1
-                    segp.p1 = vector.lerp(seg.p0, seg.p1, mint)
-
-                    local norm = mino:normal(segp)
-                    local direction = vector.reflect(vector.vsubv(seg.p1, segp.p1), norm)
-
-                    seg.p0 = segp.p1
-                    seg.p1 = vector.vaddv(segp.p1, direction)
-
-                    vel = vector.vmuls(vector.reflect(vel, norm), 0.9995)
-
-                    p[#p + 1] = segp.p1
-                else
+                if not mino then
                     break
                 end
 
-                num = num + 1
-                if num > 30 then
-                    print('*')
-                    break
-                end
+                mint = (1 - EPS) * mint
+                time = time + (1 - time)*mint
+
+                seg1.p0 = seg0.p1
+                seg1.p1 = vector.lerp(seg0.p0, seg0.p1, mint)
+
+                local norm = mino:normal(seg1)
+                local direction = vector.reflect(vector.vsubv(seg0.p1, seg1.p1), norm)
+
+                seg0.p0 = seg1.p1
+                seg0.p1 = vector.vaddv(seg1.p1, direction)
+
+                vel = vector.reflect(vel, norm)
+
+                p[#p + 1] = {seg1.p1[1], seg1.p1[2]}
             end
 
-            part0.pos, part0.vel = seg.p1, vel
+            vector.copy(seg0.p1, part0.pos)
+            vector.copy(vel, part0.vel)
         end
     end
 
     self:dump_trajectory(p)
 end
 
-local simulation = {Simulation=Simulation}
-return simulation
+return {Simulation=Simulation}

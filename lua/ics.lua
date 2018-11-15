@@ -5,12 +5,19 @@ local vector = require('vector')
 
 local ics = {}
 
+function ics.single_circle()
+    return {
+        forces = {forces.force_gravity},
+        particles = {objects.PointParticle({0.65, 0.5}, {0, 0}, {0, 0})},
+        objects = {objects.Circle({0.5, 0.5}, 0.25)}
+    }
+end
+
 function ics.halfmoon()
     return {
         forces = {forces.force_central},
         particles = {objects.PointParticle({0.71, 0.6}, {0.1, 0}, {0, 0})},
         objects = {
-            objects.Circle({0.5, 0.5}, 0.25),
             objects.Circle({0.3, 0.5}, 0.25),
             objects.Circle({0.6, 0.5}, 0.025),
             objects.Circle({0.58, 0.42}, 0.010),
@@ -47,7 +54,7 @@ function ics.circle_circles(N, radmin, radmax, R)
     }
 end
 
-function ics.particle()
+function ics.free_particle()
     return {
         forces = {forces.force_central},
         particles = {objects.PointParticle({0.5, 0.6}, {0, 0}, {0, 0})},

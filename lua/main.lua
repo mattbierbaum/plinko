@@ -1,6 +1,6 @@
 local ics = require('ics')
 
-s = ics.create_simulation(ics.particle())
+s = ics.create_simulation(ics.halfmoon())
 
 t_start = os.clock()
 s:step(1000000)

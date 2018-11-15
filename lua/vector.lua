@@ -1,5 +1,6 @@
 local vector = {}
 
+function vector.copy(v0, v1) v1[1] = v0[1]; v1[2] = v0[2] end
 function vector.vadds(v0, s) return {v0[1] + s, v0[2] + s} end
 function vector.vsubs(v0, s) return {v0[1] - s, v0[2] - s} end
 function vector.vmuls(v0, s) return {v0[1] * s, v0[2] * s} end

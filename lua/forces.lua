@@ -4,35 +4,35 @@ local util = require('util')
 local forces = {}
 
 function forces.force_central(particles)
-    for _, p in pairs(particles) do
-        p.acc = vector.vsubv({0.5, 0.5}, p.pos)
+    for i = 1, #particles do
+        local p = particles[i]
+        p.acc[1] = 0.5 - p.pos[1]
+        p.acc[2] = 0.5 - p.pos[2]
     end
 end
 
 function forces.force_gravity(particles)
-    for _, p in pairs(particles) do
-        p.acc = {0, -1}
+    for i = 1, #particles do
+        local p = particles[i]
+        p.acc[1] = 0
+        p.acc[2] = -1
     end
 end
 
 function forces.force_none(particles)
-    for _, p in pairs(particles) do
-        p.acc = {0, 0}
+    for i = 1, #particles do
+        local p = particles[i]
+        p.acc[1] = 0
+        p.acc[2] = 0
     end
 end
 
-function forces.integrate_euler(particle, dt)
-    local pos, vel, acc = particle.pos, particle.vel, particle.acc
-    local outv = {
-        vel[1] + acc[1] * dt,
-        vel[2] + acc[2] * dt
-    }
-    local outp = {
-        pos[1] + outv[1] * dt,
-        pos[2] + outv[2] * dt
-    }
+function forces.integrate_euler(p0, p1, dt)
+    p1.vel[1] = p0.vel[1] + p0.acc[1] * dt
+    p1.vel[2] = p0.vel[2] + p0.acc[2] * dt
 
-    return {pos=outp; vel=outv; acc=acc}
+    p1.pos[1] = p0.pos[1] + p1.vel[1] * dt
+    p1.pos[2] = p0.pos[2] + p1.vel[2] * dt
 end
 
 return forces
