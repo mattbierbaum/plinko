@@ -35,10 +35,13 @@ function CellNeighborlist:init(box, ncells)
     self.ncells = ncells
     self.cell = vector.vdivv(vector.vsubv(box.uu, box.ll), self.ncells)
 
+    self.seen = {}
     self.cells = {}
     for i = 1, self.ncells[1] do
+        self.seen[i] = {}
         self.cells[i] = {}
         for j = 1, self.ncells[2] do
+            self.seen[i][j] = {}
             self.cells[i][j] = {}
         end
     end
@@ -73,9 +76,13 @@ function CellNeighborlist:calculate()
                 for l = 1, #self.objects do
                     local obj = self.objects[l]
                     if obj:intersection(seg) then
-                        --util.tprint(box)
+                        local s = self.seen[i][j]
                         local t = self.cells[i][j]
-                        t[#t + 1] = l
+
+                        if not s[l] then
+                            s[l] = true
+                            t[#t + 1] = l
+                        end
                     end
                 end
             end
@@ -91,14 +98,11 @@ function CellNeighborlist:near(seg)
 end
 
 function CellNeighborlist:_addcell(i, j, obj, seen)
-    print(i, j)
     if self.cells[i] and self.cells[i][j] then
         local cell = self.cells[i][j]
-            util.tprint(cell)
         for c = 1, #cell do
             local ind = cell[c]
 
-            print(i, j, c, ind)
             if not seen[ind] then
                 seen[ind] = true
                 obj[#obj + 1] = self.objects[ind]
@@ -115,14 +119,6 @@ function CellNeighborlist:objects_on_line(p0, p1)
     local x0, y0, x1, y1 = p0[1], p0[2], p1[1], p1[2]
     local steep = math.abs(y1 - y0) > math.abs(x1 - x0)
 
-    print(x0, y0, x1, y1)
-    util.tprint(self.cells[math.floor(x0)-1][math.floor(y0)-1])
-    util.tprint(self.cells[math.floor(x0)][math.floor(y0)-1])
-    util.tprint(self.cells[math.floor(x0)][math.floor(y0)])
-    util.tprint(self.cells[math.floor(x0)][math.floor(y0)+1])
-    util.tprint(self.cells[math.floor(x0)+1][math.floor(y0)])
-    util.tprint(self.cells[math.floor(x0)+1][math.floor(y0)+1])
-
     -- short-circuit things that don't leave a single cell
     if math.floor(x0) == math.floor(x1) and math.floor(y0) == math.floor(y1) then
         self:_addcell(math.floor(x0), math.floor(y0), output, seen)
@@ -138,51 +134,31 @@ function CellNeighborlist:objects_on_line(p0, p1)
         y0, y1 = swap(y0, y1)
     end
 
-    print(x0, y0)
-    print(x1, y1)
     local dx = x1 - x0
     local dy = y1 - y0
-    local gradient = dy / dx
-    if dx == 0.0 then
-        gradient = 1.0
-    end
+    local dydx = dy / dx
 
-    local xend = math.floor(x0 + 0.5)
-    local yend = y0 + gradient * (xend - x0)
-    local xpxl1 = xend
-    local ypxl1 = math.floor(yend)
-    if steep then
-        self:_addcell(ypxl1, xpxl1, output, seen)
-        self:_addcell(ypxl1+1, xpxl1, output, seen)
-    else
-        self:_addcell(xpxl1, ypxl1, output, seen)
-        self:_addcell(xpxl1, ypxl1+1, output, seen)
-    end
-    local intery = yend + gradient
+    local ix0 = math.floor(x0)
+    local ix1 = math.ceil(x1)
 
-    xend = math.floor(x1 + 0.5)
-    yend = y1 + gradient * (xend - x1)
-    local xpxl2 = xend
-    local ypxl2 = math.floor(yend)
-    if steep then
-        self:_addcell(ypxl2, xpxl2, output, seen)
-        self:_addcell(ypxl2+1, xpxl2, output, seen)
-    else
-        self:_addcell(xpxl2, ypxl2, output, seen)
-        self:_addcell(xpxl2, ypxl2+1, output, seen)
-    end
+    for x = ix0, ix1 do
+        local iy0 = math.floor(dydx * (x - x0) + y0)
+        local iy1 = math.floor(dydx * (x + 1 - x0) + y0)
 
-    if steep then
-        for x = xpxl1 + 1, xpxl2 - 1 do
-           self:_addcell(math.floor(intery), x, output, seen)
-           self:_addcell(math.floor(intery)+1, x, output, seen)
-           intery = intery + gradient
-        end
-    else
-        for x = xpxl1 + 1, xpxl2 - 1 do
-           self:_addcell(x, math.floor(intery), output, seen)
-           self:_addcell(x, math.floor(intery)+1, output, seen)
-           intery = intery + gradient
+        if steep then
+            if iy0 == iy1 then
+                self:_addcell(iy0, x, output, seen)
+            else
+                self:_addcell(iy0, x, output, seen)
+                self:_addcell(iy1, x, output, seen)
+            end
+        else
+            if iy0 == iy1 then
+                self:_addcell(x, iy0, output, seen)
+            else
+                self:_addcell(x, iy0, output, seen)
+                self:_addcell(x, iy1, output, seen)
+            end
         end
     end
 
@@ -192,11 +168,6 @@ end
 function CellNeighborlist:show()
     for i = 1, self.ncells[1] do
         for j = 1, self.ncells[2] do
-            if i == 27 and j == 37 then
-                io.write('_')
-                break
-            end
-
             if #self.cells[i][j] > 0 then
                 io.write('*')
             else
@@ -224,16 +195,23 @@ function test2()
     util.tprint(c:near(objects.Segment({0.5, 0.26}, {0.5, 0.23})))
 end
 
---function test3()
+function test3()
     c = CellNeighborlist(objects.Box({0,0}, {1,1}), {100, 100})
     c:append(objects.Circle({0.5, 0.5}, 0.25))
     c:calculate()
     util.tprint(c.cell)
-    --c:show()
-    --seg = objects.Segment({0.67296467966958,0.32051203595316}, {0.6786790016708,0.32186511031134})
-    seg = objects.Segment({0.33117937670757,0.32219244818272}, {0.32669244582922,0.3189399543652})
+    seg = objects.Segment({0.48111+0.2501, 0.4802}, {0.5233+0.2501, 0.4907})
     util.tprint(c:near(seg))
---end
+
+    seg = objects.Segment({0.49111+0.2501, 0.4802}, {0.5233+0.2501, 0.0907})
+    util.tprint(c:near(seg))
+
+    seg = objects.Segment({0.500111+0.25, 0.4802}, {0.500111+0.25, 0.8907})
+    util.tprint(c:near(seg))
+
+    seg = objects.Segment({0.300111+0.25, 0.5}, {0.600111+0.25, 0.5})
+    util.tprint(c:near(seg))
+end
 
 --test3() 
 

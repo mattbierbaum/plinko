@@ -122,7 +122,7 @@ function Simulation:step(steps)
                 local mint, mino = self:intersection_bruteforce(seg0)
 
                 --print(mino, mino1)
-                if mino and not mino1 then
+                if not (mino == mino1) then
                     print('*')
                     util.tprint(mino1)
                     util.tprint(mino)
