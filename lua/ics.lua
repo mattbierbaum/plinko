@@ -8,7 +8,8 @@ local ics = {}
 
 function ics.single_circle()
     return {
-        nbl = neighborlist.CellNeighborlist(objects.Box({0,0}, {1,1}), {50, 50}),
+        nbl = neighborlist.CellNeighborlist(objects.Box({0,0}, {1,1}), {100, 100}),
+        --nbl = neighborlist.NaiveNeighborlist(),
         forces = {forces.force_gravity},
         particles = {objects.PointParticle({0.65, 0.5}, {0, 0}, {0, 0})},
         objects = {objects.Circle({0.5, 0.5}, 0.25)}
@@ -31,7 +32,7 @@ function ics.halfmoon()
 end
 
 function ics.circle_circles(N, radmin, radmax, R)
-    local N = N or 10
+    local N = N or 20
     local R = R or 0.5
     local radmin = radmin or 0.001
     local radmax = radmax or 0.05
@@ -52,6 +53,7 @@ function ics.circle_circles(N, radmin, radmax, R)
     end
 
     return {
+        --nbl = neighborlist.CellNeighborlist(objects.Box({0,0}, {1,1}), {50, 50}),
         nbl = neighborlist.NaiveNeighborlist(),
         forces = {forces.force_central},
         particles = {objects.PointParticle({0.5, 0.53}, {0.7, 0}, {0, 0})},
