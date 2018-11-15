@@ -130,8 +130,10 @@ function CellNeighborlist:calculate()
         for j = 1, self.ncells[2] do
             local box = self:cell_box(i, j)
 
-            for _, seg in pairs(box.segments) do
-                for _, obj in pairs(self.objects) do
+            for k = 1, #box.segments do
+                local seg = box.segments[k]
+                for l = 1, #self.objects do
+                    local obj = self.objects[l]
                     if obj:intersection(seg) then
                         local t = self.cells[i][j]
                         t[#t + 1] = obj
@@ -148,11 +150,13 @@ function CellNeighborlist:near(seg)
 
     local objects = {}
     local pixels = pixels_on_line(p0, p1)
-    for _, pix in pairs(pixels) do
-        local i, j = pix[1], pix[2]
-        if self.cells[i] and self.cells[i][j] then
-            for _, o in pairs(self.cells[i][j]) do
-                objects[o] = true
+    for i = 1, #pixels do
+        local pix = pixels[i]
+        local pi, pj = pix[1], pix[2]
+        if self.cells[pi] and self.cells[pi][pj] then
+            local cell = self.cells[pi][pj]
+            for j = 1, #cell do
+                objects[cell[j]] = true
             end
         end
     end
@@ -164,10 +168,14 @@ function CellNeighborlist:near(seg)
     return obj
 end
 
-c = CellNeighborlist(objects.Box({0, 0}, {1, 1}), {100, 100})
-c:append(objects.Circle({0.5, 0.5}, 0.25))
-c:calculate()
-util.tprint(c:near(objects.Segment({0.11, 0.1}, {0.2, 0.2})))
+function test()
+    for i = 1, 10 do
+        c = CellNeighborlist(objects.Box({0, 0}, {1, 1}), {100, 100})
+        c:append(objects.Circle({0.5, 0.5}, 0.25))
+        c:calculate()
+        c:near(objects.Segment({0.11, 0.1}, {0.5, 0.5}))
+    end
+end
 
 --[[
 -- psuedo code for neighborlisting arbitrary objects:
@@ -178,7 +186,7 @@ util.tprint(c:near(objects.Segment({0.11, 0.1}, {0.2, 0.2})))
 --      * try all 6 neighboring edges and find next intersection (later than t_cross_obj)
 --      * continue until no more crossings
 --
--- or the naive way:
+-- or the naive way (already done here):
 --   - step through each cell
 --   - if object crosses any segment, add to node
 --]]

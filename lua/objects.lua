@@ -36,7 +36,7 @@ function Circle:circle_line_poly(p0, p1)
 
     local a = vector.vlensq(dp)
     local b = 2 * vector.vdotv(dp, dc)
-    local c = vector.vlensq(dc) - self.rad^2
+    local c = vector.vlensq(dc) - self.radsq
     return {c, b, a}
 end
 
@@ -47,12 +47,12 @@ function Circle:intersection(seg)
     local root = root_quadratic(poly)
 
     if not root then
-        return nil
+        return nil, nil
     end
 
     if root[1] < 0 or root[1] > 1 then
         if root[2] < 0 or root[2] > 1 then
-            return nil
+            return nil, nil
         end
         return self, root[2]
     end
@@ -128,15 +128,14 @@ function Box:init(ll, uu)
         Segment(self.uu, self.ul),
         Segment(self.ul, self.ll)
     }
-    self.c0 = ll
-    self.c1 = uu
 end
 
 function Box:intersection(seg)
     local min_time = 1e100
     local min_seg = nil
 
-    for _, line in pairs(self.segments) do
+    for i = 1, 5 do
+        local line = self.segments[i]
         local o, t = line:intersection(seg)
         if t and t < min_time and t > 0 then
             min_time = t
@@ -151,8 +150,8 @@ function Box:intersection(seg)
 end
 
 function Box:crosses(seg)
-    local bx0, bx1 = self.c0[1], self.c1[1]
-    local by0, by1 = self.c0[2], self.c1[2]
+    local bx0, bx1 = self.ll[1], self.uu[1]
+    local by0, by1 = self.ll[2], self.uu[2]
     local p0, p1 = seg.p0, seg.p1
 
     local inx0 = (p0[1] > bx0 and p0[1] < bx1)
@@ -166,9 +165,9 @@ end
 -- -------------------------------------------------------------
 PointParticle = util.class()
 function PointParticle:init(pos, vel, acc)
-    self.pos = pos
-    self.vel = vel
-    self.acc = acc
+    self.pos = pos or {0, 0}
+    self.vel = vel or {0, 0}
+    self.acc = acc or {0, 0}
 end
 
 function PointParticle:__tostring()

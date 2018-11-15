@@ -47,6 +47,14 @@ function ics.circle_circles(N, radmin, radmax, R)
     }
 end
 
+function ics.particle()
+    return {
+        forces = {forces.force_central},
+        particles = {objects.PointParticle({0.5, 0.6}, {0, 0}, {0, 0})},
+        objects = {}
+    }
+end
+
 function ics.create_simulation(conf)
     local s = simulation.Simulation(1e-2)
     for _, i in pairs(conf.forces) do
