@@ -3,6 +3,7 @@ local util = require('util')
 local vector = require('vector')
 local objects = require('objects')
 local forces = require('forces')
+local neighborlist = require('neighborlist')
 
 Simulation = util.class()
 function Simulation:init(dt)
@@ -12,7 +13,7 @@ function Simulation:init(dt)
     self.particles = {}
     self.force_func = {}
 
-    self._t = objects.Segment()
+    self.nbl = neighborlist.NaiveNeighborlist()
 end
 
 function Simulation:add_object(obj)
@@ -27,6 +28,14 @@ function Simulation:add_force(func)
     self.force_func[#self.force_func + 1] = func
 end
 
+function Simulation:set_neighborlist(nbl)
+    self.nbl = nbl
+    for i = 1, #self.objects do
+        self.nbl:append(self.objects[i])
+    end
+    self.nbl:calculate()
+end
+
 function Simulation:dump_trajectory(p)
     local txt = json.encode(p, {indent=true})
     local file = io.open('./test.json', 'w')
@@ -34,7 +43,10 @@ function Simulation:dump_trajectory(p)
 end
 
 function Simulation:step(steps)
-    local p = {}
+    local px = {}
+    local py = {}
+    px[steps] = 1
+    py[steps] = 1
     local steps = steps or 1
     local seg0 = objects.Segment({0, 0}, {0, 0})
     local seg1 = objects.Segment({0, 0}, {0, 0})
@@ -58,12 +70,16 @@ function Simulation:step(steps)
             vector.copy(part0.pos, seg0.p0)
             vector.copy(part1.pos, seg0.p1)
 
-            p[#p + 1] = {part0.pos[1], part0.pos[2]}
+            local t = #px + 1
+            px[t] = part0.pos[1]
+            py[t] = part0.pos[2]
             for collision = 1, 3 do
                 mint = 2
                 mino = nil
-                for ind = 1, #self.objects do
-                    local obj = self.objects[ind]
+
+                local neighs = self.nbl:near(seg0)
+                for ind = 1, #neighs do
+                    local obj = neighs[ind]
                     local o, t = obj:intersection(seg0)
                     if t and t < mint and t <= 1 and t > 0 then
                         mint = t
@@ -82,14 +98,16 @@ function Simulation:step(steps)
                 seg1.p1 = vector.lerp(seg0.p0, seg0.p1, mint)
 
                 local norm = mino:normal(seg1)
-                local direction = vector.reflect(vector.vsubv(seg0.p1, seg1.p1), norm)
+                local dir = vector.reflect(vector.vsubv(seg0.p1, seg1.p1), norm)
 
                 seg0.p0 = seg1.p1
-                seg0.p1 = vector.vaddv(seg1.p1, direction)
+                seg0.p1 = vector.vaddv(seg1.p1, dir)
 
                 vel = vector.reflect(vel, norm)
 
-                p[#p + 1] = {seg1.p1[1], seg1.p1[2]}
+                t = #px + 1
+                px[t] = seg1.p1[1]
+                py[t] = seg1.p1[2]
             end
 
             vector.copy(seg0.p1, part0.pos)
@@ -97,7 +115,7 @@ function Simulation:step(steps)
         end
     end
 
-    self:dump_trajectory(p)
+    --self:dump_trajectory({px, py})
 end
 
 return {Simulation=Simulation}

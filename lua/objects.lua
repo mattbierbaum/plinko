@@ -10,7 +10,7 @@ function sign(x)
     return x > 0 and 1 or -1
 end
 
-function root_quadratic(poly)
+local function root_quadratic(poly)
     local a, b, c = poly[3], poly[2], poly[1]
 
     if a == 0 then

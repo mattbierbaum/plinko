@@ -3,10 +3,13 @@ local util = require('util')
 local vector = require('vector')
 local objects = require('objects')
 
-function pixels_on_line(p0, p1)
+local function swap(a, b)
+    return b, a
+end
+
+local function pixels_on_line(p0, p1)
     local pixels = {}
     local append = function(x, y) pixels[#pixels + 1] = {x, y} end
-    local swap = function(a, b) return b, a end
 
     local x0, y0, x1, y1 = p0[1], p0[2], p1[1], p1[2]
     local steep = math.abs(y1 - y0) > math.abs(x1 - x0)
@@ -70,7 +73,7 @@ function pixels_on_line(p0, p1)
 end
 
 -- ==============================================
-NaiveNeighborlist = util.class()
+local NaiveNeighborlist = util.class()
 
 function NaiveNeighborlist:init()
     self.objects = {}
@@ -88,7 +91,7 @@ function NaiveNeighborlist:near(seg)
 end
 
 -- ==============================================
-CellNeighborlist = util.class()
+local CellNeighborlist = util.class()
 
 function CellNeighborlist:init(box, ncells)
     self.objects = {}
@@ -177,6 +180,12 @@ function test()
     end
 end
 
+test() 
+
+return {
+    NaiveNeighborlist=NaiveNeighborlist,
+    CellNeighborlist=CellNeighborlist
+}
 --[[
 -- psuedo code for neighborlisting arbitrary objects:
 --   - each object has a parametric representation (x(t), y(y))

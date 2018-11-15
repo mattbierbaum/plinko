@@ -2,11 +2,13 @@ local simulation = require('simulation')
 local objects = require('objects')
 local forces = require('forces')
 local vector = require('vector')
+local neighborlist = require('neighborlist')
 
 local ics = {}
 
 function ics.single_circle()
     return {
+        nbl = neighborlist.CellNeighborlist(objects.Box({0,0}, {1,1}), {50, 50}),
         forces = {forces.force_gravity},
         particles = {objects.PointParticle({0.65, 0.5}, {0, 0}, {0, 0})},
         objects = {objects.Circle({0.5, 0.5}, 0.25)}
@@ -15,6 +17,8 @@ end
 
 function ics.halfmoon()
     return {
+        nbl = neighborlist.CellNeighborlist(objects.Box({0,0}, {1,1}), {50, 50}),
+        --nbl = neighborlist.NaiveNeighborlist(),
         forces = {forces.force_central},
         particles = {objects.PointParticle({0.71, 0.6}, {0.1, 0}, {0, 0})},
         objects = {
@@ -48,6 +52,7 @@ function ics.circle_circles(N, radmin, radmax, R)
     end
 
     return {
+        nbl = neighborlist.NaiveNeighborlist(),
         forces = {forces.force_central},
         particles = {objects.PointParticle({0.5, 0.53}, {0.7, 0}, {0, 0})},
         objects = obj
@@ -56,6 +61,7 @@ end
 
 function ics.free_particle()
     return {
+        nbl = neighborlist.NaiveNeighborlist(),
         forces = {forces.force_central},
         particles = {objects.PointParticle({0.5, 0.6}, {0, 0}, {0, 0})},
         objects = {}
@@ -75,6 +81,8 @@ function ics.create_simulation(conf)
     for _, i in pairs(conf.particles) do
         s:add_particle(i)
     end
+
+    s:set_neighborlist(conf.nbl)
     return s
 end
 
