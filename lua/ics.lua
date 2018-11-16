@@ -3,7 +3,6 @@ local objects = require('objects')
 local forces = require('forces')
 local vector = require('vector')
 local neighborlist = require('neighborlist')
-local util = require('util')
 
 local ics = {}
 
@@ -26,7 +25,6 @@ function hex_grid_circle(rows, cols, rad)
         end
     end
 
-    util.tprint(out)
     return out
 end
 
