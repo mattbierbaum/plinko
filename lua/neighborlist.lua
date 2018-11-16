@@ -22,7 +22,7 @@ function NaiveNeighborlist:calculate()
 end
 
 function NaiveNeighborlist:near(seg)
-    return self.objects, #self.objects
+    return self.objects
 end
 
 -- ==============================================
@@ -70,14 +70,6 @@ end
 
 function CellNeighborlist:append(obj)
     self.objects[#self.objects + 1] = obj
-    self.nnear = 0
-    self.near_objs = {}
-    self.near_seen = {}
-
-    for i = 1, #self.objects do
-        self.near_objs[i] = 0
-        self.near_seen[i] = false
-    end
 end
 
 function CellNeighborlist:calculate()
@@ -96,7 +88,7 @@ function CellNeighborlist:calculate()
 
                         if not s[l] then
                             s[l] = true
-                            t[#t + 1] = l
+                            t[#t + 1] = obj
                         end
                     end
                 end
@@ -106,24 +98,23 @@ function CellNeighborlist:calculate()
 end
 
 function CellNeighborlist:near(seg)
-    local x0 = (seg.p0[1] - self.box.ll[1]) / self.cell[1]
-    local y0 = (seg.p0[2] - self.box.ll[2]) / self.cell[2]
-    local x1 = (seg.p1[1] - self.box.ll[1]) / self.cell[1]
-    local y1 = (seg.p1[2] - self.box.ll[2]) / self.cell[2]
+    local box = self.box
+    local cell = self.cell
+    local x0 = (seg.p0[1] - box.ll[1]) / cell[1]
+    local y0 = (seg.p0[2] - box.ll[2]) / cell[2]
+    local x1 = (seg.p1[1] - box.ll[1]) / cell[1]
+    local y1 = (seg.p1[2] - box.ll[2]) / cell[2]
 
-    self.nnear = 0
-    for i = 1, #self.objects do
-        self.near_objs[i] = 0
-        self.near_seen[i] = false
-    end
+    local ix0 = math.floor(x0)
+    local ix1 = math.floor(x1)
+    local iy0 = math.floor(y0)
+    local iy1 = math.floor(y1)
 
     local steep = math.abs(y1 - y0) > math.abs(x1 - x0)
 
     -- short-circuit things that don't leave a single cell
-    if (math.floor(x0) == math.floor(x1) and
-        math.floor(y0) == math.floor(y1)) then
-        self:_addcell(math.floor(x0), math.floor(y0))
-        return self.near_objs, self.nnear
+    if (ix0 == ix1 and iy0 == iy1) then
+        return self.cells[self:cell_ind(ix0, iy0)]
     end
 
     if steep then
@@ -142,41 +133,35 @@ function CellNeighborlist:near(seg)
     local ix0 = math.floor(x0)
     local ix1 = math.ceil(x1)
 
+    objs = {}
     for x = ix0, ix1 do
         local iy0 = math.floor(dydx * (x - x0) + y0)
         local iy1 = math.floor(dydx * (x + 1 - x0) + y0)
 
         if steep then
             if iy0 == iy1 then
-                self:_addcell(iy0, x)
+                self:_addcell(iy0, x, objs)
             else
-                self:_addcell(iy0, x)
-                self:_addcell(iy1, x)
+                self:_addcell(iy0, x, objs)
+                self:_addcell(iy1, x, objs)
             end
         else
             if iy0 == iy1 then
-                self:_addcell(x, iy0)
+                self:_addcell(x, iy0, objs)
             else
-                self:_addcell(x, iy0)
-                self:_addcell(x, iy1)
+                self:_addcell(x, iy0, objs)
+                self:_addcell(x, iy1, objs)
             end
         end
     end
-
-    return self.near_objs, self.nnear
+    return objs
 end
 
-function CellNeighborlist:_addcell(i, j)
+function CellNeighborlist:_addcell(i, j, objs)
     local ind = self:cell_ind(i, j)
     local cell = self.cells[ind]
     for c = 1, #cell do
-        local o = cell[c]
-
-        if not self.near_seen[o] then
-            self.nnear = self.nnear + 1
-            self.near_seen[o] = true
-            self.near_objs[self.nnear] = self.objects[o]
-        end
+        objs[#objs + 1] = cell[c]
     end
 end
 
