@@ -62,18 +62,14 @@ function Simulation:intersection(seg)
     local mint = 2
     local mino = nil
 
-    local neighs = self.nbl:near(seg)
-    for ind = 1, #neighs do
+    local neighs, num = self.nbl:near(seg)
+    for ind = 1, num do
         local obj = neighs[ind]
         local o, t = obj:intersection(seg)
         if t and t < mint and t <= 1 and t > 0 then
             mint = t
             mino = o
         end
-        --print('============')
-        --util.tprint(seg0)
-        --util.tprint(obj)
-        --util.tprint(t)
     end
 
     return mint, mino
@@ -113,24 +109,12 @@ function Simulation:step(steps)
             vector.copy(part0.pos, seg0.p0)
             vector.copy(part1.pos, seg0.p1)
 
-            local q = #px + 1
-            px[q] = part0.pos[1]
-            py[q] = part0.pos[2]
+            --local q = #px + 1
+            --px[q] = part0.pos[1]
+            --py[q] = part0.pos[2]
 
             for collision = 1, 10 do
-                local mint1, mino1 = self:intersection(seg0)
-                local mint, mino = self:intersection_bruteforce(seg0)
-
-                --print(mino, mino1)
-                if not (mino == mino1) then
-                    print('*')
-                    util.tprint(mino1)
-                    util.tprint(mino)
-                    print(mint1, mint)
-                    util.tprint(part0)
-                    util.tprint(part1)
-                    return
-                end
+                local mint, mino = self:intersection(seg0)
 
                 if not mino then
                     break
@@ -142,9 +126,9 @@ function Simulation:step(steps)
                 seg1.p0 = seg0.p1
                 seg1.p1 = vector.lerp(seg0.p0, seg0.p1, mint)
 
-                local q = #px + 1
-                px[q] = seg1.p1[1]
-                py[q] = seg1.p1[2]
+                --local q = #px + 1
+                --px[q] = seg1.p1[1]
+                --py[q] = seg1.p1[2]
 
                 local norm = mino:normal(seg1)
                 local dir = vector.reflect(vector.vsubv(seg0.p1, seg1.p1), norm)
@@ -159,7 +143,7 @@ function Simulation:step(steps)
         end
     end
 
-    self:dump_trajectory({px, py})
+    --self:dump_trajectory({px, py})
 end
 
 return {Simulation=Simulation}

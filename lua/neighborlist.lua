@@ -22,7 +22,7 @@ function NaiveNeighborlist:calculate()
 end
 
 function NaiveNeighborlist:near(seg)
-    return self.objects
+    return self.objects, #self.objects
 end
 
 -- ==============================================
@@ -33,18 +33,21 @@ function CellNeighborlist:init(box, ncells)
 
     self.box = box
     self.ncells = ncells
-    self.cell = vector.vdivv(vector.vsubv(box.uu, box.ll), self.ncells)
+    self.cell = {
+        (box.uu[1] - box.ll[1]) / self.ncells[1],
+        (box.uu[2] - box.ll[2]) / self.ncells[2]
+    }
 
     self.seen = {}
     self.cells = {}
-    for i = 1, self.ncells[1] do
+    for i = 1, (self.ncells[1]+1)*(self.ncells[2]+1) do
         self.seen[i] = {}
         self.cells[i] = {}
-        for j = 1, self.ncells[2] do
-            self.seen[i][j] = {}
-            self.cells[i][j] = {}
-        end
     end
+end
+
+function CellNeighborlist:cell_ind(i, j)
+    return i + j*self.ncells[1]
 end
 
 function CellNeighborlist:cell_box(i, j)
@@ -59,11 +62,22 @@ function CellNeighborlist:cell_box(i, j)
 end
 
 function CellNeighborlist:point_to_index(p)
-    return vector.vdivv(vector.vsubv(p, self.box.ll), self.cell)
+    return {
+        (p[1] - self.box.ll[1]) / self.cell[1],
+        (p[2] - self.box.ll[2]) / self.cell[2]
+    }
 end
 
 function CellNeighborlist:append(obj)
     self.objects[#self.objects + 1] = obj
+    self.nnear = 0
+    self.near_objs = {}
+    self.near_seen = {}
+
+    for i = 1, #self.objects do
+        self.near_objs[i] = 0
+        self.near_seen[i] = false
+    end
 end
 
 function CellNeighborlist:calculate()
@@ -76,8 +90,9 @@ function CellNeighborlist:calculate()
                 for l = 1, #self.objects do
                     local obj = self.objects[l]
                     if obj:intersection(seg) then
-                        local s = self.seen[i][j]
-                        local t = self.cells[i][j]
+                        local ind = self:cell_ind(i, j)
+                        local s = self.seen[ind]
+                        local t = self.cells[ind]
 
                         if not s[l] then
                             s[l] = true
@@ -91,38 +106,24 @@ function CellNeighborlist:calculate()
 end
 
 function CellNeighborlist:near(seg)
-    local p0 = self:point_to_index(seg.p0)
-    local p1 = self:point_to_index(seg.p1)
+    local x0 = (seg.p0[1] - self.box.ll[1]) / self.cell[1]
+    local y0 = (seg.p0[2] - self.box.ll[2]) / self.cell[2]
+    local x1 = (seg.p1[1] - self.box.ll[1]) / self.cell[1]
+    local y1 = (seg.p1[2] - self.box.ll[2]) / self.cell[2]
 
-    return self:objects_on_line(p0, p1)
-end
-
-function CellNeighborlist:_addcell(i, j, obj, seen)
-    if self.cells[i] and self.cells[i][j] then
-        local cell = self.cells[i][j]
-        for c = 1, #cell do
-            local ind = cell[c]
-
-            if not seen[ind] then
-                seen[ind] = true
-                obj[#obj + 1] = self.objects[ind]
-            end
-        end
+    self.nnear = 0
+    for i = 1, #self.objects do
+        self.near_objs[i] = 0
+        self.near_seen[i] = false
     end
-end
 
-
-function CellNeighborlist:objects_on_line(p0, p1)
-    local output = {} -- the list of objects to return
-    local seen = {}   -- array to keep track of which objects are in list
-
-    local x0, y0, x1, y1 = p0[1], p0[2], p1[1], p1[2]
     local steep = math.abs(y1 - y0) > math.abs(x1 - x0)
 
     -- short-circuit things that don't leave a single cell
-    if math.floor(x0) == math.floor(x1) and math.floor(y0) == math.floor(y1) then
-        self:_addcell(math.floor(x0), math.floor(y0), output, seen)
-        return output
+    if (math.floor(x0) == math.floor(x1) and
+        math.floor(y0) == math.floor(y1)) then
+        self:_addcell(math.floor(x0), math.floor(y0))
+        return self.near_objs, self.nnear
     end
 
     if steep then
@@ -147,22 +148,36 @@ function CellNeighborlist:objects_on_line(p0, p1)
 
         if steep then
             if iy0 == iy1 then
-                self:_addcell(iy0, x, output, seen)
+                self:_addcell(iy0, x)
             else
-                self:_addcell(iy0, x, output, seen)
-                self:_addcell(iy1, x, output, seen)
+                self:_addcell(iy0, x)
+                self:_addcell(iy1, x)
             end
         else
             if iy0 == iy1 then
-                self:_addcell(x, iy0, output, seen)
+                self:_addcell(x, iy0)
             else
-                self:_addcell(x, iy0, output, seen)
-                self:_addcell(x, iy1, output, seen)
+                self:_addcell(x, iy0)
+                self:_addcell(x, iy1)
             end
         end
     end
 
-    return output
+    return self.near_objs, self.nnear
+end
+
+function CellNeighborlist:_addcell(i, j)
+    local ind = self:cell_ind(i, j)
+    local cell = self.cells[ind]
+    for c = 1, #cell do
+        local o = cell[c]
+
+        if not self.near_seen[o] then
+            self.nnear = self.nnear + 1
+            self.near_seen[o] = true
+            self.near_objs[self.nnear] = self.objects[o]
+        end
+    end
 end
 
 function CellNeighborlist:show()
@@ -180,11 +195,12 @@ function CellNeighborlist:show()
 end
 
 function test()
-    c = CellNeighborlist(objects.Box({0, 0}, {1, 1}), {100, 100})
+    local c = CellNeighborlist(objects.Box({0, 0}, {1, 1}), {100, 100})
     c:append(objects.Circle({0.5, 0.5}, 0.25))
     c:calculate()
+    local seg = objects.Segment({0.11, 0.1}, {0.5, 0.5})
     for i = 1, 1000000 do
-        c:near(objects.Segment({0.11, 0.1}, {0.5, 0.5}))
+        c:near(seg)
     end
 end
 
@@ -213,7 +229,7 @@ function test3()
     util.tprint(c:near(seg))
 end
 
---test3() 
+--test() 
 
 return {
     NaiveNeighborlist=NaiveNeighborlist,
