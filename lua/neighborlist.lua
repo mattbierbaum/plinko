@@ -166,17 +166,33 @@ function CellNeighborlist:_addcell(i, j, objs)
 end
 
 function CellNeighborlist:show()
+    io.write('|')
     for i = 1, self.ncells[1] do
-        for j = 1, self.ncells[2] do
-            if #self.cells[i][j] > 0 then
+        io.write('-')
+    end
+    io.write('|')
+    io.write('\n')
+
+    for j = self.ncells[2], 1, -1 do
+        io.write('|')
+        for i = 1, self.ncells[1] do
+            if #self.cells[self:cell_ind(i, j)] > 0 then
                 io.write('*')
             else
                 io.write(' ')
             end
 
         end
+        io.write('|')
         io.write('\n')
     end
+
+    io.write('|')
+    for i = 1, self.ncells[1] do
+        io.write('-')
+    end
+    io.write('|')
+    io.write('\n')
 end
 
 function test()

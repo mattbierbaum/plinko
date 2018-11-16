@@ -3,8 +3,46 @@ local objects = require('objects')
 local forces = require('forces')
 local vector = require('vector')
 local neighborlist = require('neighborlist')
+local util = require('util')
 
 local ics = {}
+
+function hex_grid_circle(rows, cols, rad)
+    local a = 1
+    local rt3 = math.sqrt(3)
+
+    local out = {}
+    for i = 0, rows-1 do
+        for j = 0, cols-1 do
+            if (i*a*rt3 >= 1e-10) then
+                local c = objects.Circle({j*a, i*a*rt3}, rad)
+                out[#out + 1] = c
+            end
+
+            if not (j == cols - 1) then
+                local c = objects.Circle({(j+0.5)*a, (i+0.5)*a*rt3}, rad)
+                out[#out + 1] = c
+            end
+        end
+    end
+
+    util.tprint(out)
+    return out
+end
+
+function ics.hexgrid(N, rad)
+    local N = N or 4
+    local rad = rad or 0.75
+
+    local h = 2*N
+    local w = 2*N - 1
+    return {
+        nbl = neighborlist.CellNeighborlist(objects.Box({0, 0}, {w, h}), {100, 100}),
+        forces = {forces.force_gravity},
+        particles = {objects.PointParticle({0.65, 0.5}, {0, 0}, {0, 0})},
+        objects = hex_grid_circle(N, 2*N, rad)
+    }
+end
 
 function ics.single_circle()
     return {
