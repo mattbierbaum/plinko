@@ -3,6 +3,7 @@ local objects = require('objects')
 local forces = require('forces')
 local vector = require('vector')
 local neighborlist = require('neighborlist')
+local observers = require('observers')
 
 local ics = {}
 
@@ -30,15 +31,21 @@ end
 
 function ics.hexgrid(N, rad)
     local N = N or 4
-    local rad = rad or 0.75
+    local rad = rad or 0.75/2
 
     local h = 2*N
     local w = 2*N - 1
+    local obj = hex_grid_circle(N, 2*N, rad)
+    local box0 = objects.Box({0, 0}, {w, h})
+    local box1 = objects.Box({-0.1, -0.1}, {w+0.1, h+0.1})
+    obj[#obj + 1] = box0
     return {
-        nbl = neighborlist.CellNeighborlist(objects.Box({0, 0}, {w, h}), {100, 100}),
+        nbl = neighborlist.CellNeighborlist(box1, {200, 200}),
+        --nbl = neighborlist.NaiveNeighborlist(),
         forces = {forces.force_gravity},
-        particles = {objects.PointParticle({0.65, 0.5}, {0, 0}, {0, 0})},
-        objects = hex_grid_circle(N, 2*N, rad)
+        particles = {objects.PointParticle({w/2+1e-6, h-0.5}, {0, 0}, {0, 0})},
+        objects = obj,
+        observers = {observers.CSVRecorder('./test.csv')},
     }
 end
 
@@ -49,6 +56,23 @@ function ics.single_circle()
         forces = {forces.force_gravity},
         particles = {objects.PointParticle({0.65, 0.5}, {0, 0}, {0, 0})},
         objects = {objects.Circle({0.5, 0.5}, 0.25)}
+    }
+end
+
+function ics.single_circle2()
+
+    return {
+        nbl = neighborlist.CellNeighborlist(
+            objects.Box({-0.1, -0.1}, {1.1, 1.1}),
+            {100, 100}
+        ),
+        forces = {forces.force_gravity},
+        particles = {objects.PointParticle({0.01, 0.95}, {0, 0}, {0, 0})},
+        objects = {
+            objects.Circle({0.5, 0.5}, 0.4999),
+            box = objects.Box({0,0}, {1,1})
+        },
+        observers = {observers.CSVRecorder('./test.csv')},
     }
 end
 
@@ -120,7 +144,14 @@ function ics.create_simulation(conf)
         s:add_particle(i)
     end
 
+    if conf.observers then
+        for _, i in pairs(conf.observers) do
+            s:add_observer(i)
+        end
+    end
+
     s:set_neighborlist(conf.nbl)
+    s:initalize()
     return s
 end
 

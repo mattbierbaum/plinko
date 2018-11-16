@@ -101,6 +101,10 @@ function Segment:intersection(seg)
     local d1 = vector.vsubv(e1, s1)
     local cross = vector.vcrossv(d0, d1)
 
+    if cross < 1e-15 then
+        return self, 0
+    end
+
     local t = vector.vcrossv(vector.vsubv(s1, s0), d0) / cross 
     
     if 0 <= t and t <= 1 then
@@ -142,7 +146,7 @@ function Box:intersection(seg)
     local min_time = 1e100
     local min_seg = nil
 
-    for i = 1, 5 do
+    for i = 1, 4 do
         local line = self.segments[i]
         local o, t = line:intersection(seg)
         if t and t < min_time and t > 0 then

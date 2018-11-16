@@ -5,13 +5,17 @@ local objects = require('objects')
 local forces = require('forces')
 local neighborlist = require('neighborlist')
 
+local MAX_BOUNCE = 1000
+
 Simulation = util.class()
 function Simulation:init(dt)
     self.t = 0
     self.dt = dt
+    self.equal_time = false
     self.objects = {}
     self.particles = {}
     self.force_func = {}
+    self.observers = {}
 
     self.nbl = neighborlist.NaiveNeighborlist()
 end
@@ -28,18 +32,22 @@ function Simulation:add_force(func)
     self.force_func[#self.force_func + 1] = func
 end
 
+function Simulation:add_observer(obv)
+    self.observers[#self.observers + 1] = obv
+end
+
+function Simulation:initalize()
+    for i = 1, #self.observers do
+        self.observers[i]:begin()
+    end
+end
+
 function Simulation:set_neighborlist(nbl)
     self.nbl = nbl
     for i = 1, #self.objects do
         self.nbl:append(self.objects[i])
     end
     self.nbl:calculate()
-end
-
-function Simulation:dump_trajectory(p)
-    local txt = json.encode(p, {indent=true})
-    local file = io.open('./test.json', 'w')
-    file:write(txt)
 end
 
 function Simulation:intersection_bruteforce(seg)
@@ -66,7 +74,7 @@ function Simulation:intersection(seg)
     for ind = 1, #objs do
         local obj = objs[ind]
         local o, t = obj:intersection(seg)
-        if t and t < mint and t <= 1 and t > 0 then
+        if t and t < mint and t <= 1 and t >= 0 then
             mint = t
             mino = o
         end
@@ -75,17 +83,7 @@ function Simulation:intersection(seg)
     return mint, mino
 end
 
-function Simulation:linear_propagation(part0, part1)
-
-end
-
 function Simulation:step(steps)
-    local px = {}
-    local py = {}
-    --local save = 0
-    --px[steps] = 1
-    --py[steps] = 1
-
     local steps = steps or 1
     local seg0 = objects.Segment({0, 0}, {0, 0})
     local seg1 = objects.Segment({0, 0}, {0, 0})
@@ -93,7 +91,7 @@ function Simulation:step(steps)
     local part1 = objects.PointParticle()
 
     local time = 0
-    local EPS = 1e-8
+    local EPS = 1e-10
     local mint = 2
     local mino = nil
     local vel = {0, 0}
@@ -109,11 +107,11 @@ function Simulation:step(steps)
             vector.copy(part0.pos, seg0.p0)
             vector.copy(part1.pos, seg0.p1)
 
-            local q = #px + 1
-            px[q] = part0.pos[1]
-            py[q] = part0.pos[2]
+            for obv = 1, #self.observers do
+                self.observers[obv]:update(part0.pos)
+            end
 
-            for collision = 1, 10 do
+            for collision = 1, MAX_BOUNCE do
                 local mint, mino = self:intersection(seg0)
 
                 if not mino then
@@ -126,9 +124,11 @@ function Simulation:step(steps)
                 seg1.p0 = seg0.p1
                 seg1.p1 = vector.lerp(seg0.p0, seg0.p1, mint)
 
-                local q = #px + 1
-                px[q] = seg1.p1[1]
-                py[q] = seg1.p1[2]
+                if not self.equal_time then
+                    for obv = 1, #self.observers do
+                        self.observers[obv]:update(seg1.p1)
+                    end
+                end
 
                 local norm = mino:normal(seg1)
                 local dir = vector.reflect(vector.vsubv(seg0.p1, seg1.p1), norm)
@@ -136,6 +136,11 @@ function Simulation:step(steps)
                 seg0.p0 = seg1.p1
                 seg0.p1 = vector.vaddv(seg1.p1, dir)
                 vel = vector.reflect(vel, norm)
+
+                if collision == MAX_BOUNCE-1 then
+                    print('*')
+                    os.exit()
+                end
             end
 
             vector.copy(seg0.p1, part0.pos)
@@ -143,7 +148,9 @@ function Simulation:step(steps)
         end
     end
 
-    self:dump_trajectory({px, py})
+    for obv = 1, #self.observers do
+        self.observers[obv]:close()
+    end
 end
 
 return {Simulation=Simulation}

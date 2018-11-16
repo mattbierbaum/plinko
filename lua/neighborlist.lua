@@ -81,7 +81,8 @@ function CellNeighborlist:calculate()
                 local seg = box.segments[k]
                 for l = 1, #self.objects do
                     local obj = self.objects[l]
-                    if obj:intersection(seg) then
+                    local o, t = obj:intersection(seg)
+                    if o then
                         local ind = self:cell_ind(i, j)
                         local s = self.seen[ind]
                         local t = self.cells[ind]
