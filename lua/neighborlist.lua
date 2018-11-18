@@ -196,47 +196,11 @@ function CellNeighborlist:show()
     io.write('\n')
 end
 
-function test()
-    local c = CellNeighborlist(objects.Box({0, 0}, {1, 1}), {100, 100})
-    c:append(objects.Circle({0.5, 0.5}, 0.25))
-    c:calculate()
-    local seg = objects.Segment({0.11, 0.1}, {0.5, 0.5})
-    for i = 1, 1000000 do
-        c:near(seg)
-    end
-end
-
-function test2()
-    c = CellNeighborlist(objects.Box({0, 0}, {1, 1}), {100, 100})
-    c:append(objects.Circle({0.5, 0.5}, 0.25))
-    c:calculate()
-    util.tprint(c:near(objects.Segment({0.5, 0.26}, {0.5, 0.23})))
-end
-
-function test3()
-    c = CellNeighborlist(objects.Box({0,0}, {1,1}), {100, 100})
-    c:append(objects.Circle({0.5, 0.5}, 0.25))
-    c:calculate()
-    util.tprint(c.cell)
-    seg = objects.Segment({0.48111+0.2501, 0.4802}, {0.5233+0.2501, 0.4907})
-    util.tprint(c:near(seg))
-
-    seg = objects.Segment({0.49111+0.2501, 0.4802}, {0.5233+0.2501, 0.0907})
-    util.tprint(c:near(seg))
-
-    seg = objects.Segment({0.500111+0.25, 0.4802}, {0.500111+0.25, 0.8907})
-    util.tprint(c:near(seg))
-
-    seg = objects.Segment({0.300111+0.25, 0.5}, {0.600111+0.25, 0.5})
-    util.tprint(c:near(seg))
-end
-
---test() 
-
 return {
     NaiveNeighborlist=NaiveNeighborlist,
     CellNeighborlist=CellNeighborlist
 }
+
 --[[
 -- psuedo code for neighborlisting arbitrary objects:
 --   - each object has a parametric representation (x(t), y(y))
@@ -245,8 +209,4 @@ return {
 --      * find segments surrounding and find earliest intersection (store t_cross_obj, t_cross_seg) (add object to node)
 --      * try all 6 neighboring edges and find next intersection (later than t_cross_obj)
 --      * continue until no more crossings
---
--- or the naive way (already done here):
---   - step through each cell
---   - if object crosses any segment, add to node
 --]]

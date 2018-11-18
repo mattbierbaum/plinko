@@ -5,12 +5,13 @@ local objects = require('objects')
 local forces = require('forces')
 local neighborlist = require('neighborlist')
 
-local MAX_BOUNCE = 1000
+local MAX_BOUNCE = 10000
 
 Simulation = util.class()
-function Simulation:init(dt)
+function Simulation:init(dt, eps)
     self.t = 0
     self.dt = dt
+    self.eps = eps or 1e-10
     self.equal_time = false
     self.objects = {}
     self.particles = {}
@@ -91,7 +92,6 @@ function Simulation:step(steps)
     local part1 = objects.PointParticle()
 
     local time = 0
-    local EPS = 1e-10
     local mint = 2
     local mino = nil
     local vel = {0, 0}
@@ -118,7 +118,7 @@ function Simulation:step(steps)
                     break
                 end
 
-                mint = (1 - EPS) * mint
+                mint = (1 - self.eps) * mint
                 time = time + (1 - time)*mint
 
                 seg1.p0 = seg0.p1

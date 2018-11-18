@@ -31,8 +31,14 @@ local function root_quadratic(poly)
 end
 
 -- ---------------------------------------------------------------
-Circle = util.class()
+Object = util.class()
+function Object:init()
+end
+
+-- ---------------------------------------------------------------
+Circle = util.class(Object)
 function Circle:init(pos, rad)
+    Object.init(self)
 	self.pos = pos
 	self.rad = rad
     self.radsq = rad*rad
@@ -86,7 +92,41 @@ function Circle:normal(seg)
 end
 
 -- ----------------------------------------------------------------
-Segment = util.class()
+MaskedCircle = util.class(Circle)
+function MaskedCircle:init(pos, rad, func)
+    Circle.init(self, pos, rad)
+    self.func = func
+end
+
+function MaskedCircle:intersection(seg)
+    local obj, time = Circle.intersection(self, seg)
+    if not obj then
+        return nil, nil
+    end
+
+    local x = seg.p0[1] + (seg.p1[1] - seg.p0[1]) * time
+    local y = seg.p0[2] + (seg.p1[2] - seg.p0[2]) * time
+    local c = self.pos
+    local theta = math.atan2(c[2] - y, c[1] - x) + math.pi
+
+    if self.func(theta) then
+        return obj, time
+    end
+    return nil, nil
+end
+
+function circle_nholes(nholes, eps, offset)
+    return function(theta)
+        local r = nholes * theta / (2 * math.pi)
+        return math.abs(r - math.floor(r + 0.5)) > eps
+    end
+end
+
+function circle_single_angle(angle, eps)
+end
+
+-- ----------------------------------------------------------------
+Segment = util.class(Object)
 function Segment:init(p0, p1)
     self.p0 = p0
     self.p1 = p1
@@ -101,9 +141,9 @@ function Segment:intersection(seg)
     local d1 = vector.vsubv(e1, s1)
     local cross = vector.vcrossv(d0, d1)
 
-    if cross < 1e-15 then
-        return self, 0
-    end
+    --if cross < 1e-15 then
+    --    return self, 0
+    --end
 
     local t = vector.vcrossv(vector.vsubv(s1, s0), d0) / cross 
     
@@ -114,7 +154,8 @@ function Segment:intersection(seg)
 end
 
 function Segment:crosses(seg)
-    return not self:intersection(seg) == nil
+    local o, t = self:intersection(seg)
+    return not o == nil
 end
 
 function Segment:normal(seg)
@@ -127,7 +168,7 @@ function Segment:normal(seg)
 end
 
 -- ---------------------------------------------------------------
-Box = util.class()
+Box = util.class(Object)
 function Box:init(ll, uu)
     self.ll = {ll[1], ll[2]}
     self.lu = {ll[1], uu[2]}
@@ -175,7 +216,7 @@ function Box:crosses(seg)
 end
 
 -- -------------------------------------------------------------
-PointParticle = util.class()
+PointParticle = util.class(Object)
 function PointParticle:init(pos, vel, acc)
     self.pos = pos or {0, 0}
     self.vel = vel or {0, 0}

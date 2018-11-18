@@ -37,11 +37,16 @@ function DensityPlot:init(box, dpi)
     self.grid = create_array(self.N[1] * self.N[2])
 end
 
-function DensityPlot:plot(x, y, c)
+function DensityPlot:_plot(x, y, c)
+    if x < 0 or x > self.N[1] or y < 0 or y > self.N[2] then
+        return
+    end
 
+    local ind = x + y*self.N[1]
+    self.grid[ind] = self.grid[ind] + c
 end
 
-function DensityPlot:plot_line(x0, y0, x1, y1)
+function DensityPlot:_plot_line(x0, y0, x1, y1)
     local steep = math.abs(y1 - y0) > math.abs(x1 - x0)
     
     if steep then
@@ -67,11 +72,11 @@ function DensityPlot:plot_line(x0, y0, x1, y1)
     local ypxl1 = ipart(yend)
 
     if steep then
-        plot(ypxl1,   xpxl1, rfpart(yend) * xgap)
-        plot(ypxl1+1, xpxl1,  fpart(yend) * xgap)
+        self:_plot(ypxl1,   xpxl1, rfpart(yend) * xgap)
+        self:_plot(ypxl1+1, xpxl1,  fpart(yend) * xgap)
     else
-        plot(xpxl1, ypxl1  , rfpart(yend) * xgap)
-        plot(xpxl1, ypxl1+1,  fpart(yend) * xgap)
+        self:_plot(xpxl1, ypxl1  , rfpart(yend) * xgap)
+        self:_plot(xpxl1, ypxl1+1,  fpart(yend) * xgap)
     end
     local intery = yend + gradient
     
@@ -81,27 +86,60 @@ function DensityPlot:plot_line(x0, y0, x1, y1)
     local xpxl2 = xend
     local ypxl2 = ipart(yend)
     if steep then
-        plot(ypxl2  , xpxl2, rfpart(yend) * xgap)
-        plot(ypxl2+1, xpxl2,  fpart(yend) * xgap)
+        self:_plot(ypxl2  , xpxl2, rfpart(yend) * xgap)
+        self:_plot(ypxl2+1, xpxl2,  fpart(yend) * xgap)
     else
-        plot(xpxl2, ypxl2,  rfpart(yend) * xgap)
-        plot(xpxl2, ypxl2+1, fpart(yend) * xgap)
+        self:_plot(xpxl2, ypxl2,  rfpart(yend) * xgap)
+        self:_plot(xpxl2, ypxl2+1, fpart(yend) * xgap)
     end
     
     if steep then
         for x = xpxl1 + 1, xpxl2 - 1 do
-           plot(ipart(intery)  , x, rfpart(intery))
-           plot(ipart(intery)+1, x,  fpart(intery))
+           self:plot(ipart(intery)  , x, rfpart(intery))
+           self:plot(ipart(intery)+1, x,  fpart(intery))
            intery = intery + gradient
         end
     else
         for x = xpxl1 + 1, xpxl2 - 1 do
-           plot(x, ipart(intery),  rfpart(intery))
-           plot(x, ipart(intery)+1, fpart(intery))
+           self:plot(x, ipart(intery),  rfpart(intery))
+           self:plot(x, ipart(intery)+1, fpart(intery))
            intery = intery + gradient
        end
     end 
 end 
 
+function DensityPlot:draw_segment(seg)
+    local x0 = self.dpi * self.(seg.p0[1] - self.box.ll[1])
+    local y0 = self.dpi * self.(seg.p0[2] - self.box.ll[2])
+    local x1 = self.dpi * self.(seg.p1[1] - self.box.ll[1])
+    local y1 = self.dpi * self.(seg.p1[2] - self.box.ll[2])
+    self:_plot_line(x0, y0, x1, y1)
+end
+
+function DensityPlot:draw_point(p)
+    local x = self.dpi * self.(p[1] - self.box.ll[1])
+    local y = self.dpi * self.(p[2] - self.box.ll[2])
+    self:_plot(x, y, 1)
+end
+
 d = DensityPlot(objects.Box({0, 0}, {1, 1}), 100)
 d.grid[0] = 1
+
+--[[ffi.cdef[[
+    typedef struct { int bar; } foo;
+    void* malloc(size_t);
+    void free(void*);
+]]
+
+--[[local foo_t = ffi.typeof("foo")
+local foo_p = ffi.typeof("foo*")
+
+function alloc_foo()
+    local obj = ffi.C.malloc(ffi.sizeof(foo_t))
+    return ffi.cast(foo_p, obj)
+end
+
+function free_foo(obj)
+    ffi.C.free(obj)
+end
+]]

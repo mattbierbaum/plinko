@@ -40,6 +40,7 @@ function ics.hexgrid(N, rad)
     local box1 = objects.Box({-0.1, -0.1}, {w+0.1, h+0.1})
     obj[#obj + 1] = box0
     return {
+        dt = 1e-3,
         nbl = neighborlist.CellNeighborlist(box1, {200, 200}),
         --nbl = neighborlist.NaiveNeighborlist(),
         forces = {forces.force_gravity},
@@ -51,25 +52,29 @@ end
 
 function ics.single_circle()
     return {
-        nbl = neighborlist.CellNeighborlist(objects.Box({0,0}, {1,1}), {100, 100}),
+        dt = 1e-3,
+        eps = 1e-7,
+        nbl = neighborlist.CellNeighborlist(objects.Box({0,0}, {1,1}), {200, 200}),
         --nbl = neighborlist.NaiveNeighborlist(),
         forces = {forces.force_gravity},
-        particles = {objects.PointParticle({0.65, 0.5}, {0, 0}, {0, 0})},
-        objects = {objects.Circle({0.5, 0.5}, 0.25)}
+        particles = {objects.PointParticle({0.51, 0.5}, {0, 0}, {0, 0})},
+        objects = {objects.Circle({0.5, 0.5}, 0.25)},
+        observers = {observers.CSVRecorder('./test.csv')},
     }
 end
 
 function ics.single_circle2()
-
     return {
         nbl = neighborlist.CellNeighborlist(
             objects.Box({-0.1, -0.1}, {1.1, 1.1}),
             {100, 100}
         ),
+        dt = 1e-3,
+        eps = 1e-7,
         forces = {forces.force_gravity},
-        particles = {objects.PointParticle({0.01, 0.95}, {0, 0}, {0, 0})},
+        particles = {objects.PointParticle({0.011, 0.95}, {0, 0}, {0, 0})},
         objects = {
-            objects.Circle({0.5, 0.5}, 0.4999),
+            objects.Circle({0.5, 0.5}, 0.49),
             box = objects.Box({0,0}, {1,1})
         },
         observers = {observers.CSVRecorder('./test.csv')},
@@ -131,7 +136,10 @@ function ics.free_particle()
 end
 
 function ics.create_simulation(conf)
-    local s = simulation.Simulation(1e-2)
+    local dt = conf.dt or 1e-2
+    local eps = conf.eps
+
+    local s = simulation.Simulation(dt, eps)
     for _, i in pairs(conf.forces) do
         s:add_force(i)
     end
