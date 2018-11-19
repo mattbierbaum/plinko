@@ -1,5 +1,6 @@
 local util = require('util')
 local objects = require('objects')
+local struct = require('struct')
 
 StateFileRecorder = util.class()
 function StateFileRecorder:init(filename)
@@ -53,15 +54,14 @@ function ImageRecorder:update(particle)
 end
 
 function ImageRecorder:close()
-    local file = io.open(self.filename, 'w')
+    local file = io.open(self.filename, 'wb')
     local image = self.plotter:image()
     local shape = self.plotter:shape()
 
     for j = 1, shape[2] do
         for i = 1, shape[1] do
-            file:write(image[i + j*shape[1]] .. ' ')
+            file:write(struct.pack('<d', image[i + j*shape[1]]))
         end
-        file:write('\n')
     end
     file:close()
 end

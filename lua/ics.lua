@@ -64,18 +64,19 @@ function ics.single_circle()
     return {
         dt = 5e-4,
         eps = 1e-6,
-        nbl = neighborlist.CellNeighborlist(objects.Box({0,0}, {1,1}), {200, 200}),
-        --nbl = neighborlist.NaiveNeighborlist(),
+        --nbl = neighborlist.CellNeighborlist(objects.Box({0,0}, {1,1}), {200, 200}),
+        nbl = neighborlist.NaiveNeighborlist(),
         forces = {forces.force_gravity},
-        particles = {objects.PointParticle({0.51, 0.85}, {1, 0}, {0, 0})},
+        particles = {objects.PointParticle({0.501, 0.85}, {0.1, 0}, {0, 0})},
         objects = {objects.Circle({0.5, 0.5}, 0.45)},
         observers = {
-            observers.StateFileRecorder('./test.csv'),
+            --observers.StateFileRecorder('./test.csv'),
             observers.ImageRecorder('./test.img', 
                 plotting_image.DensityPlot(
                     objects.Box({-0.1, -0.1}, {1.1, 1.1}), 5000
                 )
-            )
+            ),
+            observers.TimePrinter(1e6)
         },
     }
 end
