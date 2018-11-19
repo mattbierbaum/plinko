@@ -27,7 +27,7 @@ function vector.reflect(v, n)
 end
 
 function vector.lerp(p0, p1, t)
-    -- p0 + (p1 - p0) * t
+    -- p0 + (p1 - p0) * t, written more numerically stable though
     return {
         (1 - t)*p0[1] + t*p1[1],
         (1 - t)*p0[2] + t*p1[2]

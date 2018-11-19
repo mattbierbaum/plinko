@@ -108,7 +108,7 @@ function Simulation:step(steps)
             vector.copy(part1.pos, seg0.p1)
 
             for obv = 1, #self.observers do
-                self.observers[obv]:update(part0.pos)
+                self.observers[obv]:update(part0)
             end
 
             for collision = 1, MAX_BOUNCE do
@@ -125,8 +125,10 @@ function Simulation:step(steps)
                 seg1.p1 = vector.lerp(seg0.p0, seg0.p1, mint)
 
                 if not self.equal_time then
+                    vector.copy(seg1.p1, part0.pos)
+                    vector.copy(vel,     part0.vel)
                     for obv = 1, #self.observers do
-                        self.observers[obv]:update(seg1.p1)
+                        self.observers[obv]:update(part0)
                     end
                 end
 
@@ -144,7 +146,7 @@ function Simulation:step(steps)
             end
 
             vector.copy(seg0.p1, part0.pos)
-            vector.copy(vel, part0.vel)
+            vector.copy(vel,     part0.vel)
         end
     end
 
