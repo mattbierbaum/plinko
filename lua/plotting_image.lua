@@ -1,18 +1,33 @@
 local math = require('math')
 local util = require('util')
-local ffi = require('ffi')
 local objects = require('objects')
 
-ffi.cdef[[
-    void *malloc(size_t size);
-    size_t free(void*);
-]]
+local ffi_loaded, ffi = pcall(require, 'ffi')
 
-function create_array(N)
-    return ffi.gc(
-        ffi.cast('double*', ffi.C.malloc(ffi.sizeof('double')*N)),
-        ffi.C.free
-    )
+if not ffi_loaded then
+    function create_array(size)
+        local out = {}
+        for i = 1, size do
+            out[i] = 0
+        end
+        return out
+    end
+else
+    ffi.cdef[[
+        void *malloc(size_t size);
+        size_t free(void*);
+    ]]
+
+    function create_array(size)
+        local out = ffi.gc(
+            ffi.cast('double*', ffi.C.malloc(ffi.sizeof('double')*size)),
+            ffi.C.free
+        )
+        for i = 1, size do
+            out[i] = 0
+        end
+        return out
+    end
 end
 
 function ipart(x) return math.floor(x) end
@@ -95,51 +110,53 @@ function DensityPlot:_plot_line(x0, y0, x1, y1)
     
     if steep then
         for x = xpxl1 + 1, xpxl2 - 1 do
-           self:plot(ipart(intery)  , x, rfpart(intery))
-           self:plot(ipart(intery)+1, x,  fpart(intery))
+           self:_plot(ipart(intery)  , x, rfpart(intery))
+           self:_plot(ipart(intery)+1, x,  fpart(intery))
            intery = intery + gradient
         end
     else
         for x = xpxl1 + 1, xpxl2 - 1 do
-           self:plot(x, ipart(intery),  rfpart(intery))
-           self:plot(x, ipart(intery)+1, fpart(intery))
+           self:_plot(x, ipart(intery),  rfpart(intery))
+           self:_plot(x, ipart(intery)+1, fpart(intery))
            intery = intery + gradient
        end
     end 
 end 
 
 function DensityPlot:draw_segment(seg)
-    local x0 = self.dpi * self.(seg.p0[1] - self.box.ll[1])
-    local y0 = self.dpi * self.(seg.p0[2] - self.box.ll[2])
-    local x1 = self.dpi * self.(seg.p1[1] - self.box.ll[1])
-    local y1 = self.dpi * self.(seg.p1[2] - self.box.ll[2])
+    local x0 = self.dpi * (seg.p0[1] - self.box.ll[1])
+    local y0 = self.dpi * (seg.p0[2] - self.box.ll[2])
+    local x1 = self.dpi * (seg.p1[1] - self.box.ll[1])
+    local y1 = self.dpi * (seg.p1[2] - self.box.ll[2])
     self:_plot_line(x0, y0, x1, y1)
 end
 
 function DensityPlot:draw_point(p)
-    local x = self.dpi * self.(p[1] - self.box.ll[1])
-    local y = self.dpi * self.(p[2] - self.box.ll[2])
+    local x = self.dpi * (p[1] - self.box.ll[1])
+    local y = self.dpi * (p[2] - self.box.ll[2])
     self:_plot(x, y, 1)
 end
 
-d = DensityPlot(objects.Box({0, 0}, {1, 1}), 100)
-d.grid[0] = 1
-
---[[ffi.cdef[[
-    typedef struct { int bar; } foo;
-    void* malloc(size_t);
-    void free(void*);
-]]
-
---[[local foo_t = ffi.typeof("foo")
-local foo_p = ffi.typeof("foo*")
-
-function alloc_foo()
-    local obj = ffi.C.malloc(ffi.sizeof(foo_t))
-    return ffi.cast(foo_p, obj)
+function DensityPlot:image()
+    return self.grid
 end
 
-function free_foo(obj)
-    ffi.C.free(obj)
+function DensityPlot:size()
+    return self.N[1] * self.N[2]
 end
-]]
+
+function DensityPlot:shape()
+    return self.N
+end
+
+function DensityPlot:show()
+    for j = self.N[2], 1, -1 do
+        for i = 1, self.N[1] do
+            local c = self.grid[i + j*self.N[1]]
+            io.write(c == 0 and ' ' or '*')
+        end
+        io.write('\n')
+    end
+end
+
+return {DensityPlot=DensityPlot}
