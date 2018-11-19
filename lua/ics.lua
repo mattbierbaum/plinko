@@ -4,6 +4,7 @@ local forces = require('forces')
 local vector = require('vector')
 local neighborlist = require('neighborlist')
 local observers = require('observers')
+local plotting_image = require('plotting_image')
 
 local ics = {}
 
@@ -37,29 +38,45 @@ function ics.hexgrid(N, rad)
     local w = 2*N - 1
     local obj = hex_grid_circle(N, 2*N, rad)
     local box0 = objects.Box({0, 0}, {w, h})
-    local box1 = objects.Box({-0.1, -0.1}, {w+0.1, h+0.1})
+    local box1 = objects.Box({-0.10001, -0.10001}, {w+0.10001, h+0.10001})
     obj[#obj + 1] = box0
     return {
-        dt = 1e-3,
+        dt = 1e-4,
+        eps = 1e-7,
         nbl = neighborlist.CellNeighborlist(box1, {200, 200}),
         --nbl = neighborlist.NaiveNeighborlist(),
         forces = {forces.force_gravity},
-        particles = {objects.PointParticle({w/2+1e-6, h-0.5}, {0, 0}, {0, 0})},
+        particles = {objects.PointParticle({w/2+1e-2, h-0.5}, {0, 0}, {0, 0})},
         objects = obj,
-        observers = {observers.CSVRecorder('./test.csv')},
+        observers = {
+            --observers.StateFileRecorder('./test.csv'),
+            observers.ImageRecorder('./test.img', 
+                plotting_image.DensityPlot(
+                    objects.Box({-0.1, -0.1}, {w+0.1, h+0.1}), 1500
+                )
+            ),
+            observers.TimePrinter(1e6)
+        },
     }
 end
 
 function ics.single_circle()
     return {
-        dt = 1e-3,
-        eps = 1e-7,
+        dt = 5e-4,
+        eps = 1e-6,
         nbl = neighborlist.CellNeighborlist(objects.Box({0,0}, {1,1}), {200, 200}),
         --nbl = neighborlist.NaiveNeighborlist(),
         forces = {forces.force_gravity},
-        particles = {objects.PointParticle({0.51, 0.5}, {0, 0}, {0, 0})},
-        objects = {objects.Circle({0.5, 0.5}, 0.25)},
-        observers = {observers.CSVRecorder('./test.csv')},
+        particles = {objects.PointParticle({0.51, 0.85}, {1, 0}, {0, 0})},
+        objects = {objects.Circle({0.5, 0.5}, 0.45)},
+        observers = {
+            observers.StateFileRecorder('./test.csv'),
+            observers.ImageRecorder('./test.img', 
+                plotting_image.DensityPlot(
+                    objects.Box({-0.1, -0.1}, {1.1, 1.1}), 5000
+                )
+            )
+        },
     }
 end
 
@@ -77,7 +94,7 @@ function ics.single_circle2()
             objects.Circle({0.5, 0.5}, 0.49),
             box = objects.Box({0,0}, {1,1})
         },
-        observers = {observers.CSVRecorder('./test.csv')},
+        observers = {observers.StateFileRecorder('./test.csv')},
     }
 end
 

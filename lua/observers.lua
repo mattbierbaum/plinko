@@ -90,4 +90,5 @@ end
 return {
     StateFileRecorder=StateFileRecorder,
     ImageRecorder=ImageRecorder,
+    TimePrinter=TimePrinter
 }
