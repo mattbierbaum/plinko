@@ -163,8 +163,14 @@ function Segment:normal(seg)
     local center = vector.vmuls(vector.vaddv(self.p0, self.p1), 0.5)
     local newp0 = vector.vaddv(center, vector.rot90(vector.vsubv(self.p0, center)))
     local newp1 = vector.vaddv(center, vector.rot90(vector.vsubv(self.p1, center)))
-    local out = vector.vsubv(newp1, newp0)
-    return vector.vneg(vector.vnorm(out))
+    local out = vector.vnorm(vector.vsubv(newp1, newp0))
+
+    local diff = vector.vsubv(seg.p1, seg.p0)
+    if vector.vdotv(diff, out) > 0 then
+        return out
+    else
+        return vector.vneg(out)
+    end
 end
 
 -- ---------------------------------------------------------------
@@ -190,7 +196,7 @@ function Box:intersection(seg)
     for i = 1, 4 do
         local line = self.segments[i]
         local o, t = line:intersection(seg)
-        if t and t < min_time and t > 0 then
+        if t and t < min_time and t >= 0 then
             min_time = t
             min_seg = o
         end
@@ -214,6 +220,15 @@ function Box:crosses(seg)
 
     return xor(inx0, inx1) and xor(iny0, iny1)
 end
+
+function Box:contains(pt)
+    local bx0, bx1 = self.ll[1], self.uu[1]
+    local by0, by1 = self.ll[2], self.uu[2]
+
+    local inx = (pt[1] > bx0 and pt[1] < bx1)
+    local iny = (pt[2] > by0 and pt[2] < by1)
+    return inx and iny
+end 
 
 -- -------------------------------------------------------------
 PointParticle = util.class(Object)
