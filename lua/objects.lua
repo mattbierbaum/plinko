@@ -242,6 +242,8 @@ end
 
 local objects = {
     Circle=Circle,
+    MaskedCircle=MaskedCircle,
+    circle_nholes=circle_nholes,
     Segment=Segment,
     Box=Box,
     PointParticle=PointParticle

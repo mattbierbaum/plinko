@@ -8,7 +8,7 @@ local plotting_image = require('plotting_image')
 
 local ics = {}
 
-function hex_grid_circle(rows, cols, rad)
+function hex_grid_object(rows, cols, func, ...)
     local a = 1
     local rt3 = math.sqrt(3)
 
@@ -30,86 +30,27 @@ function hex_grid_circle(rows, cols, rad)
     return out
 end
 
-function ics.hexgrid(N, rad)
-    local N = N or 4
-    local rad = rad or 0.75/2
-
-    local h = 2*N
-    local w = 2*N - 1
-    local obj = hex_grid_circle(N, 2*N, rad)
-    local box0 = objects.Box({0, 0}, {w, h})
-    local box1 = objects.Box({-0.10001, -0.10001}, {w+0.10001, h+0.10001})
-    obj[#obj + 1] = box0
-    return {
-        dt = 1e-4,
-        eps = 1e-7,
-        nbl = neighborlist.CellNeighborlist(box1, {200, 200}),
-        --nbl = neighborlist.NaiveNeighborlist(),
-        forces = {forces.force_gravity},
-        particles = {objects.PointParticle({w/2+1e-2, h-0.5}, {0, 0}, {0, 0})},
-        objects = obj,
-        observers = {
-            --observers.StateFileRecorder('./test.csv'),
-            observers.ImageRecorder('./test.img', 
-                plotting_image.DensityPlot(
-                    objects.Box({-0.1, -0.1}, {w+0.1, h+0.1}), 1500
-                )
-            ),
-            observers.TimePrinter(1e6)
-        },
-    }
-end
-
-function ics.single_circle()
-    return {
-        dt = 5e-4,
-        eps = 1e-6,
-        --nbl = neighborlist.CellNeighborlist(objects.Box({0,0}, {1,1}), {200, 200}),
-        nbl = neighborlist.NaiveNeighborlist(),
-        forces = {forces.force_gravity},
-        particles = {objects.PointParticle({0.501, 0.85}, {0.1, 0}, {0, 0})},
-        objects = {objects.Circle({0.5, 0.5}, 0.45)},
-        observers = {
-            --observers.StateFileRecorder('./test.csv'),
-            observers.ImageRecorder('./test.img', 
-                plotting_image.DensityPlot(
-                    objects.Box({-0.1, -0.1}, {1.1, 1.1}), 5000
-                )
-            ),
-            observers.TimePrinter(1e6)
-        },
-    }
-end
-
 function ics.single_circle2()
     return {
         nbl = neighborlist.CellNeighborlist(
-            objects.Box({-0.1, -0.1}, {1.1, 1.1}),
-            {100, 100}
+            objects.Box({0, 0}, {1, 1}),
+            {100, 100}, 0.03
         ),
         dt = 1e-3,
-        eps = 1e-7,
+        eps = 1e-6,
         forces = {forces.force_gravity},
-        particles = {objects.PointParticle({0.011, 0.95}, {0, 0}, {0, 0})},
+        particles = {objects.PointParticle({0.111, 0.95}, {0.3, 0}, {0, 0})},
         objects = {
-            objects.Circle({0.5, 0.5}, 0.49),
+            objects.Circle({0.5, 0.5}, 0.4999),
             box = objects.Box({0,0}, {1,1})
         },
-        observers = {observers.StateFileRecorder('./test.csv')},
-    }
-end
-
-function ics.halfmoon()
-    return {
-        nbl = neighborlist.CellNeighborlist(objects.Box({0,0}, {1,1}), {50, 50}),
-        --nbl = neighborlist.NaiveNeighborlist(),
-        forces = {forces.force_central},
-        particles = {objects.PointParticle({0.71, 0.6}, {0.1, 0}, {0, 0})},
-        objects = {
-            objects.Circle({0.3, 0.5}, 0.25),
-            objects.Circle({0.6, 0.5}, 0.025),
-            objects.Circle({0.58, 0.42}, 0.010),
-            objects.Circle({0.58, 0.58}, 0.010)
+        observers = {
+            observers.PointImageRecorder('./test.img', 
+                plotting_image.DensityPlot(
+                    objects.Box({-0.1, -0.1}, {1.1, 1.1}), 10000
+                )
+            ),
+            observers.TimePrinter(1e5)
         }
     }
 end
@@ -144,15 +85,6 @@ function ics.circle_circles(N, radmin, radmax, R)
     }
 end
 
-function ics.free_particle()
-    return {
-        nbl = neighborlist.NaiveNeighborlist(),
-        forces = {forces.force_central},
-        particles = {objects.PointParticle({0.5, 0.6}, {0, 0}, {0, 0})},
-        objects = {}
-    }
-end
-
 function ics.create_simulation(conf)
     local dt = conf.dt or 1e-2
     local eps = conf.eps
@@ -176,7 +108,10 @@ function ics.create_simulation(conf)
         end
     end
 
-    s:set_neighborlist(conf.nbl)
+    if conf.nbl then
+        s:set_neighborlist(conf.nbl)
+    end
+
     s:initalize()
     return s
 end
