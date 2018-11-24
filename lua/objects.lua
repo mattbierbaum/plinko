@@ -145,9 +145,10 @@ function Segment:intersection(seg)
     --    return self, 0
     --end
 
-    local t = vector.vcrossv(vector.vsubv(s1, s0), d0) / cross 
-    
-    if 0 <= t and t <= 1 then
+    local t = vector.vcrossv(vector.vsubv(s1, s0), d0) / cross
+    local p = -vector.vcrossv(vector.vsubv(s0, s1), d1) / cross
+
+    if 0 <= t and t <= 1 and 0 <= p and p <= 1 then
         return self, t
     end
     return nil, nil

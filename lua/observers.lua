@@ -2,6 +2,7 @@ local util = require('util')
 local objects = require('objects')
 local struct = require('struct')
 
+-- =================================================================
 StateFileRecorder = util.class()
 function StateFileRecorder:init(filename)
     self.filename = filename
@@ -27,7 +28,7 @@ function StateFileRecorder:close()
     self.file:close()
 end
 
-
+-- =================================================================
 ImageRecorder = util.class()
 function ImageRecorder:init(filename, plotter)
     self.filename = filename
@@ -66,8 +67,18 @@ function ImageRecorder:close()
     file:close()
 end
 
-TimePrinter = util.class()
+-- =================================================================
+PointImageRecorder = util.class(ImageRecorder)
+function PointImageRecorder:init(filename, plotter)
+    ImageRecorder.init(self, filename, plotter)
+end
 
+function ImageRecorder:update(particle)
+    self.plotter:draw_point(particle.pos)
+end
+
+-- =================================================================
+TimePrinter = util.class()
 function TimePrinter:init(interval)
     self.interval = interval
 end
@@ -90,5 +101,6 @@ end
 return {
     StateFileRecorder=StateFileRecorder,
     ImageRecorder=ImageRecorder,
+    PointImageRecorder=PointImageRecorder,
     TimePrinter=TimePrinter
 }
