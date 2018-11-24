@@ -28,19 +28,25 @@ end
 -- ==============================================
 local CellNeighborlist = util.class()
 
-function CellNeighborlist:init(box, ncells)
-    self.objects = {}
+function CellNeighborlist:init(box, ncells, buffer)
+    local sidelength = math.max(box.uu[1] - box.ll[1], box.uu[2] - box.ll[2])
+    self.buffer = buffer or 1e-3
+    self.buffer = self.buffer * sidelength
 
-    self.box = box
     self.ncells = ncells
+    self.box = objects.Box(
+        vector.vsubs(box.ll, self.buffer),
+        vector.vadds(box.uu, self.buffer)
+    )
     self.cell = {
-        (box.uu[1] - box.ll[1]) / self.ncells[1],
-        (box.uu[2] - box.ll[2]) / self.ncells[2]
+        (self.box.uu[1] - self.box.ll[1]) / self.ncells[1],
+        (self.box.uu[2] - self.box.ll[2]) / self.ncells[2]
     }
 
+    self.objects = {}
     self.seen = {}
     self.cells = {}
-    for i = 1, (self.ncells[1]+1)*(self.ncells[2]+1) do
+    for i = 0, (self.ncells[1]+1)*(self.ncells[2]+1) do
         self.seen[i] = {}
         self.cells[i] = {}
     end
@@ -73,8 +79,8 @@ function CellNeighborlist:append(obj)
 end
 
 function CellNeighborlist:calculate()
-    for i = 1, self.ncells[1] do
-        for j = 1, self.ncells[2] do
+    for i = 0, self.ncells[1] do
+        for j = 0, self.ncells[2] do
             local box = self:cell_box(i, j)
 
             for k = 1, #box.segments do
@@ -98,7 +104,8 @@ function CellNeighborlist:calculate()
     end
 end
 
-function CellNeighborlist:near(seg)
+function CellNeighborlist:near(seg, verbose)
+    local verbose = verbose or false
     local box = self.box
     local cell = self.cell
     local x0 = (seg.p0[1] - box.ll[1]) / cell[1]
@@ -174,9 +181,9 @@ function CellNeighborlist:show()
     io.write('|')
     io.write('\n')
 
-    for j = self.ncells[2], 1, -1 do
+    for j = self.ncells[2], 0, -1 do
         io.write('|')
-        for i = 1, self.ncells[1] do
+        for i = 0, self.ncells[1] do
             if #self.cells[self:cell_ind(i, j)] > 0 then
                 io.write('*')
             else
