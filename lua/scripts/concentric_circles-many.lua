@@ -34,7 +34,7 @@ local conf = {
     objects = concentric_circles(24, 0.36, 5e-4),
     observers = {
         --observers.StateFileRecorder('./test.csv'),
-        observers.PointImageRecorder:'./test.img', 
+        observers.PointImageRecorder('./test.img', 
             plotting_image.DensityPlot(objects.Box({0, 0}, {1, 1}), 10000)
         ),
         observers.TimePrinter(1e6)

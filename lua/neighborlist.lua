@@ -30,7 +30,7 @@ local CellNeighborlist = util.class()
 
 function CellNeighborlist:init(box, ncells, buffer)
     local sidelength = math.max(box.uu[1] - box.ll[1], box.uu[2] - box.ll[2])
-    self.buffer = buffer or 1e-3
+    self.buffer = buffer or 2/self.ncells[1]
     self.buffer = self.buffer * sidelength
 
     self.ncells = ncells

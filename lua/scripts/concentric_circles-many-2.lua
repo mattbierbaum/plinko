@@ -31,10 +31,10 @@ local conf = {
     ),
     forces = {forces.force_gravity},
     particles = {objects.PointParticle({0.500, 0.986}, {0.1, 0}, {0, 0})},
-    objects = concentric_circles(24, 0.36, 5e-4),
+    objects = concentric_circles(16, 0.36, 1e-3),
     observers = {
         --observers.StateFileRecorder('./test.csv'),
-        observers.PointImageRecorder:'./test.img', 
+        observers.PointImageRecorder('./test.img', 
             plotting_image.DensityPlot(objects.Box({0, 0}, {1, 1}), 10000)
         ),
         observers.TimePrinter(1e6)
@@ -43,6 +43,6 @@ local conf = {
 
 local s = ics.create_simulation(conf)
 local t_start = os.clock()
-s:step(1e8)
+s:step(1e7)
 local t_end = os.clock()
 print(t_end - t_start)
