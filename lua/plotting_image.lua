@@ -6,9 +6,9 @@ local ffi_loaded, ffi = pcall(require, 'ffi')
 
 if not ffi_loaded then
     function create_array(size)
-        local S = (size[1]+1)*(size[2]+1)
+        local S = size[1]*size[2]
         local out = {}
-        for i = 1, S do
+        for i = 0, S-1 do
             out[i] = 0
         end
         return out
@@ -20,12 +20,12 @@ else
     ]]
 
     function create_array(size)
-        local S = (size[1]+1)*(size[2]+1)
+        local S = size[1]*size[2]
         local out = ffi.gc(
             ffi.cast('double*', ffi.C.malloc(ffi.sizeof('double')*S)),
             ffi.C.free
         )
-        for i = 1, S do
+        for i = 0, S-1 do
             out[i] = 0
         end
         return out
@@ -55,10 +55,12 @@ function DensityPlot:init(box, dpi)
 end
 
 function DensityPlot:_plot(x, y, c)
-    if x < 0 or x > self.N[1] or y < 0 or y > self.N[2] then
+    if x < 0 or x >= self.N[1] or y < 0 or y >= self.N[2] then
         return
     end
 
+    local x = math.floor(x)
+    local y = math.floor(y)
     local ind = x + y*self.N[1]
     self.grid[ind] = self.grid[ind] + c
 end
@@ -152,8 +154,8 @@ function DensityPlot:shape()
 end
 
 function DensityPlot:show()
-    for j = self.N[2], 1, -1 do
-        for i = 1, self.N[1] do
+    for j = self.N[2]-1, 0, -1 do
+        for i = 0, self.N[1]-1 do
             local c = self.grid[i + j*self.N[1]]
             io.write(c == 0 and ' ' or '*')
         end

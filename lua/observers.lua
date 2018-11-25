@@ -59,8 +59,8 @@ function ImageRecorder:close()
     local image = self.plotter:image()
     local shape = self.plotter:shape()
 
-    for j = 1, shape[2] do
-        for i = 1, shape[1] do
+    for j = 0, shape[2]-1 do
+        for i = 0, shape[1]-1 do
             file:write(struct.pack('<d', image[i + j*shape[1]]))
         end
     end
