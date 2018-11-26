@@ -166,6 +166,8 @@ function CellNeighborlist:near(seg, verbose)
 end
 
 function CellNeighborlist:_addcell(i, j, objs)
+    assert(i >= 0 or i <= self.ncells[1] or j >= 0 or j <= self.ncells[2])
+
     local ind = self:cell_ind(i, j)
     local cell = self.cells[ind]
     for c = 1, #cell do

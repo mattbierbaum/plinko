@@ -23,7 +23,7 @@ function DensityPlot:init(box, dpi)
         floor(self.dpi * (self.box.uu[1] - self.box.ll[1])),
         floor(self.dpi * (self.box.uu[2] - self.box.ll[2]))
     }
-    self.grid = alloc.create_array(self.N)
+    self.grid = alloc.create_array(self.N, 'double')
 end
 
 function DensityPlot:_plot(x, y, c)

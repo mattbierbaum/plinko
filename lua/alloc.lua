@@ -1,7 +1,7 @@
 local ffi_loaded, ffi = pcall(require, 'ffi')
 
 local function convert_size(size)
-    if type(size) ~= 'number' then
+    if type(size) == 'number' then
         return size
     end
 

@@ -16,7 +16,7 @@ function concentric_circles(N, minr, eps)
     for i = 1, N do
         local r = 0.5 - dr * i
         objs[#objs + 1] = objects.MaskedCircle(p, r,
-            objects.circle_nholes(6, eps, math.pi/4 * (i % 2))
+            objects.circle_masks.circle_nholes(6, eps, math.pi/4 * (i % 2))
         )
     end
 
@@ -34,7 +34,7 @@ local conf = {
     objects = concentric_circles(50, 0.26, 5e-4),
     observers = {
         --observers.StateFileRecorder('./test.csv'),
-        observers.PointImageRecorder('./test.img', 
+        observers.ImageRecorder('./test.img', 
             plotting_image.DensityPlot(objects.Box({0, 0}, {1, 1}), 10000)
         ),
         observers.TimePrinter(1e6)
