@@ -1,5 +1,9 @@
 local vector = {}
 
+local sqrt = math.sqrt
+local sin = math.sin
+local cos = math.cos
+
 function vector.copy(v0, v1) v1[1] = v0[1]; v1[2] = v0[2] end
 function vector.vadds(v0, s) return {v0[1] + s, v0[2] + s} end
 function vector.vsubs(v0, s) return {v0[1] - s, v0[2] - s} end
@@ -12,7 +16,7 @@ function vector.vdotv(v0, v1) return v0[1]*v1[1] + v0[2]*v1[2] end
 function vector.rot90(v)      return {-v[2], v[1]} end  -- {-y, x}
 function vector.vneg(v)       return {-v[1], -v[2]} end
 function vector.vlensq(v)     return v[1]*v[1] + v[2]*v[2] end
-function vector.vlen(v)       return math.sqrt(v[1]*v[1] + v[2]*v[2]) end
+function vector.vlen(v)       return sqrt(v[1]*v[1] + v[2]*v[2]) end
 function vector.vcrossv(v0, v1) return v0[1] * v1[2] - v0[2] * v1[1] end
 
 function vector.vnorm(v)
@@ -32,6 +36,12 @@ function vector.lerp(p0, p1, t)
         (1 - t)*p0[1] + t*p1[1],
         (1 - t)*p0[2] + t*p1[2]
     }
+end
+
+function vector.rotate(v, theta)
+    local c = cos(theta)
+    local s = sin(theta)
+    return {v[1]*c - v[2]*s, v[1]*s + v[2]*c}
 end
 
 return vector

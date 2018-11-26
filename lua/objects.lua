@@ -5,7 +5,7 @@ local roots = require('roots')
 
 function xor(a, b)
     return (a and not b) or (b and not a)
-end 
+end
 
 -- ---------------------------------------------------------------
 Object = util.class()
@@ -66,6 +66,18 @@ function Circle:normal(seg)
         return vector.vneg(norm)
     end
     return norm
+end
+
+function Circle:translate(vec)
+    return Circle(vector.vaddv(self.pos, vec), self.rad)
+end
+
+function Circle:scale(s)
+    return Circle(self.pos, self.rad * s)
+end
+
+function Circle:rotate(theta)
+    return Circle(self.pos, self.rad)
 end
 
 -- ----------------------------------------------------------------
@@ -131,6 +143,10 @@ function Segment:intersection(seg)
     return nil, nil
 end
 
+function Segment:center()
+    return vector.vmuls(vector.vaddv(self.p0, self.p1), 0.5)
+end
+
 function Segment:crosses(seg)
     local o, t = self:intersection(seg)
     return not o == nil
@@ -138,7 +154,7 @@ end
 
 function Segment:normal(seg)
     local point = seg.p1
-    local center = vector.vmuls(vector.vaddv(self.p0, self.p1), 0.5)
+    local center = self:center()
     local newp0 = vector.vaddv(center, vector.rot90(vector.vsubv(self.p0, center)))
     local newp1 = vector.vaddv(center, vector.rot90(vector.vsubv(self.p1, center)))
     local out = vector.vnorm(vector.vsubv(newp1, newp0))
@@ -155,19 +171,73 @@ function Segment:length()
     return vector.vlen(vector.vsubv(self.p1, self.p0))
 end
 
+function Segment:translate(vec)
+    return Segment(vector.vaddv(self.p0, vec), vector.vaddv(self.p1, vec))
+end
+
+function Segment:rotate(theta, center)
+    local center = center or self:center()
+    return Segment(
+        vector.vaddv(center, vector.rotate(vector.vsubv(self.p0, center), theta)),
+        vector.vaddv(center, vector.rotate(vector.vsubv(self.p1, center), theta))
+    )
+end
+
+function Segment:scale(s)
+    assert(s > 0 and s < 1)
+    return Segment(
+        vector.lerp(self.p0, self.p1, 0.5 - s/2),
+        vector.lerp(self.p0, self.p1, 0.5 + s/2)
+    )
+end
+
 -- ---------------------------------------------------------------
 Box = util.class(Object)
-function Box:init(ll, uu)
+function Box:init(...)
+    local args = {...}
+    local ll, lu, uu, ul = nil, nil, nil, nil
+
+    if #args == 0 then
+        ll = {0, 0}
+        uu = {1, 1}
+    elseif #args == 1 then
+        ll = {0, 0}
+        uu = args[1]
+    elseif #args == 2 then
+        ll = args[1]
+        uu = args[2]
+    elseif #args == 4 then
+        ll = args[1]
+        lu = args[2]
+        uu = args[3]
+        ul = args[4]
+    else
+        return
+    end
+
     self.ll = {ll[1], ll[2]}
-    self.lu = {ll[1], uu[2]}
     self.uu = {uu[1], uu[2]}
-    self.ul = {uu[1], ll[2]}
+
+    if not lu then
+        self.ul = {uu[1], ll[2]}
+        self.lu = {ll[1], uu[2]}
+    else
+        self.ul = {ul[1], ul[2]}
+        self.lu = {lu[1], lu[2]}
+    end
 
     self.segments = {
         Segment(self.ll, self.lu),
         Segment(self.lu, self.uu),
         Segment(self.uu, self.ul),
         Segment(self.ul, self.ll)
+    }
+end
+
+function Box:center()
+    return {
+        (self.ll[1] + self.ul[1] + self.uu[1] + self.lu[1])/4,
+        (self.ll[2] + self.ul[2] + self.uu[2] + self.lu[2])/4
     }
 end
 
@@ -204,13 +274,37 @@ function Box:crosses(seg)
 end
 
 function Box:contains(pt)
+    -- FIXME this is wrong
     local bx0, bx1 = self.ll[1], self.uu[1]
     local by0, by1 = self.ll[2], self.uu[2]
 
     local inx = (pt[1] > bx0 and pt[1] < bx1)
     local iny = (pt[2] > by0 and pt[2] < by1)
     return inx and iny
-end 
+end
+
+function Box:translate(vec)
+    return Box(
+        self.segments[1]:translate(vec).p0, self.segments[2]:translate(vec).p0,
+        self.segments[3]:translate(vec).p0, self.segments[4]:translate(vec).p0
+    )
+end
+
+function Box:rotate(theta)
+    local c = self:center()
+    return Box(
+        self.segments[1]:rotate(theta, c).p0, self.segments[2]:rotate(theta, c).p0,
+        self.segments[3]:rotate(theta, c).p0, self.segments[4]:rotate(theta, c).p0
+    )
+end
+
+function Box:scale(s)
+    local c = self:center()
+    return Box(
+        self.segments[1]:scale(s).p0, self.segments[2]:scale(s).p0,
+        self.segments[3]:scale(s).p0, self.segments[4]:scale(s).p0
+    )
+end
 
 -- -------------------------------------------------------------
 PointParticle = util.class(Object)
