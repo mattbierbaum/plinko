@@ -7,10 +7,17 @@ local util = require('util')
 
 local conf = {
     dt = 1e-3,
-    eps = 1e-2,
+    eps = 1e-5,
     forces = {forces.force_gravity},
-    particles = {objects.PointParticle({0.901, 0.95}, {0.2, 0.1}, {0, 0})},
-    objects = {objects.Box(), objects.Box({0.3, 0.1}):translate({0.2, 0.2}):rotate(math.pi/3):scale(0.1)},
+    particles = {objects.PointParticle({0.901, 0.95}, {-0.2, -0.1}, {0, 0})},
+    objects = {
+        objects.Box(),
+        objects.Rectangle({0, 0}, {0.4, 0.2})
+            :translate({0.2, 0.2})
+            :rotate(math.pi/3)
+            :scale(0.5),
+        objects.RegularPolygon(6, {0.2, 0.1}, 0.1)
+    },
     observers = {
         observers.StateFileRecorder('./test.csv'),
         observers.TimePrinter(1e6)
