@@ -211,33 +211,23 @@ function Box:init(...)
         lu = args[2]
         uu = args[3]
         ul = args[4]
-    else
-        return
     end
-
-    self.ll = {ll[1], ll[2]}
-    self.uu = {uu[1], uu[2]}
 
     if not lu then
-        self.ul = {uu[1], ll[2]}
-        self.lu = {ll[1], uu[2]}
-    else
-        self.ul = {ul[1], ul[2]}
-        self.lu = {lu[1], lu[2]}
+        lu = {ll[1], uu[2]}
+        ul = {uu[1], ll[2]}
     end
+
+    self.ll = ll
+    self.lu = lu
+    self.uu = uu
+    self.ul = ul
 
     self.segments = {
         Segment(self.ll, self.lu),
         Segment(self.lu, self.uu),
         Segment(self.uu, self.ul),
         Segment(self.ul, self.ll)
-    }
-end
-
-function Box:center()
-    return {
-        (self.ll[1] + self.ul[1] + self.uu[1] + self.lu[1])/4,
-        (self.ll[2] + self.ul[2] + self.uu[2] + self.lu[2])/4
     }
 end
 
@@ -274,36 +264,131 @@ function Box:crosses(seg)
 end
 
 function Box:contains(pt)
-    -- FIXME this is wrong
     local bx0, bx1 = self.ll[1], self.uu[1]
     local by0, by1 = self.ll[2], self.uu[2]
 
     local inx = (pt[1] > bx0 and pt[1] < bx1)
     local iny = (pt[2] > by0 and pt[2] < by1)
     return inx and iny
+end 
+
+-- ---------------------------------------------------------------
+Polygon = util.class(Object)
+function Polygon:init(points)
+    self.N = #points
+    self.points = self:_wrap(points)
+    self.segments = self:_segments(self.points)
+    self.com = self:center()
 end
 
-function Box:translate(vec)
-    return Box(
-        self.segments[1]:translate(vec).p0, self.segments[2]:translate(vec).p0,
-        self.segments[3]:translate(vec).p0, self.segments[4]:translate(vec).p0
-    )
+function Polygon:_wrap(pts)
+    local out = {}
+    for i = 1, #pts do
+        out[#out + 1] = {pts[i][1], pts[i][2]}
+    end
+    out[#out + 1] = {pts[1][1], pts[1][2]}
+    return out
 end
 
-function Box:rotate(theta)
-    local c = self:center()
-    return Box(
-        self.segments[1]:rotate(theta, c).p0, self.segments[2]:rotate(theta, c).p0,
-        self.segments[3]:rotate(theta, c).p0, self.segments[4]:rotate(theta, c).p0
-    )
+function Polygon:_segments(pts)
+    local seg = {}
+    for i = 1, #pts-1 do
+        seg[#seg + 1] = Segment(pts[i], pts[i+1])
+    end
+    return seg
 end
 
-function Box:scale(s)
-    local c = self:center()
-    return Box(
-        self.segments[1]:scale(s).p0, self.segments[2]:scale(s).p0,
-        self.segments[3]:scale(s).p0, self.segments[4]:scale(s).p0
-    )
+function Polygon:center()
+    local a, com = 0, {0, 0}
+    for i = 1, #self.points-1 do
+        local p0, p1 = self.points[i], self.points[i+1]
+        local cross = vector.vcrossv(p0, p1)
+        a = a + cross / 2
+        com = vector.vaddv(com, vector.vmuls(vector.vaddv(p0, p1), cross/6))
+    end
+    return vector.vdivs(com, a)
+end
+
+function Polygon:intersection(seg)
+    local min_time = 1e100
+    local min_seg = nil
+
+    for i = 1, self.N do
+        local line = self.segments[i]
+        local o, t = line:intersection(seg)
+        if t and t < min_time and t >= 0 then
+            min_time = t
+            min_seg = o
+        end
+    end
+
+    if min_seg then
+        return min_seg, min_time
+    end
+    return nil, nil
+end
+
+function Polygon:crosses(seg)
+    local obj, time = self:intersection(seg)
+    return obj and true or false
+end
+
+function Polygon:contains(pt)
+    -- FIXME this is wrong
+    return nil
+end
+
+function Polygon:translate(vec)
+    local points = {}
+    for i = 1, #self.points-1 do
+        points[i] = vector.vaddv(self.points[i], vec)
+    end
+    return Polygon(points)
+end
+
+function Polygon:rotate(theta)
+    local c = self.com
+
+    local points = {}
+    for i = 1, #self.points-1 do
+        points[i] = vector.vaddv(vector.rotate(vector.vsubv(self.points[i], c), theta), c)
+    end
+    return Polygon(points)
+end
+
+function Polygon:scale(s)
+    local c = self.com
+    local f = 1 - s/2
+
+    local points = {}
+    for i = 1, #self.points-1 do
+        points[i] = vector.lerp(self.points[i], c, f)
+    end
+    return Polygon(points)
+end
+
+-- -------------------------------------------------------------
+Rectangle = util.class(Polygon)
+function Rectangle:init(ll, uu)
+    local points = {
+        {ll[1], ll[2]},
+        {ll[1], uu[2]},
+        {uu[1], uu[2]},
+        {uu[1], ll[2]}
+    }
+    Polygon.init(self, points)
+end
+
+-- -------------------------------------------------------------
+RegularPolygon = util.class(Polygon)
+function RegularPolygon:init(N, pos, size)
+    local points = {}
+
+    for i = 0, N-1 do
+        local t = i * 2 * math.pi / N
+        points[#points + 1] = vector.vaddv(pos, {size*math.cos(t), size*math.sin(t)})
+    end
+    Polygon.init(self, points)
 end
 
 -- -------------------------------------------------------------
@@ -337,5 +422,8 @@ return {
     Circle = Circle,
     MaskedCircle = MaskedCircle,
     Segment = Segment,
+    Polygon = Polygon,
+    Rectangle = Rectangle,
+    RegularPolygon = RegularPolygon,
     PointParticle = PointParticle
 }
