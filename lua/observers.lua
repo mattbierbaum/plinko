@@ -33,6 +33,7 @@ ImageRecorder = util.class()
 function ImageRecorder:init(filename, plotter)
     self.filename = filename
     self.plotter = plotter
+    self.mindist = 2*self.plotter:pixel_size()
     self.lastposition = nil
     self.segment = objects.Segment({0,0}, {0,0})
 end
@@ -46,12 +47,15 @@ function ImageRecorder:update(particle)
         self.segment.p0[2] = self.lastposition[2]
         self.segment.p1[1] = particle.pos[1]
         self.segment.p1[2] = particle.pos[2]
-        self.plotter:draw_segment(self.segment)
+
+        if self.segment.length() > self.mindist then
+            self.plotter:draw_segment(self.segment)
+            self.lastposition[1] = particle.pos[1]
+            self.lastposition[2] = particle.pos[2]
+        end
     else
-        self.lastposition = {}
+        self.lastposition = {particle.pos[1], particle.pos[2]}
     end
-    self.lastposition[1] = particle.pos[1]
-    self.lastposition[2] = particle.pos[2]
 end
 
 function ImageRecorder:close()

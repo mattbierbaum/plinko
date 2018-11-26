@@ -54,6 +54,10 @@ function DensityPlot:init(box, dpi)
     self.grid = create_array(self.N)
 end
 
+function DensityPlot:pixel_size()
+    return 1 / self.dpi
+end
+
 function DensityPlot:_plot(x, y, c)
     if x < 0 or x >= self.N[1] or y < 0 or y >= self.N[2] then
         return
