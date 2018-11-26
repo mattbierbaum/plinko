@@ -1,40 +1,12 @@
 local math = require('math')
 local util = require('util')
 local objects = require('objects')
+local alloc = require('alloc')
 
-local ffi_loaded, ffi = pcall(require, 'ffi')
-
-if not ffi_loaded then
-    function create_array(size)
-        local S = size[1]*size[2]
-        local out = {}
-        for i = 0, S-1 do
-            out[i] = 0
-        end
-        return out
-    end
-else
-    ffi.cdef[[
-        void *malloc(size_t size);
-        size_t free(void*);
-    ]]
-
-    function create_array(size)
-        local S = size[1]*size[2]
-        local out = ffi.gc(
-            ffi.cast('double*', ffi.C.malloc(ffi.sizeof('double')*S)),
-            ffi.C.free
-        )
-        for i = 0, S-1 do
-            out[i] = 0
-        end
-        return out
-    end
-end
-
-function ipart(x) return math.floor(x) end
+local floor = math.floor
+function ipart(x) return floor(x) end
 function round(x) return ipart(x + 0.5) end
-function fpart(x) return x - math.floor(x) end
+function fpart(x) return x - floor(x) end
 function rfpart(x) return 1 - fpart(x) end
 
 function swap(a, b)
@@ -48,10 +20,10 @@ function DensityPlot:init(box, dpi)
     self.box = box
     self.dpi = dpi
     self.N = {
-        math.floor(self.dpi * (self.box.uu[1] - self.box.ll[1])),
-        math.floor(self.dpi * (self.box.uu[2] - self.box.ll[2]))
+        floor(self.dpi * (self.box.uu[1] - self.box.ll[1])),
+        floor(self.dpi * (self.box.uu[2] - self.box.ll[2]))
     }
-    self.grid = create_array(self.N)
+    self.grid = alloc.create_array(self.N)
 end
 
 function DensityPlot:_plot(x, y, c)
@@ -59,8 +31,8 @@ function DensityPlot:_plot(x, y, c)
         return
     end
 
-    local x = math.floor(x)
-    local y = math.floor(y)
+    local x = floor(x)
+    local y = floor(y)
     local ind = x + y*self.N[1]
     self.grid[ind] = self.grid[ind] + c
 end
