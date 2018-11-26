@@ -16,7 +16,7 @@ function concentric_circles(N, minr, eps)
     for i = 1, N do
         local r = 0.5 - dr * i
         objs[#objs + 1] = objects.MaskedCircle(p, r,
-            objects.circle_nholes(6, eps, math.pi/4 * (i % 2))
+            objects.circle_masks.circle_nholes(6, eps, math.pi/4 * (i % 2))
         )
     end
 

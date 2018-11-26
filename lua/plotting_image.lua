@@ -54,10 +54,6 @@ function DensityPlot:init(box, dpi)
     self.grid = create_array(self.N)
 end
 
-function DensityPlot:pixel_size()
-    return 1 / self.dpi
-end
-
 function DensityPlot:_plot(x, y, c)
     if x < 0 or x >= self.N[1] or y < 0 or y >= self.N[2] then
         return
@@ -132,10 +128,13 @@ function DensityPlot:_plot_line(x0, y0, x1, y1)
 end 
 
 function DensityPlot:draw_segment(seg)
-    local x0 = self.dpi * (seg.p0[1] - self.box.ll[1])
-    local y0 = self.dpi * (seg.p0[2] - self.box.ll[2])
-    local x1 = self.dpi * (seg.p1[1] - self.box.ll[1])
-    local y1 = self.dpi * (seg.p1[2] - self.box.ll[2])
+    local ll = self.box.ll
+    local uu = self.box.uu
+
+    local x0 = self.N[1] * (seg.p0[1] - ll[1]) / (uu[1] - ll[1])
+    local y0 = self.N[2] * (seg.p0[2] - ll[2]) / (uu[2] - ll[2])
+    local x1 = self.N[1] * (seg.p1[1] - ll[1]) / (uu[1] - ll[1])
+    local y1 = self.N[2] * (seg.p1[2] - ll[2]) / (uu[2] - ll[2])
     self:_plot_line(x0, y0, x1, y1)
 end
 
