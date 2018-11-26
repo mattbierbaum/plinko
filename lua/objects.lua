@@ -1,34 +1,11 @@
 local math = require('math')
 local util = require('util')
 local vector = require('vector')
+local roots = require('roots')
 
 function xor(a, b)
     return (a and not b) or (b and not a)
 end 
-
-function sign(x)
-    return x > 0 and 1 or -1
-end
-
-local function root_quadratic(poly)
-    local a, b, c = poly[3], poly[2], poly[1]
-
-    if a == 0 then
-        if b == 0 then
-            return nil
-        end
-        return {-c / b, nan}
-    end
-
-    local desc = b*b - 4*a*c
-    if desc < 0 then
-        return nil
-    end
-
-    local x1 = (-b - sign(b) * math.sqrt(desc)) / (2*a)
-    local x2 = c / (a * x1)
-    return x1 < x2 and {x1, x2} or {x2, x1}
-end
 
 -- ---------------------------------------------------------------
 Object = util.class()
@@ -58,7 +35,7 @@ function Circle:intersection(seg)
     local p0, p1 = seg.p0, seg.p1
     local diff = vector.vsubv(p1, p0)
     local poly = self:circle_line_poly(p0, p1)
-    local root = root_quadratic(poly)
+    local root = roots.quadratic(poly)
 
     if not root then
         return nil, nil
@@ -174,6 +151,10 @@ function Segment:normal(seg)
     end
 end
 
+function Segment:length()
+    return vector.vlen(vector.vsubv(self.p1, self.p0))
+end
+
 -- ---------------------------------------------------------------
 Box = util.class(Object)
 function Box:init(ll, uu)
@@ -239,13 +220,28 @@ function PointParticle:init(pos, vel, acc)
     self.acc = acc or {0, 0}
 end
 
+-- -------------------------------------------------------------
+ParticleGroup = util.class()
+function ParticleGroup:init() end
+function ParticleGroup:index(i) return nil end
+function ParticleGroup:count() return 0 end
 
-local objects = {
-    Circle=Circle,
-    MaskedCircle=MaskedCircle,
-    circle_nholes=circle_nholes,
-    Segment=Segment,
-    Box=Box,
-    PointParticle=PointParticle
+-- -------------------------------------------------------------
+SingleParticle = util.class(ParticleGroup)
+function SingleParticle:init(pos, vel, acc) self.particle = PointParticle(pos, vel, acc) end
+function SingleParticle:index(i) return i == 1 and self.particle or nil end
+function SingleParticle:count() return 1 end
+
+-- -------------------------------------------------------------
+
+
+return {
+    circle_masks = {
+        circle_nholes = circle_nholes
+    },
+    Box = Box,
+    Circle = Circle,
+    MaskedCircle = MaskedCircle,
+    Segment = Segment,
+    PointParticle = PointParticle
 }
-return objects
