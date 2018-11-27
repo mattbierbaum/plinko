@@ -3,6 +3,9 @@ local util = require('util')
 local vector = require('vector')
 local objects = require('objects')
 
+local floor = math.floor
+local ceil = math.ceil
+
 local function swap(a, b)
     return b, a
 end
@@ -69,8 +72,8 @@ end
 
 function CellNeighborlist:point_to_index(p)
     return {
-        (p[1] - self.box.ll[1]) / self.cell[1],
-        (p[2] - self.box.ll[2]) / self.cell[2]
+        floor((p[1] - self.box.ll[1]) / self.cell[1]),
+        floor((p[2] - self.box.ll[2]) / self.cell[2])
     }
 end
 
@@ -79,6 +82,23 @@ function CellNeighborlist:append(obj)
 end
 
 function CellNeighborlist:calculate()
+    function add_to_cell(ci, cj, l, obj)
+        local ind = self:cell_ind(ci, cj)
+        local s = self.seen[ind]
+        local t = self.cells[ind]
+
+        if not s[l] then
+            s[l] = true
+            t[#t + 1] = obj
+        end
+    end
+
+    for l = 1, #self.objects do
+        local obj = self.objects[l]
+        local ind = self:point_to_index(obj:center())
+        add_to_cell(ind[1], ind[2], l, obj)
+    end
+
     for i = 0, self.ncells[1] do
         for j = 0, self.ncells[2] do
             local box = self:cell_box(i, j)
@@ -89,14 +109,7 @@ function CellNeighborlist:calculate()
                     local obj = self.objects[l]
                     local o, t = obj:intersection(seg)
                     if o then
-                        local ind = self:cell_ind(i, j)
-                        local s = self.seen[ind]
-                        local t = self.cells[ind]
-
-                        if not s[l] then
-                            s[l] = true
-                            t[#t + 1] = obj
-                        end
+                        add_to_cell(i, j, l, obj)
                     end
                 end
             end
@@ -113,10 +126,10 @@ function CellNeighborlist:near(seg, verbose)
     local x1 = (seg.p1[1] - box.ll[1]) / cell[1]
     local y1 = (seg.p1[2] - box.ll[2]) / cell[2]
 
-    local ix0 = math.floor(x0)
-    local ix1 = math.floor(x1)
-    local iy0 = math.floor(y0)
-    local iy1 = math.floor(y1)
+    local ix0 = floor(x0)
+    local ix1 = floor(x1)
+    local iy0 = floor(y0)
+    local iy1 = floor(y1)
 
     local steep = math.abs(y1 - y0) > math.abs(x1 - x0)
 
@@ -138,13 +151,13 @@ function CellNeighborlist:near(seg, verbose)
     local dy = y1 - y0
     local dydx = dy / dx
 
-    local ix0 = math.floor(x0)
-    local ix1 = math.ceil(x1)
+    local ix0 = floor(x0)
+    local ix1 = ceil(x1)
 
     local objs = {}
     for x = ix0, ix1 do
-        local iy0 = math.floor(dydx * (x - x0) + y0)
-        local iy1 = math.floor(dydx * (x + 1 - x0) + y0)
+        local iy0 = floor(dydx * (x - x0) + y0)
+        local iy1 = floor(dydx * (x + 1 - x0) + y0)
 
         if steep then
             if iy0 == iy1 then

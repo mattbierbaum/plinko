@@ -31,8 +31,15 @@ function Object:collide(stotal, scoll, vel)
 end
 
 -- ---------------------------------------------------------------
+BezierCurve = util.class(Object)
+function BezierCurve:init(points, cargs)
+    Object.init(self, cargs)
+    self.points = points
+end
+
+-- ---------------------------------------------------------------
 Circle = util.class(Object)
-function Circle:init(pos, rad, cargs )
+function Circle:init(pos, rad, cargs)
     Object.init(self, cargs)
 	self.pos = pos
 	self.rad = rad
@@ -84,6 +91,10 @@ function Circle:normal(seg)
         return vector.vneg(norm)
     end
     return norm
+end
+
+function Circle:center()
+    return self.pos
 end
 
 function Circle:translate(vec)
@@ -229,6 +240,10 @@ function Box:init(ll, uu, cargs)
         Segment(self.uu, self.ul),
         Segment(self.ul, self.ll)
     }
+end
+
+function Box:center()
+    return {(self.ll[1] + self.uu[1])/2, (self.ll[2] + self.uu[2])/2}
 end
 
 function Box:intersection(seg)
