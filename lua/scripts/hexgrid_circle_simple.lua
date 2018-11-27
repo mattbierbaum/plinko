@@ -3,12 +3,13 @@ local objects = require('objects')
 local forces = require('forces')
 local neighborlist = require('neighborlist')
 local observers = require('observers')
+local interrupts = require('interrupts')
 
 local N = 4
-local rad = 0.49
+local rad = 0.5
 
 function rotated_octagon(pos, rad)
-    return ics.obj_funcs.ngon(pos, rad, 8):rotate(math.pi/12)
+    return ics.obj_funcs.ngon(pos, rad, 8):rotate(math.pi/8)
 end
 
 local obj, bd = ics.hex_grid_object(N, 2*N, rotated_octagon, rad)
@@ -31,11 +32,10 @@ local conf = {
         --observers.ImageRecorder('./test.img', 
         --    plotting_image.DensityPlot(box1, 100)
         --),
-        observers.TimePrinter(1e6)
+        observers.TimePrinter(1e6),
+        interrupts.Collision(box0.segments[4])
     },
 }
 
 local s = ics.create_simulation(conf)
 s:step(5e6)
-print('*')
-

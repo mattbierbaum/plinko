@@ -27,9 +27,9 @@ function StateFileRecorder:update_particle(particle)
     local vel = particle.vel
     local acc = particle.acc
     self.file:write(
-        pos[1] .. ' ' .. pos[2] .. ' ' ..
-        vel[1] .. ' ' .. vel[2] .. ' ' ..
-        acc[1] .. ' ' .. acc[2] .. '\n'
+        string.format('%f %f %f %f %f %f\n',
+            pos[1], pos[2], vel[1], vel[2], acc[1], acc[2]
+        )
     )
 end
 
@@ -109,8 +109,59 @@ end
 function TimePrinter:close()
 end
 
+-- =================================================================
+ObserverGroup = util.class(Observer)
+function ObserverGroup:init(observers)
+    self.observers = observers
+end
+
+function ObserverGroup:begin()
+    for i = 1, #self.observers do
+        self.observers[i]:begin()
+    end
+end
+
+function ObserverGroup:update_particle(particle)
+    for i = 1, #self.observers do
+        self.observers[i]:update_particle(particle)
+    end
+end
+
+function ObserverGroup:update_time(time) 
+    for i = 1, #self.observers do
+        self.observers[i]:update_time(time)
+    end
+end
+
+function ObserverGroup:update_collision(particle, object, time)
+    for i = 1, #self.observers do
+        self.observers[i]:update_collision(particle, object, time)
+    end
+end
+function ObserverGroup:is_triggered()
+    for i = 1, #self.observers do
+        if self.observers[i]:is_triggered() then
+            return true
+        end
+    end
+    return false
+end
+
+function ObserverGroup:reset()
+    for i = 1, #self.observers do
+        self.observers[i]:reset()
+    end
+end
+
+function ObserverGroup:close()
+    for i = 1, #self.observers do
+        self.observers[i]:close()
+    end
+end
+
 return {
     Observer=Observer,
+    ObserverGroup=ObserverGroup,
     StateFileRecorder=StateFileRecorder,
     ImageRecorder=ImageRecorder,
     PointImageRecorder=PointImageRecorder,

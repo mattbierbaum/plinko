@@ -4,6 +4,7 @@ local vector = require('vector')
 local objects = require('objects')
 local forces = require('forces')
 local neighborlist = require('neighborlist')
+local observers = require('observers')
 
 local MAX_BOUNCE = 10000
 
@@ -38,9 +39,8 @@ function Simulation:add_observer(obv)
 end
 
 function Simulation:initalize()
-    for i = 1, #self.observers do
-        self.observers[i]:begin()
-    end
+    self.observer_group = observers.ObserverGroup(self.observers)
+    self.observer_group:begin()
 end
 
 function Simulation:set_neighborlist(nbl)
@@ -84,75 +84,92 @@ function Simulation:intersection(seg)
     return mint, mino
 end
 
+function Simulation:linear_project(part, seg, vel)
+    local mint = self._mint
+    local mino = self._mino
+    local nseg = self._nseg
+    local running = true
+
+    for collision = 1, MAX_BOUNCE do
+        mint, mino = self:intersection(seg)
+
+        if not mino then
+            break
+        end
+
+        mint = (1 - self.eps) * mint
+        --time = time + (1 - time)*mint
+
+        nseg.p0 = seg.p1
+        nseg.p1 = vector.lerp(seg.p0, seg.p1, mint)
+
+        if not self.equal_time then
+            vector.copy(nseg.p1, part.pos)
+            vector.copy(vel,     part.vel)
+            self.observer_group:update_particle(part)
+        end
+        self.observer_group:update_collision(part0, mino, mint)
+
+        local norm = mino:normal(nseg)
+        local dir = vector.reflect(vector.vsubv(seg.p1, nseg.p1), norm)
+
+        seg.p0 = nseg.p1
+        seg.p1 = vector.vaddv(nseg.p1, dir)
+        vel = vector.reflect(vel, norm)
+
+        if collision == MAX_BOUNCE-1 then
+            print('* Max bounces reached')
+            running = false
+        end
+    end
+
+    return part, seg, vel, running
+end
+
 function Simulation:step(steps)
+    self._mint = nil
+    self._mino = nil
+    self._nseg = objects.Segment({0, 0}, {0, 0})
+
     local steps = steps or 1
     local seg0 = objects.Segment({0, 0}, {0, 0})
     local seg1 = objects.Segment({0, 0}, {0, 0})
     local part0 = objects.PointParticle()
     local part1 = objects.PointParticle()
 
+    local mint, mino = nil, nil
     local time = 0
-    local mint = 2
-    local mino = nil
     local vel = {0, 0}
 
-    for step = 1, steps do
-        self.force_func[1](self.particles)
+    for particle = 1, #self.particles do 
+        local is_running = true
 
-        for particle = 1, #self.particles do 
+        for step = 1, steps do
+            if not is_running then break end
+
+            self.force_func[1](self.particles)
+
             part0 = self.particles[particle]
             forces.integrate_euler(part0, part1, self.dt)
 
-            vel = part1.vel
+            vector.copy(part1.vel, vel)
             vector.copy(part0.pos, seg0.p0)
             vector.copy(part1.pos, seg0.p1)
+            self.observer_group:update_particle(part0)
 
-            for obv = 1, #self.observers do
-                self.observers[obv]:update(part0)
-            end
-
-            for collision = 1, MAX_BOUNCE do
-                local mint, mino = self:intersection(seg0)
-
-                if not mino then
-                    break
-                end
-
-                mint = (1 - self.eps) * mint
-                time = time + (1 - time)*mint
-
-                seg1.p0 = seg0.p1
-                seg1.p1 = vector.lerp(seg0.p0, seg0.p1, mint)
-
-                if not self.equal_time then
-                    vector.copy(seg1.p1, part0.pos)
-                    vector.copy(vel,     part0.vel)
-                    for obv = 1, #self.observers do
-                        self.observers[obv]:update(part0)
-                    end
-                end
-
-                local norm = mino:normal(seg1)
-                local dir = vector.reflect(vector.vsubv(seg0.p1, seg1.p1), norm)
-
-                seg0.p0 = seg1.p1
-                seg0.p1 = vector.vaddv(seg1.p1, dir)
-                vel = vector.reflect(vel, norm)
-
-                if collision == MAX_BOUNCE-1 then
-                    print('*')
-                    os.exit()
-                end
-            end
+            part0, seg0, vel, is_running = self:linear_project(part0, seg0, vel)
 
             vector.copy(seg0.p1, part0.pos)
             vector.copy(vel,     part0.vel)
+            self.observer_group:update_time(step)
+
+            is_running = is_running and not self.observer_group:is_triggered()
         end
+
+        self.observer_group:reset()
     end
 
-    for obv = 1, #self.observers do
-        self.observers[obv]:close()
-    end
+    self.observer_group:close()
 end
 
 return {Simulation=Simulation}
