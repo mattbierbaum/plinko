@@ -5,6 +5,7 @@ local vector = require('vector')
 local neighborlist = require('neighborlist')
 local observers = require('observers')
 local plotting_image = require('plotting_image')
+local util = require('util')
 
 local ics = {}
 ics.obj_funcs = {}
@@ -13,8 +14,9 @@ function ics.obj_funcs.circle(pos, rad)
     return objects.Circle(pos, rad)
 end
 
-function ics.obj_funcs.ngon(pos, size, N)
-    return objects.RegularPolygon(N, pos, size)
+function ics.obj_funcs.ngon(pos, size, N, cargs)
+    util.tprint({ics=cargs})
+    return objects.RegularPolygon(N, pos, size, cargs)
 end
 
 function ics.hex_grid_object(rows, cols, func, ...)

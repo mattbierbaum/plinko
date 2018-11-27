@@ -9,13 +9,31 @@ end
 
 -- ---------------------------------------------------------------
 Object = util.class()
-function Object:init()
+function Object:init(cargs)
+    self.cargs = cargs or {}
+    self.damp = self.cargs.damp or 1.0
+end
+
+function Object:collide(stotal, scoll, vel)
+    --[[
+    --  stotal is the total timestep of the particle from t0 to t1
+    --  scoll is the segment from t0 to t_collision
+    --  vel is the velocity at t0
+    --]]
+    local norm = self:normal(scoll)
+    local dir = vector.reflect(vector.vsubv(stotal.p1, scoll.p1), norm)
+
+    stotal.p0 = scoll.p1
+    stotal.p1 = vector.vaddv(scoll.p1, dir)
+    vel = vector.reflect(vel, norm)
+    vel = vector.vmuls(vel, self.damp)
+    return stotal, vel
 end
 
 -- ---------------------------------------------------------------
 Circle = util.class(Object)
-function Circle:init(pos, rad)
-    Object.init(self)
+function Circle:init(pos, rad, cargs )
+    Object.init(self, cargs)
 	self.pos = pos
 	self.rad = rad
     self.radsq = rad*rad
@@ -69,21 +87,21 @@ function Circle:normal(seg)
 end
 
 function Circle:translate(vec)
-    return Circle(vector.vaddv(self.pos, vec), self.rad)
+    return Circle(vector.vaddv(self.pos, vec), self.rad, self.cargs)
 end
 
 function Circle:scale(s)
-    return Circle(self.pos, self.rad * s)
+    return Circle(self.pos, self.rad * s, self.cargs)
 end
 
 function Circle:rotate(theta)
-    return Circle(self.pos, self.rad)
+    return Circle(self.pos, self.rad, self.cargs)
 end
 
 -- ----------------------------------------------------------------
 MaskedCircle = util.class(Circle)
-function MaskedCircle:init(pos, rad, func)
-    Circle.init(self, pos, rad)
+function MaskedCircle:init(pos, rad, func, cargs)
+    Circle.init(self, pos, rad, cargs)
     self.func = func
 end
 
@@ -116,7 +134,8 @@ end
 
 -- ----------------------------------------------------------------
 Segment = util.class(Object)
-function Segment:init(p0, p1)
+function Segment:init(p0, p1, cargs)
+    Object.init(self, cargs)
     self.p0 = p0
     self.p1 = p1
 end
@@ -172,14 +191,14 @@ function Segment:length()
 end
 
 function Segment:translate(vec)
-    return Segment(vector.vaddv(self.p0, vec), vector.vaddv(self.p1, vec))
+    return Segment(vector.vaddv(self.p0, vec), vector.vaddv(self.p1, vec), self.cargs)
 end
 
 function Segment:rotate(theta, center)
     local c = center or self:center()
     return Segment(
         vector.vaddv(c, vector.rotate(vector.vsubv(self.p0, c), theta)),
-        vector.vaddv(c, vector.rotate(vector.vsubv(self.p1, c), theta))
+        vector.vaddv(c, vector.rotate(vector.vsubv(self.p1, c), theta)), self.cargs
     )
 end
 
@@ -187,36 +206,17 @@ function Segment:scale(s)
     assert(s > 0 and s < 1)
     return Segment(
         vector.lerp(self.p0, self.p1, 0.5 - s/2),
-        vector.lerp(self.p0, self.p1, 0.5 + s/2)
+        vector.lerp(self.p0, self.p1, 0.5 + s/2), self.cargs
     )
 end
 
 -- ---------------------------------------------------------------
 Box = util.class(Object)
-function Box:init(...)
-    local args = {...}
-    local ll, lu, uu, ul = nil, nil, nil, nil
+function Box:init(ll, uu, cargs)
+    Object.init(self, cargs)
 
-    if #args == 0 then
-        ll = {0, 0}
-        uu = {1, 1}
-    elseif #args == 1 then
-        ll = {0, 0}
-        uu = args[1]
-    elseif #args == 2 then
-        ll = args[1]
-        uu = args[2]
-    elseif #args == 4 then
-        ll = args[1]
-        lu = args[2]
-        uu = args[3]
-        ul = args[4]
-    end
-
-    if not lu then
-        lu = {ll[1], uu[2]}
-        ul = {uu[1], ll[2]}
-    end
+    lu = {ll[1], uu[2]}
+    ul = {uu[1], ll[2]}
 
     self.ll = ll
     self.lu = lu
@@ -274,11 +274,14 @@ end
 
 -- ---------------------------------------------------------------
 Polygon = util.class(Object)
-function Polygon:init(points)
+function Polygon:init(points, cargs)
+    util.tprint({poly=cargs})
     self.N = #points
     self.points = self:_wrap(points)
-    self.segments = self:_segments(self.points)
+    self.segments = self:_segments(self.points, cargs)
     self.com = self:center()
+
+    Object.init(self, cargs)
 end
 
 function Polygon:_wrap(pts)
@@ -290,10 +293,10 @@ function Polygon:_wrap(pts)
     return out
 end
 
-function Polygon:_segments(pts)
+function Polygon:_segments(pts, cargs)
     local seg = {}
     for i = 1, #pts-1 do
-        seg[#seg + 1] = Segment(pts[i], pts[i+1])
+        seg[#seg + 1] = Segment(pts[i], pts[i+1], cargs)
     end
     return seg
 end
@@ -343,7 +346,7 @@ function Polygon:translate(vec)
     for i = 1, #self.points-1 do
         points[i] = vector.vaddv(self.points[i], vec)
     end
-    return Polygon(points)
+    return Polygon(points, self.cargs)
 end
 
 function Polygon:rotate(theta)
@@ -353,7 +356,7 @@ function Polygon:rotate(theta)
     for i = 1, #self.points-1 do
         points[i] = vector.vaddv(vector.rotate(vector.vsubv(self.points[i], c), theta), c)
     end
-    return Polygon(points)
+    return Polygon(points, self.cargs)
 end
 
 function Polygon:scale(s)
@@ -364,31 +367,32 @@ function Polygon:scale(s)
     for i = 1, #self.points-1 do
         points[i] = vector.lerp(self.points[i], c, f)
     end
-    return Polygon(points)
+    return Polygon(points, self.cargs)
 end
 
 -- -------------------------------------------------------------
 Rectangle = util.class(Polygon)
-function Rectangle:init(ll, uu)
+function Rectangle:init(ll, uu, cargs)
     local points = {
         {ll[1], ll[2]},
         {ll[1], uu[2]},
         {uu[1], uu[2]},
         {uu[1], ll[2]}
     }
-    Polygon.init(self, points)
+    Polygon.init(self, points, cargs)
 end
 
 -- -------------------------------------------------------------
 RegularPolygon = util.class(Polygon)
-function RegularPolygon:init(N, pos, size)
+function RegularPolygon:init(N, pos, size, cargs)
+    util.tprint(cargs)
     local points = {}
 
     for i = 0, N-1 do
         local t = i * 2 * math.pi / N
         points[#points + 1] = vector.vaddv(pos, {size*math.cos(t), size*math.sin(t)})
     end
-    Polygon.init(self, points)
+    Polygon.init(self, points, cargs)
 end
 
 -- -------------------------------------------------------------
@@ -412,7 +416,25 @@ function SingleParticle:index(i) return i == 1 and self.particle or nil end
 function SingleParticle:count() return 1 end
 
 -- -------------------------------------------------------------
+UniformParticles = util.class(ParticleGroup)
+function UniformParticles:init(p0, p1, v0, v1, N)
+    self.p0 = p0
+    self.p1 = p1
+    self.v0 = v0
+    self.v1 = v1
+    self.N = N
+end
 
+function UniformParticles:index(i)
+    local f = i / self.N
+    local pos = vector.lerp(self.p0, self.p1, f)
+    local vel = vector.lerp(self.v0, self.v1, f)
+    return PointParticle(pos, vel, {0, 0})
+end
+
+function UniformParticles:count()
+    return self.N
+end
 
 return {
     circle_masks = {
@@ -425,5 +447,8 @@ return {
     Polygon = Polygon,
     Rectangle = Rectangle,
     RegularPolygon = RegularPolygon,
-    PointParticle = PointParticle
+
+    PointParticle = PointParticle,
+    SingleParticle = SingleParticle,
+    UniformParticles = UniformParticles
 }
