@@ -3,28 +3,22 @@ local util = require('util')
 
 local forces = {}
 
-function forces.force_central(particles)
-    for i = 1, #particles do
-        local p = particles[i]
-        p.acc[1] = 0.5 - p.pos[1]
-        p.acc[2] = 0.5 - p.pos[2]
-    end
+function forces.force_central(particle)
+    local p = particle
+    p.acc[1] = 0.5 - p.pos[1]
+    p.acc[2] = 0.5 - p.pos[2]
 end
 
-function forces.force_gravity(particles)
-    for i = 1, #particles do
-        local p = particles[i]
-        p.acc[1] = 0
-        p.acc[2] = -1
-    end
+function forces.force_gravity(particle)
+    local p = particle
+    p.acc[1] = 0
+    p.acc[2] = -1
 end
 
-function forces.force_none(particles)
-    for i = 1, #particles do
-        local p = particles[i]
-        p.acc[1] = 0
-        p.acc[2] = 0
-    end
+function forces.force_none(particle)
+    local p = particle
+    p.acc[1] = 0
+    p.acc[2] = 0
 end
 
 function forces.integrate_euler(p0, p1, dt)

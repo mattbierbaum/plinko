@@ -109,13 +109,7 @@ function Simulation:linear_project(part, seg, vel)
             self.observer_group:update_particle(part)
         end
         self.observer_group:update_collision(part0, mino, mint)
-
-        local norm = mino:normal(nseg)
-        local dir = vector.reflect(vector.vsubv(seg.p1, nseg.p1), norm)
-
-        seg.p0 = nseg.p1
-        seg.p1 = vector.vaddv(nseg.p1, dir)
-        vel = vector.reflect(vel, norm)
+        seg, vel = mino:collide(seg, nseg, vel)
 
         if collision == MAX_BOUNCE-1 then
             print('* Max bounces reached')
@@ -141,32 +135,37 @@ function Simulation:step(steps)
     local time = 0
     local vel = {0, 0}
 
-    for particle = 1, #self.particles do 
-        local is_running = true
+    for p = 1, #self.particles do
+        local particles = self.particles[p]
 
-        for step = 1, steps do
-            if not is_running then break end
+        for pind = 1, particles:count() do
+            print('particle', pind)
+            local is_running = true
+            part0 = particles:index(pind)
 
-            self.force_func[1](self.particles)
+            for step = 1, steps do
+                if not is_running then break end
 
-            part0 = self.particles[particle]
-            forces.integrate_euler(part0, part1, self.dt)
+                self.force_func[1](part0)
+                forces.integrate_euler(part0, part1, self.dt)
 
-            vector.copy(part1.vel, vel)
-            vector.copy(part0.pos, seg0.p0)
-            vector.copy(part1.pos, seg0.p1)
-            self.observer_group:update_particle(part0)
+                vector.copy(part1.vel, vel)
+                vector.copy(part0.pos, seg0.p0)
+                vector.copy(part1.pos, seg0.p1)
+                self.observer_group:update_particle(part0)
 
-            part0, seg0, vel, is_running = self:linear_project(part0, seg0, vel)
+                part0, seg0, vel, is_running = self:linear_project(part0, seg0, vel)
 
-            vector.copy(seg0.p1, part0.pos)
-            vector.copy(vel,     part0.vel)
-            self.observer_group:update_time(step)
+                vector.copy(seg0.p1, part0.pos)
+                vector.copy(vel,     part0.vel)
+                time = time + self.dt
+                self.observer_group:update_time(step)
 
-            is_running = is_running and not self.observer_group:is_triggered()
+                is_running = is_running and not self.observer_group:is_triggered()
+            end
+
+            self.observer_group:reset()
         end
-
-        self.observer_group:reset()
     end
 
     self.observer_group:close()
