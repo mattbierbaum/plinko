@@ -3,6 +3,6 @@ fengari.io
 
 * fix segment drawing
 * ending conditions
-particle distributions
-more flexible interaction (damping etc)
+* particle distributions
+* more flexible interaction (damping etc)
 svg input
