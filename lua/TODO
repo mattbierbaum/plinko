@@ -1,7 +1,8 @@
 https://repo.or.cz/w/luajit-2.0.git/blob_plain/v2.1:/doc/ext_profiler.html#jit_zone
 fengari.io
-fix segment drawing
+
+* fix segment drawing
+* ending conditions
 particle distributions
-ending conditions
 more flexible interaction (damping etc)
 svg input

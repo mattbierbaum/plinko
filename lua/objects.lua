@@ -130,9 +130,9 @@ function Segment:intersection(seg)
     local d1 = vector.vsubv(e1, s1)
     local cross = vector.vcrossv(d0, d1)
 
-    --if cross < 1e-15 then
-    --    return self, 0
-    --end
+    if cross < 1e-15 then
+        return nil, nil
+    end
 
     local t = vector.vcrossv(vector.vsubv(s1, s0), d0) / cross
     local p = -vector.vcrossv(vector.vsubv(s0, s1), d1) / cross
@@ -144,7 +144,7 @@ function Segment:intersection(seg)
 end
 
 function Segment:center()
-    return vector.vmuls(vector.vaddv(self.p0, self.p1), 0.5)
+    return vector.lerp(self.p0, self.p1, 0.5)
 end
 
 function Segment:crosses(seg)
@@ -154,9 +154,9 @@ end
 
 function Segment:normal(seg)
     local point = seg.p1
-    local center = self:center()
-    local newp0 = vector.vaddv(center, vector.rot90(vector.vsubv(self.p0, center)))
-    local newp1 = vector.vaddv(center, vector.rot90(vector.vsubv(self.p1, center)))
+    local c = self:center()
+    local newp0 = vector.vaddv(c, vector.rot90(vector.vsubv(self.p0, c)))
+    local newp1 = vector.vaddv(c, vector.rot90(vector.vsubv(self.p1, c)))
     local out = vector.vnorm(vector.vsubv(newp1, newp0))
 
     local diff = vector.vsubv(seg.p1, seg.p0)
@@ -176,10 +176,10 @@ function Segment:translate(vec)
 end
 
 function Segment:rotate(theta, center)
-    local center = center or self:center()
+    local c = center or self:center()
     return Segment(
-        vector.vaddv(center, vector.rotate(vector.vsubv(self.p0, center), theta)),
-        vector.vaddv(center, vector.rotate(vector.vsubv(self.p1, center), theta))
+        vector.vaddv(c, vector.rotate(vector.vsubv(self.p0, c), theta)),
+        vector.vaddv(c, vector.rotate(vector.vsubv(self.p1, c), theta))
     )
 end
 

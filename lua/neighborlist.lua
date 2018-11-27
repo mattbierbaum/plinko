@@ -141,7 +141,7 @@ function CellNeighborlist:near(seg, verbose)
     local ix0 = math.floor(x0)
     local ix1 = math.ceil(x1)
 
-    objs = {}
+    local objs = {}
     for x = ix0, ix1 do
         local iy0 = math.floor(dydx * (x - x0) + y0)
         local iy1 = math.floor(dydx * (x + 1 - x0) + y0)
