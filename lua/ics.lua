@@ -7,9 +7,14 @@ local observers = require('observers')
 local plotting_image = require('plotting_image')
 
 local ics = {}
+ics.obj_funcs = {}
 
-function obj_circle(pos, rad)
+function ics.obj_funcs.circle(pos, rad)
     return objects.Circle(pos, rad)
+end
+
+function ics.obj_funcs.ngon(pos, size, N)
+    return objects.RegularPolygon(N, pos, size)
 end
 
 function ics.hex_grid_object(rows, cols, func, ...)
@@ -29,7 +34,8 @@ function ics.hex_grid_object(rows, cols, func, ...)
         end
     end
 
-    return out
+    local boundary = {(cols-1)*a, (rows+1)*rt3*a}
+    return out, boundary
 end
 
 function ics.create_simulation(conf)
