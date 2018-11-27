@@ -275,7 +275,6 @@ end
 -- ---------------------------------------------------------------
 Polygon = util.class(Object)
 function Polygon:init(points, cargs)
-    util.tprint({poly=cargs})
     self.N = #points
     self.points = self:_wrap(points)
     self.segments = self:_segments(self.points, cargs)
@@ -385,7 +384,6 @@ end
 -- -------------------------------------------------------------
 RegularPolygon = util.class(Polygon)
 function RegularPolygon:init(N, pos, size, cargs)
-    util.tprint(cargs)
     local points = {}
 
     for i = 0, N-1 do

@@ -10,12 +10,11 @@ local util = require('util')
 local ics = {}
 ics.obj_funcs = {}
 
-function ics.obj_funcs.circle(pos, rad)
-    return objects.Circle(pos, rad)
+function ics.obj_funcs.circle(pos, rad, cargs)
+    return objects.Circle(pos, rad, cargs)
 end
 
 function ics.obj_funcs.ngon(pos, size, N, cargs)
-    util.tprint({ics=cargs})
     return objects.RegularPolygon(N, pos, size, cargs)
 end
 
