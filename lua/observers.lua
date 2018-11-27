@@ -2,8 +2,18 @@ local util = require('util')
 local objects = require('objects')
 local struct = require('struct')
 
+Observer = util.class()
+function Observer:init() end
+function Observer:begin() end
+function Observer:update_particle(particle) end
+function Observer:update_time(time) end
+function Observer:update_collision(particle, object, time) end
+function Observer:is_triggered() return false end
+function Observer:reset() end
+function Observer:close() end
+
 -- =================================================================
-StateFileRecorder = util.class()
+StateFileRecorder = util.class(Observer)
 function StateFileRecorder:init(filename)
     self.filename = filename
 end
@@ -12,7 +22,7 @@ function StateFileRecorder:begin()
     self.file = io.open(self.filename, 'w')
 end
 
-function StateFileRecorder:update(particle)
+function StateFileRecorder:update_particle(particle)
     local pos = particle.pos
     local vel = particle.vel
     local acc = particle.acc
@@ -29,7 +39,7 @@ function StateFileRecorder:close()
 end
 
 -- =================================================================
-ImageRecorder = util.class()
+ImageRecorder = util.class(Observer)
 function ImageRecorder:init(filename, plotter)
     self.filename = filename
     self.plotter = plotter
@@ -40,7 +50,7 @@ end
 function ImageRecorder:begin()
 end
 
-function ImageRecorder:update(particle)
+function ImageRecorder:update_particle(particle)
     if self.lastposition then
         self.segment.p0[1] = self.lastposition[1]
         self.segment.p0[2] = self.lastposition[2]
@@ -74,12 +84,12 @@ function PointImageRecorder:init(filename, plotter)
     ImageRecorder.init(self, filename, plotter)
 end
 
-function PointImageRecorder:update(particle)
+function PointImageRecorder:update_particle(particle)
     self.plotter:draw_point(particle.pos)
 end
 
 -- =================================================================
-TimePrinter = util.class()
+TimePrinter = util.class(Observer)
 function TimePrinter:init(interval)
     self.interval = interval
 end
@@ -88,7 +98,7 @@ function TimePrinter:begin()
     self.step = 0
 end
 
-function TimePrinter:update(p)
+function TimePrinter:update_time(p)
     if self.step % self.interval == 0 then
         print(self.step)
     end
@@ -100,6 +110,7 @@ function TimePrinter:close()
 end
 
 return {
+    Observer=Observer,
     StateFileRecorder=StateFileRecorder,
     ImageRecorder=ImageRecorder,
     PointImageRecorder=PointImageRecorder,
