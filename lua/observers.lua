@@ -65,6 +65,10 @@ function ImageRecorder:update_particle(particle)
     end
 end
 
+function ImageRecorder:reset()
+    self.lastposition = nil
+end
+
 function ImageRecorder:close()
     local file = io.open(self.filename, 'wb')
     local image = self.plotter:image()
