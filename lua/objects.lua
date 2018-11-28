@@ -78,25 +78,48 @@ function BezierCurve:_bezier_line_poly(s0, s1)
     }
 end
 
-function BezierCurve:_intersect_segment(seg)
-    local poly = self:_bezier_line_poly(seg.p0, seg.p1)
-    return roots.first_root(roots.cubic(poly))
+function BezierCurve:_intersection_bt_st(seg)
+    local btimes = roots.cubic(self:_bezier_line_poly(seg.p0, seg.p1))
+    if not btimes then return nil end
+
+    local times = {}
+    for i = 1, #btimes do
+        times[#times + 1] = {
+            btimes[i],
+            self:_btime_to_stime(seg, btimes[i])
+        }
+    end
+
+    local out = nil
+    for i = 1, #times do
+        local bt, st = times[i][1], times[i][2]
+        if st >= 0 and st <= 1 and bt >= 0 and bt <= 1 then
+            if not out then
+                out = {bt, st}
+            else
+                if out[2] < st then
+                    out = {bt, st}
+                end
+            end
+        end
+    end
+
+    if not out then
+        return nil, nil
+    else
+        return out[1], out[2]
+    end
 end
 
-function BezierCurve:_intersection_to_seg(seg, btime)
+function BezierCurve:_btime_to_stime(seg, btime)
     local eval = self:evaluate(btime)
     return vector.ilerp(seg.p0, seg.p1, eval)
 end
 
 function BezierCurve:intersection(seg)
-    local btime = self:_intersect_segment(seg)
-    if not btime then
-        return nil, nil
-    end
-
-    local stime = self:_intersection_to_seg(seg, btime)
-    if stime >= 0 and stime <= 1 then
-        return self, stime
+    local bt, st = self:_intersection_bt_st(seg)
+    if st then
+        return self, st
     end
     return nil, nil
 end
@@ -111,9 +134,9 @@ function BezierCurve:tangent(t)
 end
 
 function BezierCurve:normal(seg)
-    local t = self:_intersect_segment(seg)
+    local bt, st = self:_intersection_bt_st(seg)
 
-    local tangent = self:tangent(t)
+    local tangent = self:tangent(bt)
     local out = vector.rot90(tangent)
     local diff = vector.vsubv(seg.p1, seg.p0)
     if vector.vdotv(diff, out) < 0 then
