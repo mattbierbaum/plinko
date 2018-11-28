@@ -39,6 +39,14 @@ function vector.lerp(p0, p1, t)
     }
 end
 
+function vector.ilerp(p0, p1, p)
+    if math.abs(p1[1] - p0[1]) < math.abs(p1[2] - p0[2]) then
+        return (p[2] - p0[2]) / (p1[2] - p0[2])
+    else
+        return (p[1] - p0[1]) / (p1[1] - p0[1])
+    end
+end
+
 function vector.rotate(v, theta)
     local c = cos(theta)
     local s = sin(theta)

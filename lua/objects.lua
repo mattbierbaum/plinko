@@ -33,8 +33,108 @@ end
 -- ---------------------------------------------------------------
 BezierCurve = util.class(Object)
 function BezierCurve:init(points, cargs)
+    -- (1-t)^3 P0 + 3(1-t)^2 t P1 + 3(1-t)t^2 P2 + t^3 P3
+    -- 3*(1-t)^2 (p2 - p1) + 6(1-t)t(p3 - p2) + 3t^2(p4 - p3)
     Object.init(self, cargs)
     self.points = points
+    self.coeff = self:_coeff()
+end
+
+function BezierCurve:_coeff()
+    local p1 = self.points[1]
+    local p2 = self.points[2]
+    local p3 = self.points[3]
+    local p4 = self.points[4]
+
+    local xpoly = {0, 0, 0, 0}
+    local ypoly = {0, 0, 0, 0}
+    xpoly[4] = 3*(p2[1] - p3[1]) + p4[1] - p1[1]
+    ypoly[4] = 3*(p2[2] - p3[2]) + p4[2] - p1[2]
+    xpoly[3] = 3*(p1[1] + p3[1] - 2*p2[1])
+    ypoly[3] = 3*(p1[2] + p3[2] - 2*p2[2])
+    xpoly[2] = 3*(p2[1] - p1[1])
+    ypoly[2] = 3*(p2[2] - p1[2])
+    xpoly[1] = p1[1]
+    ypoly[1] = p1[2]
+    return {
+        {xpoly[1], ypoly[1]},
+        {xpoly[2], ypoly[2]},
+        {xpoly[3], ypoly[3]},
+        {xpoly[4], ypoly[4]}
+    }
+end
+
+function BezierCurve:_bezier_line_poly(s0, s1)
+    local dx = s1[1] - s0[1]
+    local dy = s1[2] - s0[2]
+    local m = {dy, -dx}
+    local b = vector.vdotv(m, s0)
+
+    return {
+        vector.vdotv(m, self.coeff[1]) - b,
+        vector.vdotv(m, self.coeff[2]),
+        vector.vdotv(m, self.coeff[3]),
+        vector.vdotv(m, self.coeff[4]),
+    }
+end
+
+function BezierCurve:_intersect_segment(seg)
+    local poly = self:_bezier_line_poly(seg.p0, seg.p1)
+    return roots.first_root(roots.cubic(poly))
+end
+
+function BezierCurve:_intersection_to_seg(seg, btime)
+    local eval = self:evaluate(btime)
+    return vector.ilerp(seg.p0, seg.p1, eval)
+end
+
+function BezierCurve:intersection(seg)
+    local btime = self:_intersect_segment(seg)
+    if not btime then
+        return nil, nil
+    end
+
+    local stime = self:_intersection_to_seg(seg, btime)
+    if stime >= 0 and stime <= 1 then
+        return self, stime
+    end
+    return nil, nil
+end
+
+function BezierCurve:tangent(t)
+    local c = self.coeff
+    local tangent = {
+        c[2][1] + t*(2*c[3][1] + t*3*c[4][1]),
+        c[2][2] + t*(2*c[3][2] + t*3*c[4][2]),
+    }
+    return vector.vnorm(tangent)
+end
+
+function BezierCurve:normal(seg)
+    local t = self:_intersect_segment(seg)
+
+    local tangent = self:tangent(t)
+    local out = vector.rot90(tangent)
+    local diff = vector.vsubv(seg.p1, seg.p0)
+    if vector.vdotv(diff, out) < 0 then
+        return vector.vneg(out)
+    end
+    return out
+end
+
+function BezierCurve:evaluate(t)
+    local c = self.coeff
+    return {
+        c[1][1] + t*(c[2][1] + t*(c[3][1] + t*c[4][1])),
+        c[1][2] + t*(c[2][2] + t*(c[3][2] + t*c[4][2])),
+    }
+end
+
+function BezierCurve:center()
+    return {
+        (self.points[1][1] + self.points[2][1] + self.points[3][1] + self.points[4][1])/4,
+        (self.points[1][2] + self.points[2][2] + self.points[3][2] + self.points[4][2])/4
+    }
 end
 
 -- ---------------------------------------------------------------
@@ -285,7 +385,7 @@ function Box:contains(pt)
     local inx = (pt[1] > bx0 and pt[1] < bx1)
     local iny = (pt[2] > by0 and pt[2] < by1)
     return inx and iny
-end 
+end
 
 -- ---------------------------------------------------------------
 Polygon = util.class(Object)
@@ -460,6 +560,7 @@ return {
     Polygon = Polygon,
     Rectangle = Rectangle,
     RegularPolygon = RegularPolygon,
+    BezierCurve = BezierCurve,
 
     PointParticle = PointParticle,
     SingleParticle = SingleParticle,
