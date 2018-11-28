@@ -9,10 +9,22 @@ function forces.force_central(particle)
     p.acc[2] = 0.5 - p.pos[2]
 end
 
+function forces.force_central_invert(particle)
+    local p = particle
+    p.acc[1] = p.pos[1] - 0.5
+    p.acc[2] = p.pos[2] - 0.5
+end
+
 function forces.force_gravity(particle)
     local p = particle
     p.acc[1] = 0
     p.acc[2] = -1
+end
+
+function forces.force_gravity_invert(particle)
+    local p = particle
+    p.acc[1] = 0
+    p.acc[2] = 1
 end
 
 function forces.force_none(particle)
