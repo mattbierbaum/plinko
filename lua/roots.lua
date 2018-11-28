@@ -153,8 +153,19 @@ function cubic2(poly)
     return sort(t)
 end
 
+local solvers = {linear, quadratic, cubic, generic}
+
+function roots(poly)
+    if #poly-1 <= #solvers then
+        return solvers[#poly-1](poly)
+    end
+
+    return generic(poly)
+end
+
 return {
     quadratic=quadratic,
     cubic=cubic,
-    first_root=first_root
+    first_root=first_root,
+    roots=roots
 }

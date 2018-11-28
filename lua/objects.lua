@@ -33,35 +33,42 @@ end
 -- ---------------------------------------------------------------
 BezierCurve = util.class(Object)
 function BezierCurve:init(points, cargs)
-    -- (1-t)^3 P0 + 3(1-t)^2 t P1 + 3(1-t)t^2 P2 + t^3 P3
-    -- 3*(1-t)^2 (p2 - p1) + 6(1-t)t(p3 - p2) + 3t^2(p4 - p3)
     Object.init(self, cargs)
     self.points = points
     self.coeff = self:_coeff()
 end
 
-function BezierCurve:_coeff()
-    local p1 = self.points[1]
-    local p2 = self.points[2]
-    local p3 = self.points[3]
-    local p4 = self.points[4]
+function BezierCurve:_choose(n, k)
+    local out = 1
+    for i = 1, k do
+        out = out * (n + 1 - i) / i
+    end
+    return out
+end
 
-    local xpoly = {0, 0, 0, 0}
-    local ypoly = {0, 0, 0, 0}
-    xpoly[4] = 3*(p2[1] - p3[1]) + p4[1] - p1[1]
-    ypoly[4] = 3*(p2[2] - p3[2]) + p4[2] - p1[2]
-    xpoly[3] = 3*(p1[1] + p3[1] - 2*p2[1])
-    ypoly[3] = 3*(p1[2] + p3[2] - 2*p2[2])
-    xpoly[2] = 3*(p2[1] - p1[1])
-    ypoly[2] = 3*(p2[2] - p1[2])
-    xpoly[1] = p1[1]
-    ypoly[1] = p1[2]
-    return {
-        {xpoly[1], ypoly[1]},
-        {xpoly[2], ypoly[2]},
-        {xpoly[3], ypoly[3]},
-        {xpoly[4], ypoly[4]}
-    }
+function BezierCurve:_coeff()
+    --[[
+    --  cj = n! / (n-j)! sum_{i=0}^{j} (-1)^{i+j} P_i / (i!(j-i)!)
+    --     = (n j) \sum_{i=0}^j (-1)^{i+j} (j i) P_i
+    --]]
+    local n = #self.points
+
+    local coeff = {}
+    for j = 0, n-1 do
+        coeff[j+1] = {0, 0}
+        for i = 0, j do
+            local odd = (math.fmod(i + j, 2) == 0) and 1 or -1
+            local pre = odd * self:_choose(j, i)
+            coeff[j+1][1] = coeff[j+1][1] + pre*self.points[i+1][1]
+            coeff[j+1][2] = coeff[j+1][2] + pre*self.points[i+1][2]
+        end
+
+        local pre = self:_choose(n-1, j)
+        coeff[j+1][1] = pre * coeff[j+1][1]
+        coeff[j+1][2] = pre * coeff[j+1][2]
+    end
+
+    return coeff
 end
 
 function BezierCurve:_bezier_line_poly(s0, s1)
@@ -70,16 +77,38 @@ function BezierCurve:_bezier_line_poly(s0, s1)
     local m = {dy, -dx}
     local b = vector.vdotv(m, s0)
 
-    return {
-        vector.vdotv(m, self.coeff[1]) - b,
-        vector.vdotv(m, self.coeff[2]),
-        vector.vdotv(m, self.coeff[3]),
-        vector.vdotv(m, self.coeff[4]),
-    }
+    local out = {}
+    for i = 1, #self.coeff do
+        out[i] = vector.vdotv(m, self.coeff[i])
+        if i == 1 then
+            out[i] = out[i] - b
+        end
+    end
+    return out
+end
+
+function BezierCurve:f(t)
+    local c = self.coeff
+    local out = {0, 0}
+    for i = #c, 1, -1 do
+        out[1] = t*out[1] + c[i][1]
+        out[2] = t*out[2] + c[i][2]
+    end
+    return out
+end
+
+function BezierCurve:dfdt(t)
+    local c = self.coeff
+    local out = {0, 0}
+    for i = #c, 2, -1 do
+        out[1] = t*out[1] + (i-1)*c[i][1]
+        out[2] = t*out[2] + (i-1)*c[i][2]
+    end
+    return out
 end
 
 function BezierCurve:_intersection_bt_st(seg)
-    local btimes = roots.cubic(self:_bezier_line_poly(seg.p0, seg.p1))
+    local btimes = roots.roots(self:_bezier_line_poly(seg.p0, seg.p1))
     if not btimes then return nil end
 
     local times = {}
@@ -112,7 +141,7 @@ function BezierCurve:_intersection_bt_st(seg)
 end
 
 function BezierCurve:_btime_to_stime(seg, btime)
-    local eval = self:evaluate(btime)
+    local eval = self:f(btime)
     return vector.ilerp(seg.p0, seg.p1, eval)
 end
 
@@ -124,19 +153,10 @@ function BezierCurve:intersection(seg)
     return nil, nil
 end
 
-function BezierCurve:tangent(t)
-    local c = self.coeff
-    local tangent = {
-        c[2][1] + t*(2*c[3][1] + t*3*c[4][1]),
-        c[2][2] + t*(2*c[3][2] + t*3*c[4][2]),
-    }
-    return vector.vnorm(tangent)
-end
-
 function BezierCurve:normal(seg)
     local bt, st = self:_intersection_bt_st(seg)
 
-    local tangent = self:tangent(bt)
+    local tangent = vector.vnorm(self:dfdt(bt))
     local out = vector.rot90(tangent)
     local diff = vector.vsubv(seg.p1, seg.p0)
     if vector.vdotv(diff, out) < 0 then
@@ -145,18 +165,69 @@ function BezierCurve:normal(seg)
     return out
 end
 
-function BezierCurve:evaluate(t)
-    local c = self.coeff
+function BezierCurve:center()
+    local c = {0, 0}
+    for i = 1, #self.points do
+        c = vector.vaddv(c, self.points[i])
+    end
+    return vector.vdivs(c, #self.points)
+end
+
+-- ---------------------------------------------------------------
+BezierCurveQuadratic = util.class(BezierCurve)
+function BezierCurveQuadratic:init(points, cargs)
+    BezierCurve.init(self, points, cargs)
+end
+
+function BezierCurveQuadratic:_coeff()
+    local p1 = self.points[1]
+    local p2 = self.points[2]
+    local p3 = self.points[3]
+
+    local xpoly = {0, 0, 0}
+    local ypoly = {0, 0, 0}
+    xpoly[3] = p1[1] - 2*p2[1] + p3[1]
+    ypoly[3] = p1[2] - 2*p2[2] + p3[2]
+    xpoly[2] = 2*(p2[1] - p1[1])
+    ypoly[2] = 2*(p2[2] - p1[2])
+    xpoly[1] = p1[1]
+    ypoly[1] = p1[2]
+
     return {
-        c[1][1] + t*(c[2][1] + t*(c[3][1] + t*c[4][1])),
-        c[1][2] + t*(c[2][2] + t*(c[3][2] + t*c[4][2])),
+        {xpoly[1], ypoly[1]},
+        {xpoly[2], ypoly[2]},
+        {xpoly[3], ypoly[3]},
     }
 end
 
-function BezierCurve:center()
+-- ---------------------------------------------------------------
+BezierCurveCubic = util.class(BezierCurve)
+function BezierCurveCubic:init(points, cargs)
+    BezierCurve.init(self, points, cargs)
+end
+
+function BezierCurveCubic:_coeff()
+    local p1 = self.points[1]
+    local p2 = self.points[2]
+    local p3 = self.points[3]
+    local p4 = self.points[4]
+
+    local xpoly = {0, 0, 0, 0}
+    local ypoly = {0, 0, 0, 0}
+    xpoly[4] = 3*(p2[1] - p3[1]) + p4[1] - p1[1]
+    ypoly[4] = 3*(p2[2] - p3[2]) + p4[2] - p1[2]
+    xpoly[3] = 3*(p1[1] + p3[1] - 2*p2[1])
+    ypoly[3] = 3*(p1[2] + p3[2] - 2*p2[2])
+    xpoly[2] = 3*(p2[1] - p1[1])
+    ypoly[2] = 3*(p2[2] - p1[2])
+    xpoly[1] = p1[1]
+    ypoly[1] = p1[2]
+
     return {
-        (self.points[1][1] + self.points[2][1] + self.points[3][1] + self.points[4][1])/4,
-        (self.points[1][2] + self.points[2][2] + self.points[3][2] + self.points[4][2])/4
+        {xpoly[1], ypoly[1]},
+        {xpoly[2], ypoly[2]},
+        {xpoly[3], ypoly[3]},
+        {xpoly[4], ypoly[4]}
     }
 end
 
@@ -584,6 +655,8 @@ return {
     Rectangle = Rectangle,
     RegularPolygon = RegularPolygon,
     BezierCurve = BezierCurve,
+    BezierCurveCubic = BezierCurveCubic,
+    BezierCurveQuadratic = BezierCurveQuadratic,
 
     PointParticle = PointParticle,
     SingleParticle = SingleParticle,
