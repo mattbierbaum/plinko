@@ -39,6 +39,47 @@ function ics.hex_grid_object(rows, cols, func, ...)
     return out, boundary
 end
 
+function ics.square_grid_object(rows, cols, func, ...)
+    local a = 1
+    
+    local out = {}
+    for i = 1, rows do
+        for j = 1, cols do
+            out[#out + 1] = func({a*j, a*i}, ...)
+        end
+    end
+
+    local boundary = {(cols+1)*a, (rows+1)*a}
+    return out, boundary
+end
+
+function ics.diplacement.halfsin(tx, ty)
+    return nil
+end
+
+function ics.displacement_field(grid, func)
+    local mins = {1e10, 1e10}
+    local maxs = {-1e10, -1e10}
+
+    for i = 1, #grid do
+        local c = grid[i]:center()
+        if mins[1] > c[1] then mins[1] = c[1] end
+        if mins[2] > c[2] then mins[2] = c[2] end
+        if maxs[1] < c[1] then maxs[1] = c[1] end
+        if maxs[2] < c[2] then maxs[2] = c[2] end
+    end
+
+    for i = 1, #grid do
+        local o = grid[i]
+        local c = grid[i]:center()
+
+        local tx = (c[1] - mins[1]) / (maxs[1] - mins[1])
+        local ty = (c[2] - mins[2]) / (maxs[2] - mins[2])
+
+        grid[i] = o:translate(func(tx, ty))
+    end
+end
+
 function ics.create_simulation(conf)
     local dt = conf.dt or 1e-2
     local eps = conf.eps or 1e-6
