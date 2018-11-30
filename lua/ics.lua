@@ -9,6 +9,7 @@ local util = require('util')
 
 local ics = {}
 ics.obj_funcs = {}
+ics.displacement = {}
 
 function ics.obj_funcs.circle(pos, rad, cargs)
     return objects.Circle(pos, rad, cargs)
@@ -53,7 +54,7 @@ function ics.square_grid_object(rows, cols, func, ...)
     return out, boundary
 end
 
-function ics.diplacement.halfsin(tx, ty)
+function ics.displacement.halfsin(tx, ty)
     return nil
 end
 
