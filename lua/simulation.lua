@@ -1,4 +1,3 @@
-local json = require('dkjson')
 local util = require('util')
 local vector = require('vector')
 local objects = require('objects')
@@ -139,7 +138,7 @@ function Simulation:step(steps)
         local particles = self.particles[p]
 
         for pind = 1, particles:count() do
-            print('particle', pind)
+            --print('particle', pind)
             local is_running = true
             part0 = particles:index(pind)
 

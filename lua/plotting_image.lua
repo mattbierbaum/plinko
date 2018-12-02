@@ -138,4 +138,30 @@ function DensityPlot:show()
     end
 end
 
+-- ========================================================
+DensityPlotRGB = util.class(DensityPlot)
+
+function DensityPlotRGB:init(box, dpi, alpha)
+    DensityPlot.init(self, box, dpi)
+    self.grid = alloc.create_array(3*self.N, 'double')
+    self.alpha = alpha
+
+    for i = 0, #self.grid-1 do
+        self.grid[i] = 1
+    end
+end
+
+function DensityPlotRGB:_plot(x, y, c)
+    if x < 0 or x >= self.N[1] or y < 0 or y >= self.N[2] then
+        return
+    end
+
+    local x = floor(x)
+    local y = floor(y)
+    local ind = 3*x + 3*y*self.N[1]
+    self.grid[ind+0] = self.grid[ind+0] - c*alpha
+    self.grid[ind+1] = self.grid[ind+1] - c*alpha
+    self.grid[ind+2] = self.grid[ind+2] - c*alpha
+end
+
 return {DensityPlot=DensityPlot}
