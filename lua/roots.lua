@@ -155,12 +155,23 @@ end
 
 local solvers = {linear, quadratic, cubic, generic}
 
-function roots(poly)
-    if #poly-1 <= #solvers then
-        return solvers[#poly-1](poly)
-    end
+if not math.cosh then
+    math.cosh = function(x) return (math.exp(x) + math.exp(-x)) / 2 end
+    math.sinh = function(x) return (math.exp(x) - math.exp(-x)) / 2 end
+end
 
-    return generic(poly)
+function roots(poly)
+    local N = #poly - 1
+
+    if N == 1 then
+        return linear(poly)
+    elseif N == 2 then
+        return quadratic(poly)
+    elseif N == 3 then
+        return cubic(poly)
+    elseif N == 4 then
+        return generic(poly)
+    end
 end
 
 return {
