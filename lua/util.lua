@@ -1,9 +1,18 @@
-local json = require('dkjson')
-
 --[[
 -- https://github.com/ers35/luastatic
 --]]
 local util = {}
+
+function util.crequire(module)
+    module_success, module = xpcall(
+        function() return require(module) end,
+        function(x) end
+        --function(x) print('Could not load: ' .. module .. ', skipping...') end
+    )
+    return module_success and module or nil
+end
+
+local json = util.crequire('dkjson')
 
 function util.class(base, init)
 	local c = {}
@@ -72,7 +81,11 @@ function util.timeit(f)
 end
 
 function util.tprint(t)
-    print(json.encode(t, {indent=true}))
+    if json then
+        print(json.encode(t, {indent=true}))
+    else
+        print(t)
+    end
 end
 
 return util
