@@ -7,13 +7,13 @@ function love.draw()
     o.image:replacePixels(o.data)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(o.image)
+    love.graphics.rectangle("fill", 0, 0, 50, 17)
     love.graphics.setColor(0, 0, 0, 1)
-    --love.graphics.rectangle("line", 100, 50, 200, 150)
     love.graphics.print(string.format("%d FPS", love.timer.getFPS()))
 end
 
 function love.update(dt)
-    s:step(1e3)
+    s:step(5e0)
 end
 
 function love.load()

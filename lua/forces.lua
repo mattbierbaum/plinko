@@ -3,32 +3,37 @@ local util = require('util')
 
 local forces = {}
 
-function forces.force_central(particle)
-    local p = particle
+function forces.apply_independent_forces(particles, func)
+    for i = 1, particles:count() do
+        func(particles:index(i))
+    end
+end
+
+local function _force_central(p)
     p.acc[1] = 0.5 - p.pos[1]
     p.acc[2] = 0.5 - p.pos[2]
 end
 
-function forces.force_central_invert(particle)
-    local p = particle
+local function _force_central_invert(p)
     p.acc[1] = p.pos[1] - 0.5
     p.acc[2] = p.pos[2] - 0.5
 end
 
-function forces.force_gravity(particle)
-    local p = particle
+local function _force_gravity(p)
     p.acc[1] = 0
     p.acc[2] = -1
 end
 
-function forces.force_gravity_invert(particle)
-    local p = particle
+function forces.force_gravity(particles)
+    return forces.apply_independent_forces(particles, _force_gravity)
+end
+
+local function _force_gravity_invert(p)
     p.acc[1] = 0
     p.acc[2] = 1
 end
 
-function forces.force_none(particle)
-    local p = particle
+local function _force_none(p)
     p.acc[1] = 0
     p.acc[2] = 0
 end

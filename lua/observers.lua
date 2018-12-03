@@ -5,6 +5,7 @@ local struct = util.crequire('struct')
 Observer = util.class()
 function Observer:init() end
 function Observer:begin() end
+function Observer:set_particle(particle) end
 function Observer:update_particle(particle) end
 function Observer:update_time(time) end
 function Observer:update_collision(particle, object, time) end

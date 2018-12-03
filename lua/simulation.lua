@@ -11,10 +11,10 @@ Simulation = util.class()
 function Simulation:init(dt, eps)
     self.t = 0
     self.dt = dt
-    self.eps = eps or 1e-10
+    self.eps = eps or 1e-6
     self.equal_time = false
     self.objects = {}
-    self.particles = {}
+    self.particle_groups = {}
     self.force_func = {}
     self.observers = {}
 
@@ -26,7 +26,7 @@ function Simulation:add_object(obj)
 end
 
 function Simulation:add_particle(particle)
-    self.particles[#self.particles + 1] = particle
+    self.particle_groups[#self.particle_groups + 1] = particle
 end
 
 function Simulation:add_force(func)
@@ -134,18 +134,18 @@ function Simulation:step(steps)
     local time = 0
     local vel = {0, 0}
 
-    for p = 1, #self.particles do
-        local particles = self.particles[p]
+    for step = 1, steps do
+        for p = 1, #self.particle_groups do
+            local particles = self.particle_groups[p]
+            self.force_func[1](particles)
 
-        for pind = 1, particles:count() do
-            --print('particle', pind)
-            local is_running = true
-            part0 = particles:index(pind)
+            for pind = 1, particles:count() do
+                part0 = particles:index(pind)
+                self.observer_group:set_particle(part0)
 
-            for step = 1, steps do
+                local is_running = part0.active
                 if not is_running then break end
 
-                self.force_func[1](part0)
                 forces.integrate_euler(part0, part1, self.dt)
 
                 vector.copy(part1.vel, vel)
@@ -157,14 +157,16 @@ function Simulation:step(steps)
 
                 vector.copy(seg0.p1, part0.pos)
                 vector.copy(vel,     part0.vel)
+                self.observer_group:update_particle(part0)
                 time = time + self.dt
-                self.observer_group:update_time(step)
 
                 is_running = is_running and not self.observer_group:is_triggered()
+                part0.active = is_running
+                self.observer_group:reset()
             end
-
-            self.observer_group:reset()
         end
+
+        self.observer_group:update_time(step)
     end
 
     self.observer_group:close()

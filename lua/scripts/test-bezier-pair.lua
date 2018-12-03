@@ -23,7 +23,7 @@ s:step(1e6)
 local t_end = os.clock()
 print(t_end - t_start)
 
-conf.forces = {forces.force_central}
+--[[conf.forces = {forces.force_central}
 conf.particles = {objects.SingleParticle({1.51, 1.21}, {0.01, 0.211}, {0, 0})}
 conf.observers = {observers.StateFileRecorder('./test2.csv')}
 
@@ -31,4 +31,4 @@ local s = ics.create_simulation(conf)
 local t_start = os.clock()
 s:step(1.6e7)
 local t_end = os.clock()
-print(t_end - t_start)
+print(t_end - t_start)]]

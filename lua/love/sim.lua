@@ -1,5 +1,6 @@
 local ffi = require('ffi')
 local ics = require('ics')
+local vector = require('vector')
 local objects = require('objects')
 local forces = require('forces')
 local neighborlist = require('neighborlist')
@@ -33,10 +34,19 @@ function LoveImageObserver:begin()
     self.lastposition = nil
 end
 
+function LoveImageObserver:set_particle(p)
+    self.lastposition = nil
+    --self.lastposition[1] = p.pos[1]
+    --self.lastposition[2] = p.pos[2]
+end
+
+function LoveImageObserver:reset()
+    self.lastposition = nil
+end
+
 function LoveImageObserver:update_time(t) end
 function LoveImageObserver:update_collision() end
 function LoveImageObserver:is_triggered() end
-function LoveImageObserver:reset() end
 function LoveImageObserver:close() end
 
 function LoveImageObserver:update_particle(particle)
@@ -56,7 +66,8 @@ end
 
 function LoveImageObserver:_plot(x, y, c)
     local x = math.floor(x)
-    local y = self.h - math.floor(y)
+    local y = math.floor(y)
+    --local y = self.h - math.floor(y)
 
     if x < 0 or x >= self.N[1] or y < 0 or y >= self.N[2] then
         return
@@ -77,14 +88,22 @@ function level0()
     local w, h, flags = love.window.getMode()
     local obs = LoveImageObserver(w, h, 0.2)
 
+    local p0 = {w/2, h-20}
+    local p1 = p0 --vector.vaddv(p0, {1, 1})
+    local v0 = {0.01*w, 0.01*h}
+    local v1 = {0.011*w, 0.01*h}
+
     local conf = {
         dt = 1e-1,
         eps = 1e-4,
         forces = {forces.force_gravity},
-        particles = {objects.SingleParticle({w/2, h-20}, {0.01*w, 0.01*h}, {0, 0})},
+        --particles = {objects.SingleParticle(p0, v0, {0, 0})},
+        particles = {objects.UniformParticles(p0, p1, v0, v1, 300)},
         objects = {
             objects.Box({0, 0}, {w, h}),
-            objects.Circle({w/2, h/2}, 300)
+            objects.Circle({w/2, h/2}, 300),
+            objects.Circle({w/4, h/2}, 100),
+            objects.Circle({3*w/4, h/2}, 100)
         },
         observers = {obs}
     }
