@@ -469,7 +469,8 @@ function Box:crosses(seg)
     local iny0 = (p0[2] > by0 and p0[2] < by1)
     local iny1 = (p1[2] > by0 and p1[2] < by1)
 
-    return xor(inx0, inx1) and xor(iny0, iny1)
+    return xor(xinx0 and iny0, inx1 and iny1)
+    --return xor(inx0, inx1) and xor(iny0, iny1)
 end
 
 function Box:contains(pt)

@@ -8,6 +8,7 @@ local observers = require('observers')
 local interrupts = require('interrupts')
 local plotting_image = require('plotting_image')
 local util = require('util')
+local obs = require('obs')
 
 function clip(x)
     return x < 0 and 0 or (x > 1 and 1 or x)
@@ -66,8 +67,8 @@ end
 
 function LoveImageObserver:_plot(x, y, c)
     local x = math.floor(x)
-    local y = math.floor(y)
-    --local y = self.h - math.floor(y)
+    --local y = math.floor(y)
+    local y = self.h - math.floor(y)
 
     if x < 0 or x >= self.N[1] or y < 0 or y >= self.N[2] then
         return
@@ -86,7 +87,8 @@ end
 
 function level0()
     local w, h, flags = love.window.getMode()
-    local obs = LoveImageObserver(w, h, 0.2)
+    local _obs = LoveImageObserver(w, h, 0.01)
+    --local _obs = obs.LoveLineObserver(0.1)
 
     local p0 = {w/2, h-20}
     local p1 = p0 --vector.vaddv(p0, {1, 1})
@@ -96,20 +98,22 @@ function level0()
     local conf = {
         dt = 1e-1,
         eps = 1e-4,
+        nbl = neighborlist.CellNeighborlist(objects.Box({0, 0}, {w, h}), {100, 100}),
         forces = {forces.force_gravity},
         --particles = {objects.SingleParticle(p0, v0, {0, 0})},
-        particles = {objects.UniformParticles(p0, p1, v0, v1, 300)},
+        particles = {objects.UniformParticles(p0, p1, v0, v1, 2000)},
         objects = {
             objects.Box({0, 0}, {w, h}),
-            objects.Circle({w/2, h/2}, 300),
-            objects.Circle({w/4, h/2}, 100),
-            objects.Circle({3*w/4, h/2}, 100)
+            --objects.Circle({w/2, h/2}, 300),
+            --objects.Circle({w/4, h/2}, 100),
+            --objects.Circle({3*w/4, h/2}, 100)
         },
-        observers = {obs}
+        observers = {_obs}
     }
     
     local s = ics.create_simulation(conf)
-    return s, obs
+    return s, _obs
 end
+
 
 return {level0 = level0}
