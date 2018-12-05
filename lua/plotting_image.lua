@@ -1,6 +1,5 @@
 local math = require('math')
 local util = require('util')
-local objects = require('objects')
 local alloc = require('alloc')
 
 local floor = math.floor

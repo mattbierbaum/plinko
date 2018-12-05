@@ -7,6 +7,14 @@ local observers = require('observers')
 
 local MAX_BOUNCE = 10000
 
+-- a bunch of module-local items to save on gc
+local nseg = objects.Segment({0, 0}, {0, 0})
+local seg0 = objects.Segment({0, 0}, {0, 0})
+local seg1 = objects.Segment({0, 0}, {0, 0})
+local part0 = objects.PointParticle()
+local part1 = objects.PointParticle()
+local vel = {0, 0}
+
 Simulation = util.class()
 function Simulation:init(dt, eps)
     self.t = 0
@@ -84,20 +92,16 @@ function Simulation:intersection(seg)
 end
 
 function Simulation:linear_project(part, seg, vel)
-    local mint = self._mint
-    local mino = self._mino
-    local nseg = self._nseg
     local running = true
 
     for collision = 1, MAX_BOUNCE do
-        mint, mino = self:intersection(seg)
+        local mint, mino = self:intersection(seg)
 
         if not mino then
             break
         end
 
         mint = (1 - self.eps) * mint
-        --time = time + (1 - time)*mint
 
         nseg.p0 = seg.p1
         nseg.p1 = vector.lerp(seg.p0, seg.p1, mint)
@@ -119,57 +123,84 @@ function Simulation:linear_project(part, seg, vel)
     return part, seg, vel, running
 end
 
+function Simulation:step_particle(part0)
+    self.observer_group:set_particle(part0)
+
+    if not part0.active then
+        return
+    end
+
+    forces.integrate_euler(part0, part1, self.dt)
+
+    vector.copy(part1.vel, vel)
+    vector.copy(part0.pos, seg0.p0)
+    vector.copy(part1.pos, seg0.p1)
+    self.observer_group:update_particle(part0)
+
+    part0, seg0, vel, is_running = self:linear_project(part0, seg0, vel)
+
+    vector.copy(seg0.p1, part0.pos)
+    vector.copy(vel,     part0.vel)
+    self.observer_group:update_particle(part0)
+
+    part0.active = part0.active and not self.observer_group:is_triggered()
+    self.observer_group:reset()
+end
+
 function Simulation:step(steps)
-    self._mint = nil
-    self._mino = nil
-    self._nseg = objects.Segment({0, 0}, {0, 0})
-
     local steps = steps or 1
-    local seg0 = objects.Segment({0, 0}, {0, 0})
-    local seg1 = objects.Segment({0, 0}, {0, 0})
-    local part0 = objects.PointParticle()
-    local part1 = objects.PointParticle()
-
-    local mint, mino = nil, nil
-    local time = 0
-    local vel = {0, 0}
-
     for step = 1, steps do
         for p = 1, #self.particle_groups do
             local particles = self.particle_groups[p]
             self.force_func[1](particles)
 
             for pind = 1, particles:count() do
-                part0 = particles:index(pind)
-                self.observer_group:set_particle(part0)
-
-                local is_running = part0.active
-                if not is_running then break end
-
-                forces.integrate_euler(part0, part1, self.dt)
-
-                vector.copy(part1.vel, vel)
-                vector.copy(part0.pos, seg0.p0)
-                vector.copy(part1.pos, seg0.p1)
-                self.observer_group:update_particle(part0)
-
-                part0, seg0, vel, is_running = self:linear_project(part0, seg0, vel)
-
-                vector.copy(seg0.p1, part0.pos)
-                vector.copy(vel,     part0.vel)
-                self.observer_group:update_particle(part0)
-                time = time + self.dt
-
-                is_running = is_running and not self.observer_group:is_triggered()
-                part0.active = is_running
-                self.observer_group:reset()
+                self:step_particle(particles:index(pind))
             end
         end
 
+        self.t = self.t + self.dt
         self.observer_group:update_time(step)
     end
 
     self.observer_group:close()
 end
 
+function Simulation:parallelize(threads)
+    local lanes = require('lanes').configure()
+    local linda = lanes.linda()
+    local parts = self.particle_groups[1]:partition(threads)
+
+    function stepper(sim, particles, index)
+        sim.particle_groups = {particles}
+        while true do
+            local k, v = linda:receive(1e3, tostring(index))
+
+            if not v then
+                print('Thread timeout, stopping...')
+                break
+            end
+
+            if v == -1 then
+                print('Recieved cleanup signal, stopping...')
+                break
+            end
+            sim:step(v)
+        end
+    end
+
+    local out = {}
+    for i = 1, threads do
+        local th = lanes.gen('*', stepper)(self, parts[i], i)
+        out[i] = th
+    end
+
+    function step(n)
+        for i = 1, threads do
+            linda:send(tostring(i), n)
+        end
+    end
+
+    return step, out
+end
 return {Simulation=Simulation}

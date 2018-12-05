@@ -415,6 +415,11 @@ function Segment:scale(s)
     )
 end
 
+function Segment:update(p0, p1)
+    vector.copy(p0, self.p0)
+    vector.copy(p1, self.p1)
+end
+
 -- ---------------------------------------------------------------
 Box = util.class(Object)
 function Box:init(ll, uu, cargs)
@@ -480,6 +485,18 @@ function Box:contains(pt)
     local inx = (pt[1] > bx0 and pt[1] < bx1)
     local iny = (pt[2] > by0 and pt[2] < by1)
     return inx and iny
+end
+
+function Box:update(ll, uu)
+    vector.copy(ll, self.ll)
+    vector.copy(uu, self.uu)
+    vector.copy({ll[1], uu[2]}, self.lu)
+    vector.copy({uu[1], ll[2]}, self.ul)
+
+    self.segments[1]:update(self.ll, self.lu)
+    self.segments[2]:update(self.lu, self.uu)
+    self.segments[3]:update(self.uu, self.ul)
+    self.segments[4]:update(self.ul, self.ll)
 end
 
 -- ---------------------------------------------------------------
@@ -648,6 +665,19 @@ end
 
 function UniformParticles:count()
     return self.N
+end
+
+function UniformParticles:partition(total)
+    local out = {}
+    for i = 1, total do
+        local p0 = vector.lerp(self.p0, self.p1, (i-1) / total)
+        local p1 = vector.lerp(self.p0, self.p1, (i+0) / total)
+        local v0 = vector.lerp(self.v0, self.v1, (i-1) / total)
+        local v1 = vector.lerp(self.v0, self.v1, (i+0) / total)
+
+        out[i] = UniformParticles(p0, p1, v0, v1, math.floor(self.N / total))
+    end
+    return out
 end
 
 return {
