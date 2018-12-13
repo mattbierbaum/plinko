@@ -36,6 +36,7 @@ function BezierCurve:init(points, cargs)
     Object.init(self, cargs)
     self.points = points
     self.coeff = self:_coeff()
+    self.name = 'bezier'
 end
 
 function BezierCurve:_choose(n, k)
@@ -238,6 +239,7 @@ function Circle:init(pos, rad, cargs)
 	self.pos = pos
 	self.rad = rad
     self.radsq = rad*rad
+    self.name = 'circle'
 end
 
 function Circle:circle_line_poly(p0, p1)
@@ -308,6 +310,7 @@ MaskedCircle = util.class(Circle)
 function MaskedCircle:init(pos, rad, func, cargs)
     Circle.init(self, pos, rad, cargs)
     self.func = func
+    self.name = 'maskedcircle'
 end
 
 function MaskedCircle:intersection(seg)
@@ -343,6 +346,7 @@ function Segment:init(p0, p1, cargs)
     Object.init(self, cargs)
     self.p0 = p0
     self.p1 = p1
+    self.name = 'segment'
 end
 
 function Segment:intersection(seg)
@@ -439,6 +443,7 @@ function Box:init(ll, uu, cargs)
         Segment(self.uu, self.ul),
         Segment(self.ul, self.ll)
     }
+    self.name = 'box'
 end
 
 function Box:center()
@@ -508,6 +513,7 @@ function Polygon:init(points, cargs)
     self.com = self:center()
 
     Object.init(self, cargs)
+    self.name = 'polygon'
 end
 
 function Polygon:_wrap(pts)

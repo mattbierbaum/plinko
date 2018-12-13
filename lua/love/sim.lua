@@ -87,7 +87,7 @@ end
 
 function level0()
     local w, h, flags = love.window.getMode()
-    local _obs = LoveImageObserver(w, h, 0.01)
+    local _obs = LoveImageObserver(w, h, 0.03)
     --local _obs = obs.LoveLineObserver(0.1)
 
     local p0 = {w/2, h-20}
@@ -100,13 +100,14 @@ function level0()
         eps = 1e-4,
         nbl = neighborlist.CellNeighborlist(objects.Box({0, 0}, {w, h}), {100, 100}),
         forces = {forces.force_gravity},
-        --particles = {objects.SingleParticle(p0, v0, {0, 0})},
-        particles = {objects.UniformParticles(p0, p1, v0, v1, 2000)},
+        particles = {objects.SingleParticle(p0, v0, {0, 0})},
+        --particles = {objects.UniformParticles(p0, p1, v0, v1, 10)},
         objects = {
             objects.Box({0, 0}, {w, h}),
-            --objects.Circle({w/2, h/2}, 300),
-            --objects.Circle({w/4, h/2}, 100),
-            --objects.Circle({3*w/4, h/2}, 100)
+            objects.Circle({w/2, h/2}, 300),
+            objects.Circle({w/4, h/2}, 100),
+            objects.Circle({3*w/4, h/2}, 100),
+            --objects.Box({w/6, h/6}, {w/5, h/5})
         },
         observers = {_obs}
     }
