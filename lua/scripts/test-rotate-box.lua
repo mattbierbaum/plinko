@@ -7,11 +7,11 @@ local util = require('util')
 
 local conf = {
     dt = 1e-3,
-    eps = 1e-5,
+    eps = 1e-3,
     forces = {forces.force_gravity},
-    particles = {objects.PointParticle({0.901, 0.95}, {-0.2, -0.1}, {0, 0})},
+    particles = {objects.SingleParticle({0.901, 0.95}, {-0.2, -0.1}, {0, 0})},
     objects = {
-        objects.Box(),
+        objects.Box({0, 0}, {1, 1}),
         objects.Rectangle({0, 0}, {0.4, 0.2})
             :translate({0.2, 0.2})
             :rotate(math.pi/3)

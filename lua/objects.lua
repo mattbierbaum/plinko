@@ -358,9 +358,9 @@ function Segment:intersection(seg)
     local d1 = vector.vsubv(e1, s1)
     local cross = vector.vcrossv(d0, d1)
 
-    if cross < 1e-15 then
-        return nil, nil
-    end
+    --if cross < 1e-27 then
+    --    return nil, nil
+    --end
 
     local t = vector.vcrossv(vector.vsubv(s1, s0), d0) / cross
     local p = -vector.vcrossv(vector.vsubv(s0, s1), d1) / cross
@@ -600,6 +600,21 @@ function Polygon:scale(s)
         points[i] = vector.lerp(self.points[i], c, f)
     end
     return Polygon(points, self.cargs)
+end
+
+function Polygon:coordinate_bounding_box()
+    local x0, y0 = 1e100, 1e100
+    local x1, y1 = -1e100, -1e100
+
+    for i = 1, #self.points-1 do
+        local pt = self.points[i]
+        x0 = math.min(pt[1], x0)
+        y0 = math.min(pt[2], y0)
+        x1 = math.max(pt[1], x1)
+        y1 = math.max(pt[2], y1)
+    end
+
+    return {{x0, y0}, {x1, y1}}
 end
 
 -- -------------------------------------------------------------

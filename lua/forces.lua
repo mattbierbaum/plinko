@@ -9,9 +9,11 @@ function forces.apply_independent_forces(particles, func)
     end
 end
 
-local function _force_central(p)
-    p.acc[1] = 0.5 - p.pos[1]
-    p.acc[2] = 0.5 - p.pos[2]
+local function _force_central(c, k)
+    return function(p)
+        p.acc[1] = k*(c[1] - p.pos[1])
+        p.acc[2] = k*(c[2] - p.pos[2])
+    end
 end
 
 local function _force_central_invert(p)
@@ -26,6 +28,14 @@ end
 
 function forces.force_gravity(particles)
     return forces.apply_independent_forces(particles, _force_gravity)
+end
+
+function forces.generate_force_central(c, k)
+    util.tprint(c)
+    local func = _force_central(c, k)
+    return function(p)
+        return forces.apply_independent_forces(p, func)
+    end
 end
 
 local function _force_gravity_invert(p)
