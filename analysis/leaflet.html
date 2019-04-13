@@ -25,8 +25,8 @@
         <div id='info'>
             <div>
                 <select id='selector'>
-                <option selected='selected' value='data'>Large grid of circles 0.1</option>
-                <option value='data-log'>Large grid of circles log</option>
+                <option selected='selected' value='data'>Large grid of circles</option>
+                <!--<option value='data-log'>Large grid of circles log</option>-->
                 <!--<option value='umap-nn10-0.003'>umap-nn10-0.003</option>
                 <option value='umap-nn100-0.010'>umap-nn100-0.010</option>-->
                 </select>
@@ -49,17 +49,17 @@ function loadmap(name) {
         center: [-X/2, X/2],
         zoom: 2,
         minZoom: 0,
-        maxZoom: 8,
+        maxZoom: 10,
     });
-    
+
     var bounds = L.latLngBounds(
         map.unproject([0, 256], map.getMinZoom()),
         map.unproject([256, 0], map.getMinZoom())
     );
-    
-    L.tileLayer('./'+name+'/{z}/{x}/{y}.png', {
+
+    L.tileLayer('./'+name+'/{z}/{x}/{y}.jpg', {
         minZoom: 0,
-        maxZoom: 8,
+        maxZoom: 10,
         center: [0, 0],
         noWrap: true,
         tms: false,
