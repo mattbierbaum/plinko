@@ -30,7 +30,7 @@ local conf = {
         objects.Box({0, 0}, {1, 1}), {200, 200}, 1e-1
     ),
     forces = {forces.force_gravity},
-    particles = {objects.PointParticle({0.500, 0.986}, {0.1, 0}, {0, 0})},
+    particles = {objects.SingleParticle({0.500, 0.986}, {0.1, 0}, {0, 0})},
     objects = concentric_circles(50, 0.26, 5e-4),
     observers = {
         --observers.StateFileRecorder('./test.csv'),

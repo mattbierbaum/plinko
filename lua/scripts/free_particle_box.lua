@@ -1,7 +1,9 @@
+local forces = require('forces')
+local objects = require('objects')
+
 local conf = {
-    nbl = neighborlist.NaiveNeighborlist(),
     forces = {forces.force_central},
-    particles = {objects.PointParticle({0.5, 0.6}, {0, 0}, {0, 0})},
+    particles = {objects.SingleParticle({0.5, 0.6}, {0, 0}, {0, 0})},
     objects = {}
 }
 
