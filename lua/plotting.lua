@@ -32,7 +32,7 @@ function blendmodes.darken(a, b)        return b < a and b or a end
 function blendmodes.lighten(a, b)       return b > a and b or a end
 function blendmodes.difference(a, b)    return math.abs(a - b) end
 function blendmodes.negation(a, b)      return 1 - math.abs(1 - a - b) end
-function blendmodes.exclusion(a, b)     return a + b - 2*a*b
+function blendmodes.exclusion(a, b)     return a + b - 2*a*b end
 function blendmodes.overlay(a, b)       return b < 0.5 and 2*a*b or 1 - 2*(1-a)*(1-b) end
 function blendmodes.hardlight(a, b)     return a < 0.5 and 2*a*b or 1 - 2*(1-a)*(1-b) end
 function blendmodes.interpolative(a, b) return 0.5 - 0.25*math.cos(math.pi*a) - 0.25*math.cos(math.pi*b) end
