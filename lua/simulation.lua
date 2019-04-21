@@ -9,8 +9,7 @@ local MAX_BOUNCE = 10000
 
 -- a bunch of module-local items to save on gc
 local nseg = objects.Segment({0, 0}, {0, 0})
-local seg0 = objects.Segment({0, 0}, {0, 0})
-local seg1 = objects.Segment({0, 0}, {0, 0})
+local pseg = objects.Segment({0, 0}, {0, 0})
 local part0 = objects.PointParticle()
 local part1 = objects.PointParticle()
 local vel = {0, 0}
@@ -133,13 +132,13 @@ function Simulation:step_particle(part0)
     forces.integrate_euler(part0, part1, self.dt)
 
     vector.copy(part1.vel, vel)
-    vector.copy(part0.pos, seg0.p0)
-    vector.copy(part1.pos, seg0.p1)
+    vector.copy(part0.pos, pseg.p0)
+    vector.copy(part1.pos, pseg.p1)
     self.observer_group:update_particle(part0)
 
-    part0, seg0, vel, is_running = self:linear_project(part0, seg0, vel)
+    part0, pseg, vel, is_running = self:linear_project(part0, pseg, vel)
 
-    vector.copy(seg0.p1, part0.pos)
+    vector.copy(pseg.p1, part0.pos)
     vector.copy(vel,     part0.vel)
     self.observer_group:update_particle(part0)
 

@@ -44,9 +44,9 @@ function ics.square_grid_object(rows, cols, func, ...)
     local a = 1
     
     local out = {}
-    for i = 1, rows do
-        for j = 1, cols do
-            out[#out + 1] = func({a*j, a*i}, ...)
+    for i = 1, rows+1 do
+        for j = 1, cols+2 do
+            out[#out + 1] = func({a*(j-1), a*(i-1)}, ...)
         end
     end
 
