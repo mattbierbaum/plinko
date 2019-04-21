@@ -337,6 +337,12 @@ function circle_nholes(nholes, eps, offset)
     end
 end
 
+function circle_angle_range(amin, amax)
+    return function(theta)
+        return (theta > amin) and (theta < amax)
+    end
+end
+
 function circle_single_angle(angle, eps)
 end
 
@@ -703,7 +709,8 @@ end
 
 return {
     circle_masks = {
-        circle_nholes = circle_nholes
+        circle_nholes = circle_nholes,
+        circle_angle_range = circle_angle_range
     },
     Box = Box,
     Circle = Circle,
