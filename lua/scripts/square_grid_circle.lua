@@ -22,11 +22,11 @@ local box2 = objects.Box({0, 0}, {max, max})
 obj[#obj + 1] = box0
 
 local conf = {
-    dt = 1e-2,
+    dt = 1e-3,
     eps = 1e-4,
     nbl = neighborlist.CellNeighborlist(box1, {100, 100}, 1e-1),
     forces = {forces.force_gravity},
-    particles = {objects.SingleParticle({w/2, h+0.5}, {0.1, 0}, {0, 0})},
+    particles = {objects.SingleParticle({w/2+0.3, O+0.98}, {0.1, 0}, {0, 0})},
     objects = obj,
     observers = {
         observers.StateFileRecorder('./test.csv'),
