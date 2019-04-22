@@ -1,4 +1,5 @@
 local util = require('util')
+local vector = require('vector')
 local objects = require('objects')
 local struct = util.crequire('struct')
 
@@ -81,6 +82,68 @@ function ImageRecorder:close()
         end
     end
     file:close()
+end
+
+-- ========================================================
+SVGLinePlot = util.class(Observer)
+
+SVG_HEADER = [[<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="%fin" height="%fin" viewBox="0 0 %f %f"><g>
+]]
+SVG_PATH_STR = '<path style="fill:none;stroke:#000000;stroke-width:%fin;" d="m '
+SVG_PATH_END = 'Z"/>\n'
+SVG_FOOTER = '</g></svg>'
+
+function SVGLinePlot:init(filename, box, lw)
+    self.filename = filename
+    self.box = box
+    self.lw = lw
+    self.breakpt = 100000
+end
+
+function SVGLinePlot:begin()
+    self.count = 0
+    self.file = io.open(self.filename, 'w')
+    self.file:write(
+        string.format(
+            SVG_HEADER,
+            self.box.uu[1] - self.box.ll[1],
+            self.box.uu[2] - self.box.ll[2],
+            self.box.uu[1] - self.box.ll[1],
+            self.box.uu[2] - self.box.ll[2]
+        )
+    )
+    self.file:write(string.format(SVG_PATH_STR, self.lw))
+end
+
+function SVGLinePlot:update_particle(particle)
+    local pos = vector.vsubv(particle.pos, self.box.ll)
+    pos[2] = self.box.uu[2] - pos[2]
+    local msg = ''
+
+    if self.count == 0 then
+        msg = string.format('%f,%f ', pos[1], pos[2])
+        self.file:write(msg)
+    else
+        msg = string.format('L%f,%f ', pos[1], pos[2])
+        self.file:write(msg)
+    end
+
+    if self.count > self.breakpt then
+        self.file:write(SVG_PATH_END)
+        self.file:write(string.format(SVG_PATH_STR, self.lw))
+        self.file:write(msg)
+        self.count = 0
+    end
+
+    self.count = self.count + 1
+end
+
+function SVGLinePlot:close()
+    self.file:write(SVG_PATH_END)
+    self.file:write(SVG_FOOTER)
+    self.file:flush()
+    self.file:close()
 end
 
 -- =================================================================
@@ -170,5 +233,6 @@ return {
     StateFileRecorder=StateFileRecorder,
     ImageRecorder=ImageRecorder,
     PointImageRecorder=PointImageRecorder,
-    TimePrinter=TimePrinter
+    TimePrinter=TimePrinter,
+    SVGLinePlot=SVGLinePlot
 }
