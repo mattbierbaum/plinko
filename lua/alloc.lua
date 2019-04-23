@@ -64,7 +64,7 @@ function ArrayBase:save_csv(file)
     if #self.shape == 2 then
         for j = 0, self.shape[2]-1 do
             for i = 0, self.shape[1]-1 do
-                file:write(string.format(fmt, self.arr[i+j*self.shape[1]]))
+                file:write(string.format(fmt..' ', self.arr[i+j*self.shape[1]]))
             end
             file:write('\n')
         end
@@ -95,6 +95,22 @@ function ArrayBase:save_bin(file)
     end
 
     file:close()
+end
+
+function ArrayBase:save_pgm2(filename)
+    file = io.open(filename, 'w')
+    file:write(string.format('P2 %i %i %i\n', self.shape[2], self.shape[1], 255))
+    file:close()
+
+    self:save_csv(io.open(filename, 'a'))
+end
+
+function ArrayBase:save_pgm5(filename)
+    file = io.open(filename, 'w')
+    file:write(string.format('P5 %i %i %i\n', self.shape[2], self.shape[1], 255))
+    file:close()
+
+    self:save_bin(io.open(filename, 'ab'))
 end
 
 --================================================

@@ -1,7 +1,6 @@
 local util = require('util')
 local vector = require('vector')
 local objects = require('objects')
-local struct = util.crequire('struct')
 
 Observer = util.class()
 function Observer:init() end

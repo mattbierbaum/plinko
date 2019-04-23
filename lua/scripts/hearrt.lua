@@ -38,11 +38,11 @@ local conf = {
     objects = beziers,
     forces = {forces.generate_force_central({0.5, 0.5}, -2.0)},
     particles = {objects.SingleParticle({0.71, 0.31}, {0.011, 0.0151}, {0, 0})},
-    observers = {observers.StateFileRecorder('./test.csv')}
+    observers = {observers.SVGLinePlot('./test.svg', objects.Box({0,0}, {1,1}), 1e-5)}
 }
 
 local s = ics.create_simulation(conf)
 local t_start = os.clock()
-s:step(3e5)
+s:step(1.3e5)
 local t_end = os.clock()
 print(t_end - t_start)

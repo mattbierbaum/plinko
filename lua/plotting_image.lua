@@ -130,7 +130,6 @@ function DensityPlot:show()
     end
 end
 
-function DensityPlot:xpm2() end
 function DensityPlot:pgm2() end
 function DensityPlot:pgm5() end
 function DensityPlot:ppm() end
