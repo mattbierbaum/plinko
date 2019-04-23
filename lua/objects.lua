@@ -649,11 +649,12 @@ end
 
 -- -------------------------------------------------------------
 PointParticle = util.class(Object)
-function PointParticle:init(pos, vel, acc)
+function PointParticle:init(pos, vel, acc, index)
     self.pos = pos or {0, 0}
     self.vel = vel or {0, 0}
     self.acc = acc or {0, 0}
     self.active = true
+    self.index = not (index == nil) and index or 1
 end
 
 -- -------------------------------------------------------------
@@ -681,7 +682,7 @@ function UniformParticles:init(p0, p1, v0, v1, N)
         local f = i / self.N
         local pos = vector.lerp(self.p0, self.p1, f)
         local vel = vector.lerp(self.v0, self.v1, f)
-        local p = PointParticle(pos, vel, {0, 0})
+        local p = PointParticle(pos, vel, {0, 0}, i)
         self.particles[i] = p
     end
 end

@@ -4,6 +4,7 @@ local forces = require('forces')
 local objects = require('objects')
 local observers = require('observers')
 local util = require('util')
+local plotting_image = require('plotting_image')
 
 local conf = {
     dt = 1e-2,
@@ -21,7 +22,10 @@ local conf = {
     observers = {
         observers.StateFileRecorder('./test.csv'),
         observers.SVGLinePlot('./test.svg', objects.Box({0,0}, {1,1}), 2e-5),
-        observers.TimePrinter(1e6)
+        observers.TimePrinter(1e6),
+        observers.ImageRecorder('./test.img',
+            plotting_image.DensityPlot(objects.Box({0,0}, {1,1}), 1080)
+        ),
     },
 }
 

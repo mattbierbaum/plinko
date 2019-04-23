@@ -84,21 +84,34 @@ function ImageRecorder:close()
     file:close()
 end
 
+-- =================================================================
+PointImageRecorder = util.class(ImageRecorder)
+function PointImageRecorder:init(filename, plotter)
+    ImageRecorder.init(self, filename, plotter)
+end
+
+function PointImageRecorder:update_particle(particle)
+    self.plotter:draw_point(particle.pos)
+end
+
 -- ========================================================
 SVGLinePlot = util.class(Observer)
 
 SVG_HEADER = [[<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="%fin" height="%fin" viewBox="0 0 %f %f"><g>
+<svg xmlns="http://www.w3.org/2000/svg" width="%fin" height="%fin" viewBox="0 0 %f %f"
+     style="background-color:white;"
+><g>
 ]]
 SVG_PATH_STR = '<path style="fill:none;stroke:#000000;stroke-width:%fin;" d="m '
-SVG_PATH_END = 'Z"/>\n'
+SVG_PATH_END = '"/>\n'
 SVG_FOOTER = '</g></svg>'
 
 function SVGLinePlot:init(filename, box, lw)
     self.filename = filename
     self.box = box
     self.lw = lw
-    self.breakpt = 100000
+    self.lastpt = nil
+    self.breakpt = 10000
 end
 
 function SVGLinePlot:begin()
@@ -113,30 +126,26 @@ function SVGLinePlot:begin()
             self.box.uu[2] - self.box.ll[2]
         )
     )
-    self.file:write(string.format(SVG_PATH_STR, self.lw))
 end
 
 function SVGLinePlot:update_particle(particle)
     local pos = vector.vsubv(particle.pos, self.box.ll)
     pos[2] = self.box.uu[2] - pos[2]
-    local msg = ''
 
     if self.count == 0 then
-        msg = string.format('%f,%f ', pos[1], pos[2])
-        self.file:write(msg)
-    else
-        msg = string.format('L%f,%f ', pos[1], pos[2])
-        self.file:write(msg)
+        local pt = self.lastpt and self.lastpt or pos
+        self.file:write(string.format(SVG_PATH_STR, self.lw))
+        self.file:write(string.format('%f,%f ', pt[1], pt[2]))
     end
+    self.file:write(string.format('L%f,%f ', pos[1], pos[2]))
+
+    self.lastpt = pos
+    self.count = self.count + 1
 
     if self.count > self.breakpt then
         self.file:write(SVG_PATH_END)
-        self.file:write(string.format(SVG_PATH_STR, self.lw))
-        self.file:write(msg)
         self.count = 0
     end
-
-    self.count = self.count + 1
 end
 
 function SVGLinePlot:close()
@@ -147,14 +156,16 @@ function SVGLinePlot:close()
 end
 
 -- =================================================================
-PointImageRecorder = util.class(ImageRecorder)
-function PointImageRecorder:init(filename, plotter)
-    ImageRecorder.init(self, filename, plotter)
+LastPositionRecorder = util.class(Observer)
+function LastPositionRecorder:init(filename)
+    self.filename = filename
+    self.pos = {}
 end
 
-function PointImageRecorder:update_particle(particle)
-    self.plotter:draw_point(particle.pos)
+function LastPositionRecorder:update_particle(particle)
+    self.pos[particle.index] = particle.pos
 end
+
 
 -- =================================================================
 TimePrinter = util.class(Observer)
@@ -232,6 +243,7 @@ return {
     ObserverGroup=ObserverGroup,
     StateFileRecorder=StateFileRecorder,
     ImageRecorder=ImageRecorder,
+    LastPositionRecorder=LastPositionRecorder,
     PointImageRecorder=PointImageRecorder,
     TimePrinter=TimePrinter,
     SVGLinePlot=SVGLinePlot
