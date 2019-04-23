@@ -48,9 +48,11 @@ function ArrayBase:zero()
     end
 end
 
-function ArrayBase:save_csv(filename)
+function ArrayBase:save_csv(file)
     assert(#self.shape < 3, 'array is > 2D, cannot save CSV')
-    file = io.open(filename, 'w')
+    if type(file) == 'string' then
+        file = io.open(file, 'w')
+    end
     fmt = '%'..dtypes_format[self.dtype]
 
     if #self.shape == 1 then
@@ -71,9 +73,11 @@ function ArrayBase:save_csv(filename)
     file:close()
 end
 
-function ArrayBase:save_bin(filename)
+function ArrayBase:save_bin(file)
     assert(#self.shape < 3, 'array is > 2D, cannot save')
-    file = io.open(filename, 'wb')
+    if type(file) == 'string' then
+        file = io.open(file, 'wb')
+    end
     fmt = '<'..dtypes_struct[self.dtype]
 
     if #self.shape == 1 then
@@ -131,15 +135,9 @@ function ArrayC:init(size, dtype)
     self:zero()
 end
 
-function ArrayC:tofile(filename)
+function ArrayC:save_bin(filename)
     file = ffi.C.fopen(filename, 'wb')
-    ffi.C.fwrite(self.arr, ffi.sizeof(self.dtype), self.S, file)
-    ffi.C.fclose(file)
-end
-
-function ArrayC:fromfile(filename)
-    file = ffi.C.fopen(filename, 'rb')
-    ffi.C.fread(self.arr, ffi.sizeof(self.dtype), self.S, file)
+    ffi.C.fwrite(self.arr, ffi.sizeof(self.dtype), self.size, file)
     ffi.C.fclose(file)
 end
 

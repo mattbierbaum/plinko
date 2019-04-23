@@ -130,17 +130,10 @@ function DensityPlot:show()
     end
 end
 
-function DensityPlot:xpm2()
-    -- 
-end
-
-function DensityPlot:pgm()
-    -- P2 8 bit grayscale
-end
-
-function DensityPlot:ppm()
-
-end
+function DensityPlot:xpm2() end
+function DensityPlot:pgm2() end
+function DensityPlot:pgm5() end
+function DensityPlot:ppm() end
 
 -- ========================================================
 DensityPlotRGB = util.class(DensityPlot)
