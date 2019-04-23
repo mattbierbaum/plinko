@@ -22,7 +22,8 @@ function DensityPlot:init(box, dpi)
         floor(self.dpi * (self.box.uu[1] - self.box.ll[1])),
         floor(self.dpi * (self.box.uu[2] - self.box.ll[2]))
     }
-    self.grid = alloc.create_array(self.N, 'double')
+    self.array = alloc.create_array(self.N, 'double')
+    self.grid = self.array.arr
 end
 
 function DensityPlot:_plot(x, y, c)
@@ -115,16 +116,8 @@ function DensityPlot:draw_point(p)
     self:_plot(x, y, 1)
 end
 
-function DensityPlot:image()
-    return self.grid
-end
-
-function DensityPlot:size()
-    return self.N[1] * self.N[2]
-end
-
-function DensityPlot:shape()
-    return self.N
+function DensityPlot:save_bin(fn)
+    self.array:save_bin(fn)
 end
 
 function DensityPlot:show()

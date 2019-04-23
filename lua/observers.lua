@@ -72,16 +72,7 @@ function ImageRecorder:reset()
 end
 
 function ImageRecorder:close()
-    local file = io.open(self.filename, 'wb')
-    local image = self.plotter:image()
-    local shape = self.plotter:shape()
-
-    for j = 0, shape[2]-1 do
-        for i = 0, shape[1]-1 do
-            file:write(struct.pack('<d', image[i + j*shape[1]]))
-        end
-    end
-    file:close()
+    self.plotter:save_bin(self.filename)
 end
 
 -- =================================================================

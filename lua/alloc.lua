@@ -3,15 +3,18 @@ local ffi = util.crequire('ffi')
 local js = util.crequire('js')
 local struct = util.crequire('struct')
 
-local struct_dtypes = {
-    double = 'd',
-    float = 'f',
-    ubyte = 'B',
-    byte = 'b',
-    int = 'i',
-    uint = 'I',
-    long = 'l',
-    ulong = 'L'
+local dtypes_struct = {
+    float = 'f', double = 'd',
+    ubyte = 'B', byte = 'b',
+    uint = 'I',  int = 'i',
+    ulong = 'L', long = 'l',
+}
+
+local dtypes_format = {
+    float = 'f', double = 'f',
+    ubyte = 'c', byte = 'c',
+    uint = 'u',  int = 'i',
+    ulong = 'L', long = 'l',
 }
 
 local function convert_size(size)
@@ -30,6 +33,10 @@ end
 ArrayBase = util.class()
 
 function ArrayBase:init(size, dtype)
+    if type(size) == 'number' then
+        size = {size}
+    end
+
     self.dtype = dtype
     self.size = convert_size(size)
     self.shape = size
@@ -42,19 +49,21 @@ function ArrayBase:zero()
 end
 
 function ArrayBase:save_csv(filename)
-    if #self.shape > 2 then
-        print("Array is > 2D, cannot save CSV")
-        return
-    end
+    assert(#self.shape < 3, 'array is > 2D, cannot save CSV')
     file = io.open(filename, 'w')
+    fmt = '%'..dtypes_format[self.dtype]
 
     if #self.shape == 1 then
-        file:write(table.concat(self.arr, '\n'))
+        for i = 0, self.shape[1]-1 do
+            file:write(string.format(fmt..'\n', self.arr[i]))
+        end
     end
 
     if #self.shape == 2 then
-        for i = 0, self.size[1]-1 do
-            file:write(table.concat(self.arr[i], ', '))
+        for j = 0, self.shape[2]-1 do
+            for i = 0, self.shape[1]-1 do
+                file:write(string.format(fmt, self.arr[i+j*self.shape[1]]))
+            end
             file:write('\n')
         end
     end
@@ -63,7 +72,25 @@ function ArrayBase:save_csv(filename)
 end
 
 function ArrayBase:save_bin(filename)
+    assert(#self.shape < 3, 'array is > 2D, cannot save')
+    file = io.open(filename, 'wb')
+    fmt = '<'..dtypes_struct[self.dtype]
 
+    if #self.shape == 1 then
+        for i = 0, self.shape[1]-1 do
+            file:write(struct.pack(fmt, self.arr[i]))
+        end
+    end
+
+    if #self.shape == 2 then
+        for j = 0, self.shape[2]-1 do
+            for i = 0, self.shape[1]-1 do
+                file:write(struct.pack(fmt, self.arr[i+j*self.shape[1]]))
+            end
+        end
+    end
+
+    file:close()
 end
 
 --================================================
@@ -147,7 +174,7 @@ else
 end
 
 function create_array(size, dtype)
-    return Array(size, dtype).arr
+    return Array(size, dtype)
 end
 
 return {Array=Array, create_array=create_array}
