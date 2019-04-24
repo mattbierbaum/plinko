@@ -153,7 +153,7 @@ local cmaps = {}
 function cmaps.gray_r(data)
     local out = alloc.create_array(data.shape, 'ubyte')
     for i = 0, data.size-1 do
-        out.arr[i] = math.floor(256 * data.arr[i])
+        out.arr[i] = 255 - math.floor(256 * data.arr[i])
     end
     return out
 end
