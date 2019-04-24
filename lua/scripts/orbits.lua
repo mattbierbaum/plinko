@@ -16,7 +16,11 @@ if #arg == 3 then
 else
     print('orbits <vx> <vy> <t_max>')
     print('suggestions:')
-    print('\t0.1 0.44 1e6')
+    print('\t0.60 0.35 3e6')
+    print('\t0.50 0.50 3e6')
+    print('\t0.50 0.60 1e6')
+    print('\t0.50 0.63 6e6')
+    print('\t0.20 0.75 1e6')
     os.exit()
 end
 
@@ -25,7 +29,7 @@ local conf = {
     dt = 1e-2,
     eps = 1e-4,
     forces = {forces.force_gravity},
-    particles = {objects.SingleParticle({L, 1.9*L}, {-f0*L, -f1*L}, {0, 0})},
+    particles = {objects.SingleParticle({0.53*L, 0.2*L}, {-f0*L, -f1*L}, {0, 0})},
     objects = {objects.Circle({L, L}, L, {damp=1.0})},
     observers = {
         observers.ImageRecorder('./orbits.pgm',

@@ -1,7 +1,7 @@
 LJ=luajit
 
-LUA_INC = ~/build/LuaJIT-2.1.0-beta3/src/
-LUA_LIB = ~/build/LuaJIT-2.1.0-beta3/src/libluajit.a
+LUA_INC = ~/builds/LuaJIT-2.1.0-beta3/src/
+LUA_LIB = ~/builds/LuaJIT-2.1.0-beta3/src/libluajit.a
 
 LIB_SRC = $(wildcard *.lua)
 LIB_OBJ = $(LIB_SRC:.lua=.o)
@@ -22,7 +22,7 @@ print-%  : ; @echo $* = $($*)
 	ar rcs $@ $^
 
 %.exe: %.lua $(LIB)
-	$(LJ) external/luastatic.lua $< $(LIB_SRC) $(LUA_LIB) -I$(LUA_INC) -static -ldl -o $@
+	$(LJ) external/luastatic.lua $< $(LIB_SRC) $(LUA_LIB) -I$(LUA_INC) -o $@
 
 all: $(EXE)
 

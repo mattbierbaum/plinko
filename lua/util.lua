@@ -12,7 +12,7 @@ function util.crequire(module)
     return module_success and module or nil
 end
 
-local json = util.crequire('dkjson')
+local json = require('external.dkjson')
 
 function util.class(base, init)
 	local c = {}
