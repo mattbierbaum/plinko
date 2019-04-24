@@ -165,6 +165,20 @@ function LastPositionRecorder:update_particle(particle)
     self.pos[particle.index] = particle.pos
 end
 
+-- =================================================================
+BounceCountRecorder = util.class(Observer)
+function BounceCountRecorder:init(filename)
+    self.filename = filename
+    self.bounces = {}
+end
+
+function BounceCountRecorder:update_collision(particle, object, time)
+    local i = particle.index
+    if not self.bounces[i] then
+        self.bounces[i] = 0
+    end
+    self.bounces[i] = self.bounces[i] + 1
+end
 
 -- =================================================================
 TimePrinter = util.class(Observer)
