@@ -23,8 +23,11 @@ local conf = {
         observers.StateFileRecorder('./test.csv'),
         observers.SVGLinePlot('./test.svg', objects.Box({0,0}, {1,1}), 2e-5),
         observers.TimePrinter(1e6),
-        observers.ImageRecorder('./test.img',
-            plotting_image.DensityPlot(objects.Box({0,0}, {1,1}), 1080)
+        observers.ImageRecorder('./test.pgm',
+            plotting_image.DensityPlot(objects.Box({0,0}, {1,1}), 1080), 'pgm5'
+        ),
+        observers.ImageRecorder('./test.bin',
+            plotting_image.DensityPlot(objects.Box({0,0}, {1,1}), 1080), 'bin'
         ),
     },
 }
