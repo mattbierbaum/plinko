@@ -1,0 +1,6 @@
+*.a
+*.json
+*.csv
+*.out
+*.img
+old/

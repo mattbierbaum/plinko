@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>PLINKO</title>
+    <style>
+        html, body, #map {
+            height: 100%;
+            margin: 0px;
+            padding: 0px;
+            z-index: 0;
+        }
+
+        #info {
+            z-index: 1;
+            position: absolute;
+            top: 25px;
+            left: 100px;
+        }
+    </style>
+    <link rel='stylesheet' href='./leaflet/leaflet.css' />
+    <script src='./leaflet/leaflet.js'></script>
+    </head>
+    <body>
+        <div id='map'></div>
+        <div id='info'>
+            <div>
+                <select id='selector'>
+                <option selected='selected' value='data'>Large grid of circles</option>
+                <!--<option value='data-log'>Large grid of circles log</option>-->
+                <!--<option value='umap-nn10-0.003'>umap-nn10-0.003</option>
+                <option value='umap-nn100-0.010'>umap-nn100-0.010</option>-->
+                </select>
+            </div>
+        </div>
+    </body>
+    <script>
+var X = 256;
+var bdx = []
+var bdy = []
+var marker = null;
+var map;
+
+function loadmap(name) {
+    if (map) { map.remove(); }
+
+    map = L.map('map', {
+        crs: L.CRS.Simple,
+        bounds: [[0, 256], [0, 256]],
+        center: [-X/2, X/2],
+        zoom: 2,
+        minZoom: 0,
+        maxZoom: 10,
+    });
+
+    var bounds = L.latLngBounds(
+        map.unproject([0, 256], map.getMinZoom()),
+        map.unproject([256, 0], map.getMinZoom())
+    );
+
+    L.tileLayer('./'+name+'/{z}/{x}/{y}.jpg', {
+        minZoom: 0,
+        maxZoom: 10,
+        center: [0, 0],
+        noWrap: true,
+        tms: false,
+        bounds: bounds
+    }).addTo(map);
+
+    marker = null;
+}
+
+function change_map(event) {
+    var name = document.getElementById('selector').value;
+    console.log(name);
+    loadmap(name);
+}
+
+change_map();
+
+document.getElementById('selector').onchange = change_map;
+
+      </script>
+</html>
