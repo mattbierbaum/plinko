@@ -1,6 +1,7 @@
 local math = require('math')
 local util = require('util')
 local alloc = require('alloc')
+local plotting = require('plotting')
 
 local floor = math.floor
 function ipart(x) return floor(x) end
@@ -22,7 +23,7 @@ function DensityPlot:init(box, dpi)
         floor(self.dpi * (self.box.uu[1] - self.box.ll[1])),
         floor(self.dpi * (self.box.uu[2] - self.box.ll[2]))
     }
-    self.array = alloc.create_array(self.N, 'double')
+    self.array = alloc.create_array(self.N, 'float')
     self.grid = self.array.arr
 end
 
@@ -116,9 +117,21 @@ function DensityPlot:draw_point(p)
     self:_plot(x, y, 1)
 end
 
+function DensityPlot:save_csv(fn)
+    self.array:save_csv(fn)
+end
+
 function DensityPlot:save_bin(fn)
     self.array:save_bin(fn)
 end
+
+function DensityPlot:save_pgm2(fn) end
+function DensityPlot:save_pgm5(fn)
+    local img = plotting.cmaps.gray_r(plotting.eq_hist(self.array, 256*256))
+    img:save_pgm5(fn)
+end
+
+function DensityPlot:save_ppm() end
 
 function DensityPlot:show()
     for j = self.N[2]-1, 0, -1 do
@@ -130,16 +143,13 @@ function DensityPlot:show()
     end
 end
 
-function DensityPlot:pgm2() end
-function DensityPlot:pgm5() end
-function DensityPlot:ppm() end
 
 -- ========================================================
 DensityPlotRGB = util.class(DensityPlot)
 
 function DensityPlotRGB:init(box, dpi, alpha)
     DensityPlot.init(self, box, dpi)
-    self.grid = alloc.create_array(3*self.N, 'double')
+    self.grid = alloc.create_array(3*self.N, 'float')
     self.alpha = alpha
 
     for i = 0, #self.grid-1 do

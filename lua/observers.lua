@@ -41,7 +41,8 @@ end
 
 -- =================================================================
 ImageRecorder = util.class(Observer)
-function ImageRecorder:init(filename, plotter)
+function ImageRecorder:init(filename, plotter, format)
+    self.format = format or 'pgm5'
     self.filename = filename
     self.plotter = plotter
     self.lastposition = nil
@@ -71,7 +72,15 @@ function ImageRecorder:reset()
 end
 
 function ImageRecorder:close()
-    self.plotter:save_bin(self.filename)
+    if self.format == 'csv' then
+        self.plotter:save_csv(self.filename)
+    end
+    if self.format == 'bin' then
+        self.plotter:save_bin(self.filename)
+    end
+    if self.format == 'pgm5' then
+        self.plotter:save_pgm5(self.filename)
+    end
 end
 
 -- =================================================================
