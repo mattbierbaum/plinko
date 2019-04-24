@@ -48,6 +48,18 @@ function ArrayBase:zero()
     end
 end
 
+function ArrayBase:minmax_nozero(cutoff)
+    local cut = cutoff ~= nil and cutoff or 1e-15
+    local min = 1e100
+    local max = -1e100
+    for i = 0, self.size-1 do
+        local d = self.arr[i]
+        if d < min and d > cut then min = d end
+        if d > max then max = d end
+    end
+    return min, max
+end
+
 function ArrayBase:minmax()
     local min = 1e100
     local max = -1e100

@@ -75,15 +75,19 @@ function blendmodes.apply(func, ca, cb)
     return out
 end
 
-function hist(array, nbins)
-    local min, max = array:minmax()
+function hist(array, nbins, docut)
+    local docut = docut ~= nil and docut or true
+
+    local min, max = array:minmax_nozero()
     local bins = alloc.create_array(nbins, 'int')
     local norm = 1.0 / (max - min)
 
     for i = 0, array.size-1 do
         local v = array.arr[i]
-        local n = math.floor(math.max(math.min(nbins*(v - min)*norm, nbins-1), 0))
-        bins.arr[n] = bins.arr[n] + 1
+        if docut and v > min then
+            local n = math.floor(math.max(math.min(nbins*(v - min)*norm, nbins-1), 0))
+            bins.arr[n] = bins.arr[n] + 1
+        end
     end
 
     return bins
@@ -104,7 +108,7 @@ function cdf(data)
 end
 
 function eq_hist(data, nbins)
-    local min, max = data:minmax()
+    local min, max = data:minmax_nozero()
 
     local df = cdf(hist(data, nbins))
     local dx = (max - min) / nbins
