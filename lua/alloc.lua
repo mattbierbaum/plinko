@@ -48,12 +48,36 @@ function ArrayBase:zero()
     end
 end
 
-function ArrayBase:save_csv(file)
+function ArrayBase:minmax()
+    local min = 1e100
+    local max = -1e100
+    for i = 0, self.size-1 do
+        local d = self.arr[i]
+        if d < min then min = d end
+        if d > max then max = d end
+    end
+    return min, max
+end
+
+function ArrayBase:sum()
+    local out = 0.0
+    for i = 0, self.size-1 do
+        out = out + self.arr[i]
+    end
+    return out
+end
+
+function ArrayBase:save_csv(file, mode)
     assert(#self.shape < 3, 'array is > 2D, cannot save CSV')
-    if type(file) == 'string' then
+
+    if mode == 'a' then
+        file = io.open(file, 'a')
+        file:seek('end')
+    else
         file = io.open(file, 'w')
     end
-    fmt = '%'..dtypes_format[self.dtype]
+
+    local fmt = '%'..dtypes_format[self.dtype]
 
     if #self.shape == 1 then
         for i = 0, self.shape[1]-1 do
@@ -73,12 +97,17 @@ function ArrayBase:save_csv(file)
     file:close()
 end
 
-function ArrayBase:save_bin(file)
+function ArrayBase:save_bin(file, mode)
     assert(#self.shape < 3, 'array is > 2D, cannot save')
-    if type(file) == 'string' then
+
+    if mode == 'a' then
+        file = io.open(file, 'ab')
+        file:seek('end')
+    else
         file = io.open(file, 'wb')
     end
-    fmt = '<'..dtypes_struct[self.dtype]
+
+    local fmt = '<'..dtypes_struct[self.dtype]
 
     if #self.shape == 1 then
         for i = 0, self.shape[1]-1 do
@@ -102,7 +131,7 @@ function ArrayBase:save_pgm2(filename)
     file:write(string.format('P2 %i %i %i\n', self.shape[2], self.shape[1], 255))
     file:close()
 
-    self:save_csv(io.open(filename, 'a'))
+    self:save_csv(filename, 'a')
 end
 
 function ArrayBase:save_pgm5(filename)
@@ -110,7 +139,7 @@ function ArrayBase:save_pgm5(filename)
     file:write(string.format('P5 %i %i %i\n', self.shape[2], self.shape[1], 255))
     file:close()
 
-    self:save_bin(io.open(filename, 'ab'))
+    self:save_bin(filename, 'a')
 end
 
 --================================================
@@ -151,8 +180,9 @@ function ArrayC:init(size, dtype)
     self:zero()
 end
 
-function ArrayC:save_bin(filename)
-    file = ffi.C.fopen(filename, 'wb')
+function ArrayC:save_bin(filename, mode)
+    mode = mode ~= nil and mode or 'w'
+    file = ffi.C.fopen(filename, mode..'b')
     ffi.C.fwrite(self.arr, ffi.sizeof(self.dtype), self.size, file)
     ffi.C.fclose(file)
 end
@@ -164,6 +194,9 @@ else
         Array = ArrayLua
     else
         ffi.cdef[[
+            typedef unsigned char ubyte;
+            typedef signed char byte;
+
             typedef struct {
               char *fpos;
               void *base;
