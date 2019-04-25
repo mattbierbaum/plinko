@@ -4,6 +4,9 @@ plinko-density
 plinko-directdraw
 plinko-twotone
 plinko-nbounces
+*.a
+*.lua.c
+*.exe
 *.o
 *.conf
 *.pegs
