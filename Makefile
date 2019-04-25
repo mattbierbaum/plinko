@@ -3,8 +3,7 @@ LJ=luajit
 LUA_INC = ~/builds/LuaJIT-2.1.0-beta3/src/
 LUA_LIB = ~/builds/LuaJIT-2.1.0-beta3/src/libluajit.a
 
-LIB_SRC = $(wildcard plinko/*.lua)
-LIB_SRC += lib/dkjson.lua lib/argparse.lua
+LIB_SRC = $(wildcard plinko/*.lua) $(wildcard lib/*.lua)
 LIB_OBJ = $(LIB_SRC:.lua=.o)
 LIB = plinko.a
 
