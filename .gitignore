@@ -1,9 +1,9 @@
-plinko
-plinko-single
-plinko-density
-plinko-directdraw
-plinko-twotone
-plinko-nbounces
+clib/plinko
+clib/plinko-single
+clib/plinko-density
+clib/plinko-directdraw
+clib/plinko-twotone
+clib/plinko-nbounces
 *.a
 *.lua.c
 *.exe

@@ -8,4 +8,8 @@ function dofile(filename)
     return f()
 end
 
-dofile(table.remove(arg, 1))
+if #arg < 1 then
+    print("plinko <script.lua> <args>")
+else
+    dofile(table.remove(arg, 1))
+end
