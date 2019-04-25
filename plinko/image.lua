@@ -7,8 +7,8 @@
 --  https://en.wikipedia.org/wiki/Blend_modes
 --  https://en.wikipedia.org/wiki/Alpha_compositing
 --]]
-local util = require('util')
-local alloc = require('alloc')
+local util = require('plinko.util')
+local alloc = require('plinko.alloc')
 
 local function clip(x)
     return math.max(0, math.min(x, 1))

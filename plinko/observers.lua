@@ -1,6 +1,6 @@
-local util = require('util')
-local vector = require('vector')
-local objects = require('objects')
+local util = require('plinko.util')
+local vector = require('plinko.vector')
+local objects = require('plinko.objects')
 
 Observer = util.class()
 function Observer:init() end

@@ -1,7 +1,6 @@
-local math = require('math')
-local util = require('util')
-local vector = require('vector')
-local objects = require('objects')
+local util = require('plinko.util')
+local vector = require('plinko.vector')
+local objects = require('plinko.objects')
 
 local floor = math.floor
 local ceil = math.ceil

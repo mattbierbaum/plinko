@@ -1,7 +1,6 @@
-local math = require('math')
-local util = require('util')
-local alloc = require('alloc')
-local plotting = require('plotting')
+local util = require('plinko.util')
+local alloc = require('plinko.alloc')
+local image = require('plinko.image')
 
 local floor = math.floor
 function ipart(x) return floor(x) end
@@ -127,7 +126,7 @@ end
 
 function DensityPlot:save_pgm2(fn) end
 function DensityPlot:save_pgm5(fn)
-    local img = plotting.cmaps.gray_r(plotting.eq_hist(self.array, 256*256))
+    local img = image.cmaps.gray_r(image.eq_hist(self.array, 256*256))
     img:save_pgm5(fn)
 end
 

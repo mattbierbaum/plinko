@@ -1,11 +1,11 @@
-local simulation = require('simulation')
-local objects = require('objects')
-local forces = require('forces')
-local vector = require('vector')
-local neighborlist = require('neighborlist')
-local observers = require('observers')
-local plotting_image = require('plotting_image')
-local util = require('util')
+local simulation = require('plinko.simulation')
+local objects = require('plinko.objects')
+local forces = require('plinko.forces')
+local vector = require('plinko.vector')
+local neighborlist = require('plinko.neighborlist')
+local observers = require('plinko.observers')
+local plotting = require('plinko.plotting')
+local util = require('plinko.util')
 
 local ics = {}
 ics.obj_funcs = {}

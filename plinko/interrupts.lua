@@ -1,5 +1,5 @@
-local observers = require('observers')
-local util = require('util')
+local observers = require('plinko.observers')
+local util = require('plinko.util')
 
 Interrupt = util.class(observers.Observer)
 function Interrupt:is_triggered() return false end

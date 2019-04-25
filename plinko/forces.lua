@@ -1,5 +1,5 @@
-local vector = require('vector')
-local util = require('util')
+local vector = require('plinko.vector')
+local util = require('plinko.util')
 
 local forces = {}
 

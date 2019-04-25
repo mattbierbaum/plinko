@@ -1,9 +1,9 @@
-local util = require('util')
-local vector = require('vector')
-local objects = require('objects')
-local forces = require('forces')
-local neighborlist = require('neighborlist')
-local observers = require('observers')
+local util = require('plinko.util')
+local vector = require('plinko.vector')
+local objects = require('plinko.objects')
+local forces = require('plinko.forces')
+local neighborlist = require('plinko.neighborlist')
+local observers = require('plinko.observers')
 
 local MAX_BOUNCE = 10000
 

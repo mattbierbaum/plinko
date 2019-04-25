@@ -1,4 +1,4 @@
-local util = require('util')
+local util = require('plinko.util')
 local ffi = util.crequire('ffi')
 local js = util.crequire('js')
 local struct = util.crequire('struct')

@@ -3,11 +3,11 @@ LJ=luajit
 LUA_INC = ~/builds/LuaJIT-2.1.0-beta3/src/
 LUA_LIB = ~/builds/LuaJIT-2.1.0-beta3/src/libluajit.a
 
-LIB_SRC = $(wildcard *.lua)
+LIB_SRC = $(wildcard plinko/*.lua)
 LIB_OBJ = $(LIB_SRC:.lua=.o)
 LIB = plinko.a
 
-EXE_SRC = $(wildcard scripts/*.lua)
+EXE_SRC = $(wildcard examples/*.lua)
 EXE_C = $(EXE_SRC:.lua=.lua.c)
 EXE = $(EXE_C:.lua.c=.exe)
 
@@ -22,7 +22,7 @@ print-%  : ; @echo $* = $($*)
 	ar rcs $@ $^
 
 %.exe: %.lua $(LIB)
-	$(LJ) external/luastatic.lua $< $(LIB_SRC) $(LUA_LIB) -I$(LUA_INC) -o $@
+	$(LJ) lib/luastatic.lua $< $(LIB_SRC) $(LUA_LIB) -I$(LUA_INC) -o $@
 
 all: $(EXE)
 

@@ -1,7 +1,6 @@
-local math = require('math')
-local util = require('util')
-local vector = require('vector')
-local roots = require('roots')
+local util = require('plinko.util')
+local vector = require('plinko.vector')
+local roots = require('plinko.roots')
 
 function xor(a, b)
     return (a and not b) or (b and not a)
