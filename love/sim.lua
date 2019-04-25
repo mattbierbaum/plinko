@@ -89,7 +89,7 @@ end
 
 function level0()
     local w, h, flags = love.window.getMode()
-    local _obs = LoveImageObserver(w, h, 0.03)
+    local _obs = LoveImageObserver(w, h, 0.5)
     --local _obs = obs.LoveLineObserver(0.1)
 
     local p0 = {w/2, h-20}

@@ -34,7 +34,7 @@ end
 
 function love.update(dt)
     --s:step(2e4)
-    s:step(1e3)
+    s:step(10)
 end
 
 function love.load()
