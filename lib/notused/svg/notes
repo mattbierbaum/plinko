@@ -1,0 +1,10 @@
+inkscape copy-of-file.svg --select=id-of-node \
+    --verb=EditCut --verb=EditPaste \
+    --verb=FileSave --verb=FileClose
+
+Assuming you have "Transforms -> Store transformation" set to "Optimized" in
+inkscape's prefs (I believe it is on by default), this will apply it and
+produce the wanted result. Be sure you operate on a copy of your input file, as
+the operation replaces your original file!
+
+inkscape -f filename.svg --verb EditSelectAll --verb SelectionUnGroup --verb EditSelectAll --verb ObjectToPath --verb FileSave --verb FileQuit
