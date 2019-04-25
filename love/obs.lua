@@ -1,5 +1,5 @@
-local util = require('util')
-local observers = require('observers')
+local util = require('plinko.util')
+local observers = require('plinko.observers')
 
 LoveLineObserver = util.class(observers.Observer)
 function LoveLineObserver:init(alpha)

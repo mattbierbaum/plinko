@@ -1,9 +1,9 @@
-local ics = require('ics')
-local neighborlist = require('neighborlist')
-local forces = require('forces')
-local objects = require('objects')
-local observers = require('observers')
-local plotting_image = require('plotting_image')
+local ics = require('plinko.ics')
+local neighborlist = require('plinko.neighborlist')
+local forces = require('plinko.forces')
+local objects = require('plinko.objects')
+local observers = require('plinko.observers')
+local plotting = require('plinko.plotting')
 
 function concentric_circles(N, minr, eps)
     local p = {0.5, 0.5}
@@ -35,7 +35,7 @@ local conf = {
     observers = {
         --observers.StateFileRecorder('./test.csv'),
         observers.PointImageRecorder('./test.img', 
-            plotting_image.DensityPlot(objects.Box({0, 0}, {1, 1}), 10000)
+            plotting.DensityPlot(objects.Box({0, 0}, {1, 1}), 10000)
         ),
         observers.TimePrinter(1e6)
     },

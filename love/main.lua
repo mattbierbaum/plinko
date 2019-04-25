@@ -1,5 +1,6 @@
+local util = require('plinko.util')
+
 local sim = require('sim')
-local util = require('util')
 
 local s, o
 

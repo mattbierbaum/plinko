@@ -1,22 +1,24 @@
 local ffi = require('ffi')
-local ics = require('ics')
-local vector = require('vector')
-local objects = require('objects')
-local forces = require('forces')
-local neighborlist = require('neighborlist')
-local observers = require('observers')
-local interrupts = require('interrupts')
-local plotting_image = require('plotting_image')
-local util = require('util')
+
+local ics = require('plinko.ics')
+local vector = require('plinko.vector')
+local objects = require('plinko.objects')
+local forces = require('plinko.forces')
+local neighborlist = require('plinko.neighborlist')
+local observers = require('plinko.observers')
+local interrupts = require('plinko.interrupts')
+local plotting = require('plinko.plotting')
+local util = require('plinko.util')
+
 local obs = require('obs')
 
 function clip(x)
     return x < 0 and 0 or (x > 1 and 1 or x)
 end
 
-LoveImageObserver = util.class(plotting_image.DensityPlot)
+LoveImageObserver = util.class(plotting.DensityPlot)
 function LoveImageObserver:init(w, h, alpha)
-    plotting_image.DensityPlot.init(self, objects.Box({0, 0}, {w, h}), 1)
+    plotting.DensityPlot.init(self, objects.Box({0, 0}, {w, h}), 1)
 
     self.lastposition = nil
     self.segment = objects.Segment({0, 0}, {1, 1})

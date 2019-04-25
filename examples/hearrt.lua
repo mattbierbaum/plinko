@@ -1,8 +1,4 @@
-local ics = require('ics')
-local forces = require('forces')
-local objects = require('objects')
-local observers = require('observers')
-local util = require('util')
+local P = require('plinko')
 
 local HEARRT = {
     {{0.49999, 0.24787}, {0.50197, 0.16331}, {0.53926, 0.09956}, {0.59094, 0.05792}}, 
@@ -28,7 +24,7 @@ local HEARRT = {
 local beziers = {}
 
 for i = 1, #HEARRT do
-    local bez = objects.BezierCurve(HEARRT[i])
+    local bez = P.objects.BezierCurve(HEARRT[i])
     beziers[#beziers + 1] = bez
 end
 
@@ -36,12 +32,12 @@ local conf = {
     dt = 1e-2,
     eps = 1e-4,
     objects = beziers,
-    forces = {forces.generate_force_central({0.5, 0.5}, -2.0)},
-    particles = {objects.SingleParticle({0.71, 0.31}, {0.011, 0.0151}, {0, 0})},
-    observers = {observers.SVGLinePlot('./test.svg', objects.Box({0,0}, {1,1}), 1e-5)}
+    forces = {P.forces.generate_force_central({0.5, 0.5}, -2.0)},
+    particles = {P.objects.SingleParticle({0.71, 0.31}, {0.011, 0.0151}, {0, 0})},
+    observers = {P.observers.SVGLinePlot('./test.svg', P.objects.Box({0,0}, {1,1}), 1e-5)}
 }
 
-local s = ics.create_simulation(conf)
+local s = P.ics.create_simulation(conf)
 local t_start = os.clock()
 s:step(1.3e5)
 local t_end = os.clock()

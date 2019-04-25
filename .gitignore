@@ -10,4 +10,7 @@ plinko-nbounces
 *.npy
 *.track
 *.png
+*.pgm
+*.img
+*.csv
 data/
