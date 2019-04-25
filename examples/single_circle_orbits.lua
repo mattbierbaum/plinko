@@ -1,8 +1,8 @@
-local ics = require('ics')
-local neighborlist = require('neighborlist')
-local forces = require('forces')
-local objects = require('objects')
-local observers = require('observers')
+local ics = require('plinko.ics')
+local neighborlist = require('plinko.neighborlist')
+local forces = require('plinko.forces')
+local objects = require('plinko.objects')
+local observers = require('plinko.observers')
 
 local conf = {
     dt = 1e-3,
