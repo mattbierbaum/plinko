@@ -14,9 +14,7 @@ function package.run_file(filename)
 end
 
 function package.run_string(string)
-    local f = assert(loadstring(string))
-    return f()
+    return loadstring(string)()
 end
-
 
 return package
