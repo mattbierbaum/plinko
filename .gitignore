@@ -1,9 +1,10 @@
-clib/plinko
-clib/plinko-single
-clib/plinko-density
-clib/plinko-directdraw
-clib/plinko-twotone
-clib/plinko-nbounces
+libc/plinko
+libc/plinko-single
+libc/plinko-density
+libc/plinko-directdraw
+libc/plinko-twotone
+libc/plinko-nbounces
+*.so
 *.a
 *.lua.c
 *.exe
@@ -16,4 +17,5 @@ clib/plinko-nbounces
 *.pgm
 *.img
 *.csv
+*.bin
 data/
