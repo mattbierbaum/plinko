@@ -1,4 +1,4 @@
-package.path = '../lua/?.lua;./web/?.lua' .. package.path
+package.path = '../?.lua;../plinko/?lua;/plinko/?.lua;./web/?.lua' .. package.path
 print(package.path)
 
 local js = require('js')
