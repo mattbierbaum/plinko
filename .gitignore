@@ -18,4 +18,5 @@ libc/plinko-nbounces
 *.img
 *.csv
 *.bin
+*.svg
 data/

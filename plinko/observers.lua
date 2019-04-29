@@ -46,7 +46,7 @@ function ImageRecorder:init(filename, plotter, format)
     self.format = format or 'pgm5'
     self.filename = filename
     self.plotter = plotter
-    self.lastposition = nil
+    self.lastposition = {}
     self.segment = objects.Segment({0,0}, {0,0})
 end
 
@@ -54,22 +54,25 @@ function ImageRecorder:begin()
 end
 
 function ImageRecorder:update_particle(particle)
-    if self.lastposition then
-        self.segment.p0[1] = self.lastposition[1]
-        self.segment.p0[2] = self.lastposition[2]
+    local ind = particle.index
+    local lastposition = self.lastposition[ind]
+
+    if lastposition then
+        self.segment.p0[1] = lastposition[1]
+        self.segment.p0[2] = lastposition[2]
         self.segment.p1[1] = particle.pos[1]
         self.segment.p1[2] = particle.pos[2]
 
         self.plotter:draw_segment(self.segment)
-        self.lastposition[1] = particle.pos[1]
-        self.lastposition[2] = particle.pos[2]
+        lastposition[1] = particle.pos[1]
+        lastposition[2] = particle.pos[2]
     else
-        self.lastposition = {particle.pos[1], particle.pos[2]}
+        self.lastposition[ind] = {particle.pos[1], particle.pos[2]}
     end
 end
 
 function ImageRecorder:reset()
-    self.lastposition = nil
+    self.lastposition = {}
 end
 
 function ImageRecorder:close()
@@ -98,19 +101,22 @@ end
 SVGLinePlot = util.class(Observer)
 
 SVG_HEADER = [[<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="%fin" height="%fin" viewBox="0 0 %f %f"
+<svg xmlns="http://www.w3.org/2000/svg" width="%fin" height="%fin" viewBox="%f %f %f %f"
      style="background-color:white;"
-><g>
+><rect width="100%%" height="100%%" fill="white"/><g>
 ]]
-SVG_PATH_STR = '<path style="fill:none;stroke:#000000;stroke-width:%fin;" d="m '
+SVG_PATH_STR = '<path style="fill:none;stroke:#000000;stroke-width:%fin;stroke-opacity:%f" d="'
 SVG_PATH_END = '"/>\n'
 SVG_FOOTER = '</g></svg>'
 
-function SVGLinePlot:init(filename, box, lw)
+function SVGLinePlot:init(filename, box, lw, opacity, crosspath)
     self.filename = filename
     self.box = box
     self.lw = lw
-    self.lastpt = nil
+    self.opacity = opacity ~= nil and opacity or 1.0
+    self.crosspath = crosspath
+    self.lastpt = {}
+    self.lastind = -1
     self.breakpt = 10000
 end
 
@@ -122,24 +128,34 @@ function SVGLinePlot:begin()
             SVG_HEADER,
             self.box.uu[1] - self.box.ll[1],
             self.box.uu[2] - self.box.ll[2],
-            self.box.uu[1] - self.box.ll[1],
-            self.box.uu[2] - self.box.ll[2]
+            self.box.ll[1], self.box.ll[1],
+            self.box.uu[1], self.box.uu[2]
         )
     )
 end
 
 function SVGLinePlot:update_particle(particle)
-    local pos = vector.vsubv(particle.pos, self.box.ll)
-    pos[2] = self.box.uu[2] - pos[2]
+    local ind = particle.index
+    local pos = particle.pos
+
+    local lind = self.lastind
+    local lpos = self.lastpt[ind]
+    local pt = lpos and lpos or pos
 
     if self.count == 0 then
-        local pt = self.lastpt and self.lastpt or pos
-        self.file:write(string.format(SVG_PATH_STR, self.lw))
-        self.file:write(string.format('%f,%f ', pt[1], pt[2]))
+        self.file:write(string.format(SVG_PATH_STR, self.lw, self.opacity))
+        self.file:write(string.format('M%f,%f ', pt[1], pt[2]))
+    else
+        if self.crosspath or (lind == ind) then
+            self.file:write(string.format('L%f,%f ', pos[1], pos[2]))
+        else
+            self.file:write(string.format('M%f,%f ', pt[1], pt[2]))
+            self.file:write(string.format('L%f,%f ', pos[1], pos[2]))
+        end
     end
-    self.file:write(string.format('L%f,%f ', pos[1], pos[2]))
 
-    self.lastpt = pos
+    self.lastpt[ind] = pos
+    self.lastind = ind
     self.count = self.count + 1
 
     if self.count > self.breakpt then

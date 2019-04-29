@@ -10,8 +10,8 @@ local MAX_BOUNCE = 10000
 -- a bunch of module-local items to save on gc
 local nseg = objects.Segment({0, 0}, {0, 0})
 local pseg = objects.Segment({0, 0}, {0, 0})
-local part0 = objects.PointParticle()
-local part1 = objects.PointParticle()
+local part0 = objects.PointParticle(nil, nil, nil, -100)
+local part1 = objects.PointParticle(nil, nil, nil, -100)
 local vel = {0, 0}
 
 Simulation = util.class()

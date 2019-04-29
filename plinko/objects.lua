@@ -653,7 +653,17 @@ function PointParticle:init(pos, vel, acc, index)
     self.vel = vel or {0, 0}
     self.acc = acc or {0, 0}
     self.active = true
-    self.index = (index ~= nil) and index or 1
+
+    if index == nil then
+        if PointParticle.index == nil then
+            PointParticle.index = 1
+        else
+            PointParticle.index = PointParticle.index + 1
+        end
+        self.index = PointParticle.index
+    else
+        self.index = index
+    end
 end
 
 -- -------------------------------------------------------------
@@ -664,7 +674,9 @@ function ParticleGroup:count() return 0 end
 
 -- -------------------------------------------------------------
 SingleParticle = util.class(ParticleGroup)
-function SingleParticle:init(pos, vel, acc) self.particle = PointParticle(pos, vel, acc) end
+function SingleParticle:init(pos, vel, acc, index)
+    self.particle = PointParticle(pos, vel, acc, index)
+end
 function SingleParticle:index(i) return i == 1 and self.particle or nil end
 function SingleParticle:count() return 1 end
 
