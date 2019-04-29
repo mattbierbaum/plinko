@@ -14,10 +14,12 @@ svg input
 
 Translate all of the Lua source code files to object files and put them in a static library:
 
-for f in *.lua; do
+for f in *.lua;* do
     luajit -b $f `basename $f .lua`.o
 done
-ar rcus libmyluafiles.a *.o
+ar rcus libmyluafiles.a *.o*
+
+gcc -o myexe main-stub.c -I/usr/local/include/luajit-2.0 -L/usr/local/lib -lluajit-5.1 -Wl,--whole-archive libmylib.a -Wl,--no-whole-archive -Wl,-E
 
 Then link the libmyluafiles.a library into your main program using -Wl,--whole-archive -lmyluafiles -Wl,--no-whole-archive -Wl,-E.
 This line forces the linker to include all object files from the archive and to export all symbols.
