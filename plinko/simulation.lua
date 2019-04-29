@@ -142,8 +142,7 @@ function Simulation:step_particle(part0)
     vector.copy(vel,     part0.vel)
     self.observer_group:update_particle(part0)
 
-    part0.active = part0.active and not self.observer_group:is_triggered()
-    self.observer_group:reset()
+    part0.active = part0.active and not self.observer_group:is_triggered_particle(part0)
 end
 
 function Simulation:step(steps)
@@ -160,6 +159,10 @@ function Simulation:step(steps)
 
         self.t = self.t + self.dt
         self.observer_group:update_time(step)
+
+        if self.observer_group:is_triggered() then
+            break
+        end
     end
 
     self.observer_group:close()

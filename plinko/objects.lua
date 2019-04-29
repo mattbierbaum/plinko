@@ -653,7 +653,7 @@ function PointParticle:init(pos, vel, acc, index)
     self.vel = vel or {0, 0}
     self.acc = acc or {0, 0}
     self.active = true
-    self.index = not (index == nil) and index or 1
+    self.index = (index ~= nil) and index or 1
 end
 
 -- -------------------------------------------------------------

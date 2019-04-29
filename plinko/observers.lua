@@ -10,6 +10,7 @@ function Observer:update_particle(particle) end
 function Observer:update_time(time) end
 function Observer:update_collision(particle, object, time) end
 function Observer:is_triggered() return false end
+function Observer:is_triggered_particle(particle) return false end
 function Observer:reset() end
 function Observer:close() end
 
@@ -230,9 +231,19 @@ function ObserverGroup:update_collision(particle, object, time)
         self.observers[i]:update_collision(particle, object, time)
     end
 end
+
 function ObserverGroup:is_triggered()
     for i = 1, #self.observers do
         if self.observers[i]:is_triggered() then
+            return true
+        end
+    end
+    return false
+end
+
+function ObserverGroup:is_triggered_particle(particle)
+    for i = 1, #self.observers do
+        if self.observers[i]:is_triggered_particle(particle) then
             return true
         end
     end
