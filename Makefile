@@ -1,3 +1,4 @@
+CC=gcc
 LJ=luajit
 
 LUA_INC = ~/builds/LuaJIT-2.1.0-beta3/src/
@@ -6,6 +7,7 @@ LUA_LIB = ~/builds/LuaJIT-2.1.0-beta3/src/libluajit.a
 LIB_SRC = $(wildcard plinko/*.lua) $(wildcard lib/*.lua)
 LIB_OBJ = $(LIB_SRC:.lua=.o)
 LIB = plinko.a
+SO = plinko.so
 
 EXE_SRC = $(wildcard examples/*.lua)
 EXE_SRC = bin/plinko.lua
@@ -22,6 +24,9 @@ print-%  : ; @echo $* = $($*)
 %.a: $(LIB_OBJ)
 	ar rcs $@ $^
 
+%.so: $(LIB_OBJ)
+	$(CC) -shared $^ -o $@
+
 %.exe: %.lua
 	$(LJ) lib/luastatic.lua $< $(LIB_SRC) $(LUA_LIB) -I $(LUA_INC) -o $@
 
@@ -30,6 +35,8 @@ all: $(EXE)
 default: $(EXE)
 
 lib: $(LIB)
+
+shared: $(SO)
 
 clean:
 	rm -f $(LIB) $(LIB_OBJ) $(EXE) $(EXE_C)
