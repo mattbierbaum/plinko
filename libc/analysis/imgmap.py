@@ -76,7 +76,7 @@ def _map_line(i, N, filename, kwargs):
     kwargs.update(regions=(i, N))
     map_line(line, **kwargs)
 
-def map_line(line, out_folder='./data', lws=[0.005, 0.3], zooms=8, regions=None):
+def map_line(line, out_folder='./data', lws=[0.005, 0.3], zooms=8, minzoom=None, regions=None):
     x = line[:, 0]
     y = line[:, 1]
 
@@ -91,7 +91,7 @@ def map_line(line, out_folder='./data', lws=[0.005, 0.3], zooms=8, regions=None)
     mkdirp(out_folder)
 
     if isinstance(lws, (list, tuple)):
-        lws = np.logspace(np.log2(lws[0]), np.log2(lws[1]), base=2, num=zooms)
+        lws = np.logspace(np.log2(lws[0]), np.log2(lws[1]), base=2, num=zooms+1)
     else:
         lws = [lws]*zooms
 
@@ -108,6 +108,9 @@ def map_line(line, out_folder='./data', lws=[0.005, 0.3], zooms=8, regions=None)
         z, x, y = ind
         x0, y0 = p0
         x1, y1 = p1
+
+        if minzoom and z < minzoom:
+            continue
 
         print(z, x, y)
         dir_z = os.path.join(out_folder, str(z))
