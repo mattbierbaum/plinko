@@ -28,13 +28,22 @@ if _G.bundle_names then
     for i,  name in pairs(scripts) do
         local n = string.len(name)
         local t = name
-        for j = 1, scripts_max - n do t = t .. ' ' end
-        if c == columns then t = t .. '\n' end
+
+        for j = 1, scripts_max - n do
+            t = t .. ' '
+        end
+
+        if c == columns and i ~= #scripts then
+            t = t .. '\n'
+        end
+
         scripts_string = scripts_string .. t
 
-        c = c + 1
-        if c > columns then c = 0 end
-
+        if c > columns-1 then
+            c = 0
+        else
+            c = c + 1
+        end
     end
 end
 
@@ -56,7 +65,7 @@ local help_run = [[Run a script from the filesystem or stdin.]]
 local epil_run = [[
 The recommended format of the script is:
 
-=============================================================================
+===============================================================================
 local P = require('plinko')
 local box = P.objects.Box({0, 0}, {1, 1})
 local conf = {
@@ -66,14 +75,16 @@ local conf = {
     observers = {P.observers.SVGLinePlot('freeparticle.svg', box, 1e-5)}
 }
 P.ics.create_simulation(conf):step(1e4)
-=============================================================================
+===============================================================================
 ]]
 
 local help_exec = [[Execute a script distributed with plinko.]]
 local epil_exec = ([[
 The names of available embedded scripts are:
 
+===============================================================================
 %s
+===============================================================================
 ]]):format(scripts_string)
 
 local parser = argparse()
