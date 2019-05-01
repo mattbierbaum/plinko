@@ -1,12 +1,11 @@
-local ics = require('plinko.ics')
-local forces = require('plinko.forces')
-local objects = require('plinko.objects')
+local P = require('plinko')
 
+local box = P.objects.Box({0, 0}, {1, 1})
 local conf = {
-    forces = {forces.generate_force_central({0,0}, -1.0)},
-    particles = {objects.SingleParticle({0.5, 0.6}, {0, 0}, {0, 0})},
-    objects = {}
+    objects = {box},
+    forces = {P.forces.generate_force_central({0.5, 0.5}, 9.0)},
+    particles = {P.objects.SingleParticle({0.63, 0.63}, {1.5, 1.3}, {0, 0})},
+    observers = {P.observers.SVGLinePlot('freeparticle.svg', box, 1e-5)}
 }
 
-local sim = ics.create_simulation(conf)
-sim:step(1e3)
+P.ics.create_simulation(conf):step(1e4)

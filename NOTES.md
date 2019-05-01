@@ -1,14 +1,22 @@
-https://github.com/hugomg/lua-aot
+TODO:
 
-https://repo.or.cz/w/luajit-2.0.git/blob_plain/v2.1:/doc/ext_profiler.html#jit_zone
-fengari.io
+* flexible observer (stream, recorder) chaining
+* svg input (probably not, just using scripts due to flexibility)
+* inkscape extension (svg -> script conversion)
+* website interface
+* integrate some examples into executable
+
+DONE:
 
 * fix segment drawing
 * ending conditions
 * particle distributions
 * more flexible interaction (damping etc)
-svg input
 
+
+https://github.com/hugomg/lua-aot
+https://repo.or.cz/w/luajit-2.0.git/blob_plain/v2.1:/doc/ext_profiler.html#jit_zone
+fengari.io
 
 #================================================
 
