@@ -4,7 +4,17 @@ LJ=luajit
 LUA_INC = ~/builds/LuaJIT-2.1.0-beta3/src/
 LUA_LIB = ~/builds/LuaJIT-2.1.0-beta3/src/libluajit.a
 
-LIB_SRC = $(wildcard plinko/*.lua) $(wildcard lib/*.lua)
+EXDIR = examples
+PACKAGED_SCRIPTS = $(EXDIR)/column_of_squares.lua
+PACKAGED_SCRIPTS += $(EXDIR)/concentric_circles.lua
+PACKAGED_SCRIPTS += $(EXDIR)/curtains.lua
+PACKAGED_SCRIPTS += $(EXDIR)/hearrt.lua
+PACKAGED_SCRIPTS += $(EXDIR)/hexgrid_huge_circle.lua
+PACKAGED_SCRIPTS += $(EXDIR)/orbits.lua
+PACKAGED_SCRIPTS += $(EXDIR)/snowflakes.lua
+PACKAGED_SCRIPTS += $(EXDIR)/speedtest.lua
+
+LIB_SRC = $(wildcard plinko/*.lua) $(wildcard lib/*.lua) $(PACKAGED_SCRIPTS)
 LIB_OBJ = $(LIB_SRC:.lua=.o)
 LIB = plinko.a
 SO = plinko.so

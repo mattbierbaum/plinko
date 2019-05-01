@@ -344,6 +344,11 @@ local function lua_loader(name)
 end
 table.insert(package.loaders or package.searchers, 2, lua_loader)
 
+bundle_names = {}
+for k, v in pairs(lua_bundle) do
+    bundle_names[#bundle_names + 1] = k
+end
+
 -- Lua 5.1 has unpack(). Lua 5.2+ has table.unpack().
 local unpack = unpack or table.unpack
 ]])
