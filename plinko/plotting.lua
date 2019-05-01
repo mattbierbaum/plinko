@@ -3,17 +3,17 @@ local alloc = require('plinko.alloc')
 local image = require('plinko.image')
 
 local floor = math.floor
-function ipart(x) return floor(x) end
-function round(x) return ipart(x + 0.5) end
-function fpart(x) return x - floor(x) end
-function rfpart(x) return 1 - fpart(x) end
+local function ipart(x) return floor(x) end
+local function round(x) return ipart(x + 0.5) end
+local function fpart(x) return x - floor(x) end
+local function rfpart(x) return 1 - fpart(x) end
 
-function swap(a, b)
+local function swap(a, b)
     return b, a
 end
 
 -- ========================================================
-DensityPlot = util.class()
+local DensityPlot = util.class()
 
 function DensityPlot:init(box, dpi)
     self.box = box
@@ -144,7 +144,7 @@ end
 
 
 -- ========================================================
-DensityPlotRGB = util.class(DensityPlot)
+local DensityPlotRGB = util.class(DensityPlot)
 
 function DensityPlotRGB:init(box, dpi, alpha)
     DensityPlot.init(self, box, dpi)

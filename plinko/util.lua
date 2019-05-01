@@ -88,4 +88,12 @@ function util.tprint(t)
     end
 end
 
+function util.tstring(t)
+    if json then
+        return json.encode(t)
+    else
+        return t
+    end
+end
+
 return util

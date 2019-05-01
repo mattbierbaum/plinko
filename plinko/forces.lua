@@ -1,5 +1,4 @@
 local vector = require('plinko.vector')
-local util = require('plinko.util')
 
 local forces = {}
 
@@ -31,7 +30,6 @@ function forces.force_gravity(particles)
 end
 
 function forces.generate_force_central(c, k)
-    util.tprint(c)
     local func = _force_central(c, k)
     return function(p)
         return forces.apply_independent_forces(p, func)

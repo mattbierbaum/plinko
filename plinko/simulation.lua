@@ -14,7 +14,7 @@ local part0 = objects.PointParticle(nil, nil, nil, -100)
 local part1 = objects.PointParticle(nil, nil, nil, -100)
 local vel = {0, 0}
 
-Simulation = util.class()
+local Simulation = util.class()
 function Simulation:init(dt, eps)
     self.t = 0
     self.dt = dt

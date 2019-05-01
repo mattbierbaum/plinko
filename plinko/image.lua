@@ -75,7 +75,7 @@ function blendmodes.apply(func, ca, cb)
     return out
 end
 
-function hist(array, nbins, docut)
+local function hist(array, nbins, docut)
     local docut = docut ~= nil and docut or true
 
     local min, max = array:minmax_nozero()
@@ -93,7 +93,7 @@ function hist(array, nbins, docut)
     return bins
 end
 
-function cdf(data)
+local function cdf(data)
     local out = alloc.create_array(data.shape, 'float')
     local total = 0.0
     local tsum = data:sum()
@@ -107,7 +107,7 @@ function cdf(data)
     return out
 end
 
-function eq_hist(data, nbins)
+local function eq_hist(data, nbins)
     local min, max = data:minmax_nozero()
 
     local df = cdf(hist(data, nbins))
@@ -138,7 +138,7 @@ function eq_hist(data, nbins)
     return out
 end
 
-function normalize(data, vmin, vmax)
+local function normalize(data, vmin, vmax)
     local out = alloc.create_array(data.shape, 'float')
     local min, max = data:minmax()
 

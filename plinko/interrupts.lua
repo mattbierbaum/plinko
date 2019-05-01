@@ -1,12 +1,12 @@
 local observers = require('plinko.observers')
 local util = require('plinko.util')
 
-Interrupt = util.class(observers.Observer)
+local Interrupt = util.class(observers.Observer)
 function Interrupt:is_triggered() return false end
 function Interrupt:is_triggered_particle() return false end
 
 -- ================================================================
-MaxSteps = util.class(Interrupt)
+local MaxSteps = util.class(Interrupt)
 function MaxSteps:init(max)
     self.max = max
     self.triggered = false
@@ -22,7 +22,7 @@ function MaxSteps:update_time(step)
 end
 
 -- ================================================================
-Collision = util.class(Interrupt)
+local Collision = util.class(Interrupt)
 function Collision:init(object)
     self.obj = object
     self.triggers = nil

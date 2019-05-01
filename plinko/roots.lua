@@ -115,7 +115,7 @@ local function cubic(poly)
     end
 end
 
-function cubic2(poly)
+local function cubic2(poly)
 	local a = poly[4]
 	local b = poly[3]
 	local c = poly[2]
@@ -160,7 +160,7 @@ if not math.cosh then
     math.sinh = function(x) return (math.exp(x) - math.exp(-x)) / 2 end
 end
 
-function roots(poly)
+local function roots(poly)
     local N = #poly - 1
 
     if N == 1 then

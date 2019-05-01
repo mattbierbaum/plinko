@@ -2,12 +2,12 @@ local util = require('plinko.util')
 local vector = require('plinko.vector')
 local roots = require('plinko.roots')
 
-function xor(a, b)
+local function xor(a, b)
     return (a and not b) or (b and not a)
 end
 
 -- ---------------------------------------------------------------
-Object = util.class()
+local Object = util.class()
 function Object:init(cargs)
     self.cargs = cargs or {}
     self.damp = self.cargs.damp or 1.0
@@ -30,7 +30,7 @@ function Object:collide(stotal, scoll, vel)
 end
 
 -- ---------------------------------------------------------------
-BezierCurve = util.class(Object)
+local BezierCurve = util.class(Object)
 function BezierCurve:init(points, cargs)
     Object.init(self, cargs)
     self.points = points
@@ -174,7 +174,7 @@ function BezierCurve:center()
 end
 
 -- ---------------------------------------------------------------
-BezierCurveQuadratic = util.class(BezierCurve)
+local BezierCurveQuadratic = util.class(BezierCurve)
 function BezierCurveQuadratic:init(points, cargs)
     BezierCurve.init(self, points, cargs)
 end
@@ -201,7 +201,7 @@ function BezierCurveQuadratic:_coeff()
 end
 
 -- ---------------------------------------------------------------
-BezierCurveCubic = util.class(BezierCurve)
+local BezierCurveCubic = util.class(BezierCurve)
 function BezierCurveCubic:init(points, cargs)
     BezierCurve.init(self, points, cargs)
 end
@@ -232,7 +232,7 @@ function BezierCurveCubic:_coeff()
 end
 
 -- ---------------------------------------------------------------
-Circle = util.class(Object)
+local Circle = util.class(Object)
 function Circle:init(pos, rad, cargs)
     Object.init(self, cargs)
 	self.pos = pos
@@ -305,7 +305,7 @@ function Circle:rotate(theta)
 end
 
 -- ----------------------------------------------------------------
-MaskedCircle = util.class(Circle)
+local MaskedCircle = util.class(Circle)
 function MaskedCircle:init(pos, rad, func, cargs)
     Circle.init(self, pos, rad, cargs)
     self.func = func
@@ -329,24 +329,24 @@ function MaskedCircle:intersection(seg)
     return nil, nil
 end
 
-function circle_nholes(nholes, eps, offset)
+local function circle_nholes(nholes, eps, offset)
     return function(theta)
         local r = nholes * theta / (2 * math.pi)
         return math.abs(r - math.floor(r + 0.5)) > eps
     end
 end
 
-function circle_angle_range(amin, amax)
+local function circle_angle_range(amin, amax)
     return function(theta)
         return (theta > amin) and (theta < amax)
     end
 end
 
-function circle_single_angle(angle, eps)
+local function circle_single_angle(angle, eps)
 end
 
 -- ----------------------------------------------------------------
-Segment = util.class(Object)
+local Segment = util.class(Object)
 function Segment:init(p0, p1, cargs)
     Object.init(self, cargs)
     self.p0 = p0
@@ -430,7 +430,7 @@ function Segment:update(p0, p1)
 end
 
 -- ---------------------------------------------------------------
-Box = util.class(Object)
+local Box = util.class(Object)
 function Box:init(ll, uu, cargs)
     Object.init(self, cargs)
 
@@ -510,7 +510,7 @@ function Box:update(ll, uu)
 end
 
 -- ---------------------------------------------------------------
-Polygon = util.class(Object)
+local Polygon = util.class(Object)
 function Polygon:init(points, cargs)
     self.N = #points
     self.points = self:_wrap(points)
@@ -623,7 +623,7 @@ function Polygon:coordinate_bounding_box()
 end
 
 -- -------------------------------------------------------------
-Rectangle = util.class(Polygon)
+local Rectangle = util.class(Polygon)
 function Rectangle:init(ll, uu, cargs)
     local points = {
         {ll[1], ll[2]},
@@ -635,7 +635,7 @@ function Rectangle:init(ll, uu, cargs)
 end
 
 -- -------------------------------------------------------------
-RegularPolygon = util.class(Polygon)
+local RegularPolygon = util.class(Polygon)
 function RegularPolygon:init(N, pos, size, cargs)
     local points = {}
 
@@ -647,7 +647,7 @@ function RegularPolygon:init(N, pos, size, cargs)
 end
 
 -- -------------------------------------------------------------
-PointParticle = util.class(Object)
+local PointParticle = util.class(Object)
 function PointParticle:init(pos, vel, acc, index)
     self.pos = pos or {0, 0}
     self.vel = vel or {0, 0}
@@ -667,13 +667,13 @@ function PointParticle:init(pos, vel, acc, index)
 end
 
 -- -------------------------------------------------------------
-ParticleGroup = util.class()
+local ParticleGroup = util.class()
 function ParticleGroup:init() end
 function ParticleGroup:index(i) return nil end
 function ParticleGroup:count() return 0 end
 
 -- -------------------------------------------------------------
-SingleParticle = util.class(ParticleGroup)
+local SingleParticle = util.class(ParticleGroup)
 function SingleParticle:init(pos, vel, acc, index)
     self.particle = PointParticle(pos, vel, acc, index)
 end
@@ -681,7 +681,7 @@ function SingleParticle:index(i) return i == 1 and self.particle or nil end
 function SingleParticle:count() return 1 end
 
 -- -------------------------------------------------------------
-UniformParticles = util.class(ParticleGroup)
+local UniformParticles = util.class(ParticleGroup)
 function UniformParticles:init(p0, p1, v0, v1, N)
     self.p0 = p0
     self.p1 = p1

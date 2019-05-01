@@ -2,7 +2,7 @@ local util = require('plinko.util')
 local vector = require('plinko.vector')
 local objects = require('plinko.objects')
 
-Observer = util.class()
+local Observer = util.class()
 function Observer:init() end
 function Observer:begin() end
 function Observer:set_particle(particle) end
@@ -15,7 +15,7 @@ function Observer:reset() end
 function Observer:close() end
 
 -- =================================================================
-StateFileRecorder = util.class(Observer)
+local StateFileRecorder = util.class(Observer)
 function StateFileRecorder:init(filename)
     self.filename = filename
 end
@@ -41,7 +41,7 @@ function StateFileRecorder:close()
 end
 
 -- =================================================================
-ImageRecorder = util.class(Observer)
+local ImageRecorder = util.class(Observer)
 function ImageRecorder:init(filename, plotter, format)
     self.format = format or 'pgm5'
     self.filename = filename
@@ -88,7 +88,7 @@ function ImageRecorder:close()
 end
 
 -- =================================================================
-PointImageRecorder = util.class(ImageRecorder)
+local PointImageRecorder = util.class(ImageRecorder)
 function PointImageRecorder:init(filename, plotter)
     ImageRecorder.init(self, filename, plotter)
 end
@@ -98,16 +98,16 @@ function PointImageRecorder:update_particle(particle)
 end
 
 -- ========================================================
-SVGLinePlot = util.class(Observer)
+local SVGLinePlot = util.class(Observer)
 
-SVG_HEADER = [[<?xml version="1.0" encoding="UTF-8"?>
+local SVG_HEADER = [[<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="%fin" height="%fin" viewBox="%f %f %f %f"
      style="background-color:white;"
 ><rect width="100%%" height="100%%" fill="white"/><g>
 ]]
-SVG_PATH_STR = '<path style="fill:none;stroke:#000000;stroke-width:%fin;stroke-opacity:%f" d="'
-SVG_PATH_END = '"/>\n'
-SVG_FOOTER = '</g></svg>'
+local SVG_PATH_STR = '<path style="fill:none;stroke:#000000;stroke-width:%fin;stroke-opacity:%f" d="'
+local SVG_PATH_END = '"/>\n'
+local SVG_FOOTER = '</g></svg>'
 
 function SVGLinePlot:init(filename, box, lw, opacity, crosspath)
     self.filename = filename
@@ -172,7 +172,7 @@ function SVGLinePlot:close()
 end
 
 -- =================================================================
-LastPositionRecorder = util.class(Observer)
+local LastPositionRecorder = util.class(Observer)
 function LastPositionRecorder:init(filename)
     self.filename = filename
     self.pos = {}
@@ -183,7 +183,7 @@ function LastPositionRecorder:update_particle(particle)
 end
 
 -- =================================================================
-BounceCountRecorder = util.class(Observer)
+local BounceCountRecorder = util.class(Observer)
 function BounceCountRecorder:init(filename)
     self.filename = filename
     self.bounces = {}
@@ -198,7 +198,7 @@ function BounceCountRecorder:update_collision(particle, object, time)
 end
 
 -- =================================================================
-TimePrinter = util.class(Observer)
+local TimePrinter = util.class(Observer)
 function TimePrinter:init(interval)
     self.interval = interval
 end
@@ -219,7 +219,7 @@ function TimePrinter:close()
 end
 
 -- =================================================================
-ObserverGroup = util.class(Observer)
+local ObserverGroup = util.class(Observer)
 function ObserverGroup:init(observers)
     self.observers = observers
 end

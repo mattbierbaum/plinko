@@ -30,7 +30,7 @@ local function convert_size(size)
 end
 
 --================================================
-ArrayBase = util.class()
+local ArrayBase = util.class()
 
 function ArrayBase:init(size, dtype)
     if type(size) == 'number' then
@@ -155,7 +155,7 @@ function ArrayBase:save_pgm5(filename)
 end
 
 --================================================
-ArrayLua = util.class(ArrayBase)
+local ArrayLua = util.class(ArrayBase)
 
 function ArrayLua:init(size, dtype)
     ArrayBase.init(self, size, dtype)
@@ -164,7 +164,7 @@ function ArrayLua:init(size, dtype)
 end
 
 --================================================
-ArrayJS = util.class(ArrayBase)
+local ArrayJS = util.class(ArrayBase)
 
 function ArrayJS:init(size, dtype)
     ArrayBase.init(self, size, dtype)
@@ -181,7 +181,7 @@ function ArrayJS:init(size, dtype)
 end
 
 --================================================
-ArrayC = util.class(ArrayBase)
+local ArrayC = util.class(ArrayBase)
 
 function ArrayC:init(size, dtype)
     ArrayBase.init(self, size, dtype)
@@ -199,6 +199,7 @@ function ArrayC:save_bin(filename, mode)
     ffi.C.fclose(file)
 end
 
+local Array = nil
 if js then
     Array = ArrayJS
 else
@@ -232,7 +233,7 @@ else
     end
 end
 
-function create_array(size, dtype)
+local function create_array(size, dtype)
     return Array(size, dtype)
 end
 
