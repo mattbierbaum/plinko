@@ -168,6 +168,10 @@ function Simulation:step(steps)
     self.observer_group:close()
 end
 
+function Simulation:run()
+    self:step(1e100)
+end
+
 function Simulation:parallelize(threads)
     local lanes = require('lanes').configure()
     local linda = lanes.linda()

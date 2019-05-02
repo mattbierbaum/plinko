@@ -94,6 +94,7 @@ local parser = argparse()
 
 parser:command_target('command')
 parser:help_description_margin(30)
+parser:help_max_width(80)
 parser:flag('-v --version', 'Print version information and exit.')
 
 local crun = parser:command('run r', help_run, epil_run)
