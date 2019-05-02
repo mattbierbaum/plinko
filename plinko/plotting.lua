@@ -26,13 +26,17 @@ function DensityPlot:init(box, dpi)
     self.grid = self.array.arr
 end
 
+function DensityPlot:reflect(y)
+    return (self.N[2] - y - 1)
+end
+
 function DensityPlot:_plot(x, y, c)
     if x < 0 or x >= self.N[1] or y < 0 or y >= self.N[2] then
         return
     end
 
     local x = floor(x)
-    local y = floor(y)
+    local y = floor(self:reflect(y))
     local ind = x + y*self.N[1]
     self.grid[ind] = self.grid[ind] + c
 end

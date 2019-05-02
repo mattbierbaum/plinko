@@ -118,6 +118,8 @@ function SVGLinePlot:init(filename, box, lw, opacity, crosspath)
     self.lastpt = {}
     self.lastind = -1
     self.breakpt = 10000
+    self.y0 = self.box.ll[2]
+    self.y1 = self.box.uu[2]
 end
 
 function SVGLinePlot:begin()
@@ -128,10 +130,14 @@ function SVGLinePlot:begin()
             SVG_HEADER,
             self.box.uu[1] - self.box.ll[1],
             self.box.uu[2] - self.box.ll[2],
-            self.box.ll[1], self.box.ll[1],
+            self.box.ll[1], self.box.ll[2],
             self.box.uu[1], self.box.uu[2]
         )
     )
+end
+
+function SVGLinePlot:reflect(p)
+    return {p[1], (self.y1 - p[2]) + self.y0}
 end
 
 function SVGLinePlot:update_particle(particle)
@@ -141,6 +147,8 @@ function SVGLinePlot:update_particle(particle)
     local lind = self.lastind
     local lpos = self.lastpt[ind]
     local pt = lpos and lpos or pos
+    pt = self:reflect(pt)
+    pos = self:reflect(pos)
 
     if self.count == 0 then
         self.file:write(string.format(SVG_PATH_STR, self.lw, self.opacity))
