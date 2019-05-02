@@ -1,4 +1,15 @@
 local P = require('plinko')
+local argparse = require('lib.argparse')
+
+local opt = argparse(){name='hearrt', description='Draw a heart with bezier curves'}
+opt:option('-l', 'Fractional line width', 1e-5, tonumber):argname('linewidth')
+opt:option('-t', 'Number of timesteps to simulate', 1.3e5, tonumber):argname('maxt')
+opt:option('-k', 'Hookes law spring constant', 2.0, tonumber):argname('k')
+opt:option('-p', 'Starting position "%f,%f"', {0.71, 0.31}, P.util.tovec):argname('p0')
+opt:option('-v', 'Starting velocity "%f,%f"', {0.011, 0.0151}, P.util.tovec):argname('v0')
+opt:argument('filename', 'Filename for SVG output', 'hearrt.svg'):args('?')
+local arg = opt:parse(arg)
+local fn = arg.filename or 'hearrt.svg'
 
 local HEARRT = {
     {{0.49999, 0.24787}, {0.50197, 0.16331}, {0.53926, 0.09956}, {0.59094, 0.05792}}, 
@@ -28,17 +39,18 @@ for i = 1, #HEARRT do
     beziers[#beziers + 1] = bez
 end
 
+local box = P.objects.Box({0, 0}, {1, 1})
 local conf = {
     dt = 1e-2,
     eps = 1e-4,
     objects = beziers,
-    forces = {P.forces.generate_force_central({0.5, 0.5}, -2.0)},
-    particles = {P.objects.SingleParticle({0.71, 0.31}, {0.011, 0.0151}, {0, 0})},
-    observers = {P.observers.SVGLinePlot('./test.svg', P.objects.Box({0,0}, {1,1}), 1e-5)}
+    forces = {P.forces.generate_force_central({0.5, 0.5}, -arg.k)},
+    particles = {P.objects.SingleParticle(arg.p, arg.v, {0, 0})},
+    observers = {P.observers.SVGLinePlot(fn, box, arg.l)}
 }
 
 local s = P.ics.create_simulation(conf)
 local t_start = os.clock()
-s:step(1.3e5)
+s:step(arg.t)
 local t_end = os.clock()
 print(t_end - t_start)

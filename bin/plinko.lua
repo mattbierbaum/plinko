@@ -1,7 +1,7 @@
 local argparse = require('lib.argparse')
 local plinko = require('plinko')
 
-local prefix = 'examples'
+local prefix = 'bundle'
 local scripts = {}
 local scripts_max = 0
 local scripts_string = ''
@@ -100,10 +100,15 @@ local crun = parser:command('run r', help_run, epil_run)
 local cexec = parser:command('exec e', help_exec, epil_exec)
 
 crun:argument('script', 'Filename of script to run, "-" for stdin.')
+crun:argument('options', 'Command line arguments to the script. Must be preceeded by "--" to indicate that all following options are passed to the other script.'):args('*')
 cexec:argument('script', 'Name of the script to run.')
-
+cexec:argument('options', 'Command line arguments to the script. Must be preceeded by "--" to indicate that all following options are passed to the embedded script.'):args('*')
 
 local opts = parser:parse()
+local args = opts.options or {}
+args[-1] = _G.arg[-1]
+args[0] = opts.script
+_G.arg = args
 
 if opts.command == 'run' then
     plinko.run_file(opts.script)

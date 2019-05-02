@@ -96,4 +96,11 @@ function util.tstring(t)
     end
 end
 
+function util.tovec(str)
+    local comma, _ = string.find(str, ',')
+    local a = string.sub(str, 1, comma-1)
+    local b = string.sub(str, comma+1, string.len(str))
+    return {tonumber(a), tonumber(b)}
+end
+
 return util
