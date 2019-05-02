@@ -29,7 +29,7 @@ if _G.bundle_names then
         local n = string.len(name)
         local t = name
 
-        for j = 1, scripts_max - n do
+        for j = 1, scripts_max - n - 2 do
             t = t .. ' '
         end
 

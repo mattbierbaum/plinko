@@ -148,7 +148,7 @@ end
 
 function ArrayBase:save_pgm5(filename)
     file = io.open(filename, 'w')
-    file:write(string.format('P5 %i %i %i\n', self.shape[2], self.shape[1], 255))
+    file:write(string.format('P5 %i %i %i\n', self.shape[1], self.shape[2], 255))
     file:close()
 
     self:save_bin(filename, 'a')
