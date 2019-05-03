@@ -142,13 +142,11 @@ end
 
 function SVGLinePlot:update_particle(particle)
     local ind = particle.index
-    local pos = particle.pos
+    local pos = self:reflect(particle.pos)
 
     local lind = self.lastind
     local lpos = self.lastpt[ind]
     local pt = lpos and lpos or pos
-    pt = self:reflect(pt)
-    pos = self:reflect(pos)
 
     if self.count == 0 then
         self.file:write(string.format(SVG_PATH_STR, self.lw, self.opacity))
