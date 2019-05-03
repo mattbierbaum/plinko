@@ -5,11 +5,9 @@ local opt = argparse(){name='curtains'}
 opt:option('-g', 'Fractional gap between circles.', 1e-3, tonumber):argname('gap')
 opt:option('-d', 'Collision damping constant', 1.0, tonumber):argname('damp')
 opt:option('-N', 'Number of rows', 8, tonumber):argname('N')
-opt:option('-o', 'Type of output (svg, csv, pgm)', 'svg'):argname('filetype')
-opt:option('-p', 'If type pgm, the number of pixels wide.', 1080, tonumber):argname('pix')
-opt:argument('filename', 'Filename for output', 'curtains'):args('?')
+P.cli.options_seed(opt, '10')
+P.cli.options_observer(opt, 'curtains.svg', '1e4')
 local arg = opt:parse(arg)
-local fn = arg.filename or 'hearrt.svg'
 
 local O = arg.N
 local rad = 0.5*(1 - arg.g)
@@ -26,29 +24,17 @@ local w, h = bd[1], bd[2]
 local box = P.objects.Box({0, 0}, {w, h*1.0})
 obj[#obj + 1] = box
 
-if arg.o ~= 'svg' and arg.o ~= 'csv' and arg.o ~= 'pgm' then
-    print('Output filetype must be one of [svg, csv, pgm]')
-    os.exit()
-end
-
-local filename = (arg.filename or 'curtains') .. '.' .. arg.o
-local observers = {
-    svg = P.observers.SVGLinePlot(filename, box, 1e-5),
-    csv = P.observers.StateFileRecorder(filename),
-    pgm = P.observers.ImageRecorder(
-        filename, P.plotting.DensityPlot(box, arg.p/w), 'pgm5'
-    )
-}
+local vx = 0.1*(2*math.random()-1)
 
 local conf = {
     dt = 1e-2,
     eps = 1e-4,
     nbl = P.neighborlist.CellNeighborlist(box, {200, 200}, 1e-1),
     forces = {P.forces.force_gravity},
-    particles = {P.objects.SingleParticle({w/2, h-1.5}, {0.1, 0}, {0, 0})},
+    particles = {P.objects.SingleParticle({w/2, h-1.5}, {vx, 0}, {0, 0})},
     objects = obj,
     observers = {
-        observers[arg.o],
+        P.cli.args_to_observer(arg, box),
         P.observers.TimePrinter(1e6),
         P.interrupts.Collision(box.segments[4])
     },

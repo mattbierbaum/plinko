@@ -1,6 +1,6 @@
 local modules = {
-    'alloc', 'forces', 'ics', 'image', 'interrupts', 'neighborlist', 'objects',
-    'observers', 'plotting', 'roots', 'simulation', 'util', 'vector'
+    'alloc', 'cli', 'forces', 'ics', 'image', 'interrupts', 'neighborlist',
+    'objects', 'observers', 'plotting', 'roots', 'simulation', 'util', 'vector'
 }
 
 local package = {}
