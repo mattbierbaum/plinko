@@ -5,10 +5,10 @@ local opt = argparse(){name='plinko'}
 opt:option('-g', 'Fractional gap between circles', 0.2, tonumber):argname('gap')
 opt:option('-L', 'Lattice dimensions %i,%i', {3, 8}, P.util.tovec):argname('latt')
 opt:option('-d', 'Collision damping constant', 0.8, tonumber):argname('damp')
-opt:argument('filename', 'Filename for output', 'plinko.svg'):args('?')
+P.cli.options_seed(opt, '10')
+P.cli.options_observer(opt, 'plinko.svg', '1e4')
 local arg = opt:parse(arg)
 
-local fn = arg.filename or 'plinko.svg'
 local O = arg.L
 local N = arg.N
 local rad = 0.5 * (1 - arg.g)
@@ -27,8 +27,7 @@ local conf = {
     particles = {P.objects.SingleParticle({w/2-0.05, h-0.5}, {-0.01, 0.0})},
     objects = obj,
     observers = {
-        P.observers.SVGLinePlot(fn, box, 1e-5),
-        --P.plotting.DensityPlot(box, 4500/w, 'pgm5')),
+        P.cli.args_to_observer(arg, box),
         P.observers.TimePrinter(1e4),
         P.interrupts.Collision(box.segments[4])
     },

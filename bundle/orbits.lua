@@ -17,12 +17,11 @@ local opt = argparse(){
 }
 opt:option('-b', 'Fractional bump size', 0.0, tonumber):argname('bump')
 opt:option('-t', 'Number of timesteps to simulate', 3e6, tonumber):argname('maxt')
-opt:option('-L', 'Number of pixels for each dimension', 3200, tonumber):argname('pix')
 opt:option('-p', 'Starting position "%f,%f"', {0.53, 0.20}, P.util.tovec):argname('p0')
 opt:option('-v', 'Starting velocity "%f,%f"', {0.6, 0.35}, P.util.tovec):argname('v0')
-opt:argument('filename', 'Filename for PGM output', 'orbits.pgm'):args('?')
+P.cli.options_seed(opt, '10')
+P.cli.options_observer(opt, 'orbits.pgm', '3200')
 local arg = opt:parse(arg)
-local fn = arg.filename or 'orbits.pgm'
 
 local L = 10.0
 local f0 = arg.v[1]
@@ -42,9 +41,7 @@ local conf = {
         P.objects.Circle({L, 0}, bump*L),
         P.objects.Circle({L, L}, L)
     },
-    observers = {
-        P.observers.ImageRecorder(fn, P.plotting.DensityPlot(box, arg.L/(2*L)), 'pgm5')
-    }
+    observers = {P.cli.args_to_observer(arg, box)}
 }
 
 local s = P.ics.create_simulation(conf)

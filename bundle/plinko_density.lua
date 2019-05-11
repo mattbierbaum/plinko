@@ -6,10 +6,10 @@ opt:option('-g', 'Fractional gap between circles', 0.2, tonumber):argname('gap')
 opt:option('-L', 'Lattice dimensions', {3, 8}, P.util.tovec):argname('latt')
 opt:option('-d', 'Collision damping constant', 0.8, tonumber):argname('damp')
 opt:option('-N', 'Number of particles', 10000, tonumber):argname('N')
-opt:argument('filename', 'Filename for output', 'plinko.pgm'):args('?')
+P.cli.options_seed(opt, '10')
+P.cli.options_observer(opt, 'plinko.pgm', '3e4')
 local arg = opt:parse(arg)
 
-local fn = arg.filename or 'plinko.pgm'
 local O = arg.L
 local N = arg.N
 local rad = 0.5 * (1 - arg.g)
@@ -35,7 +35,7 @@ local conf = {
     },
     objects = obj,
     observers = {
-        P.observers.ImageRecorder(fn, P.plotting.DensityPlot(box, 4500/w, 'pgm5')),
+        P.cli.args_to_observer(arg, box),
         P.observers.TimePrinter(1e4),
         P.interrupts.Collision(box.segments[4])
     },

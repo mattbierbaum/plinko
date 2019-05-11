@@ -113,7 +113,7 @@ function Simulation:linear_project(part, seg, vel)
         self.observer_group:update_collision(part0, mino, mint)
         seg, vel = mino:collide(seg, nseg, vel)
 
-        if collision == MAX_BOUNCE-1 then
+        if collision == MAX_BOUNCE then
             print('* Max bounces reached')
             running = false
         end
@@ -134,8 +134,6 @@ function Simulation:step_particle(part0)
     vector.copy(part1.vel, vel)
     vector.copy(part0.pos, pseg.p0)
     vector.copy(part1.pos, pseg.p1)
-    self.observer_group:update_particle(part0)
-
     part0, pseg, vel, is_running = self:linear_project(part0, pseg, vel)
 
     vector.copy(pseg.p1, part0.pos)

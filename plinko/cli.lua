@@ -47,7 +47,7 @@ function cli.args_to_observer(arg, box)
 
     local width = box.uu[1] - box.ll[1]
     if ext == 'svg' then
-        return observers.SVGLinePlot(filename, box, 1.0/res/width/20)
+        return observers.SVGLinePlot(filename, box, 1.0/res/width/5)
     elseif ext == 'csv' then
         return observers.StateFileRecorder(filename)
     elseif ext == 'pgm' then

@@ -107,6 +107,8 @@ local SVG_HEADER = [[<?xml version="1.0" encoding="UTF-8"?>
 ]]
 local SVG_PATH_STR = '<path style="fill:none;stroke:#000000;stroke-width:%fin;stroke-opacity:%f" d="'
 local SVG_PATH_END = '"/>\n'
+local SVG_PATH_RAW_STR = 'd="'
+local SVG_PATH_RAW_END = '"\n'
 local SVG_FOOTER = '</g></svg>'
 
 function SVGLinePlot:init(filename, box, lw, opacity, crosspath)
@@ -114,20 +116,24 @@ function SVGLinePlot:init(filename, box, lw, opacity, crosspath)
     self.box = box
     self.lw = lw
     self.opacity = opacity ~= nil and opacity or 1.0
-    self.crosspath = crosspath
+    self.crosspath = crosspath ~= nil and crosspath or false
     self.lastpt = {}
     self.lastind = -1
     self.breakpt = 10000
     self.y0 = self.box.ll[2]
     self.y1 = self.box.uu[2]
+    self.PATH_START = SVG_PATH_STR
+    self.PATH_END = SVG_PATH_END
+    self.HEADER = SVG_HEADER
+    self.FOOTER = SVG_FOOTER
 end
 
 function SVGLinePlot:begin()
     self.count = 0
     self.file = io.open(self.filename, 'w')
-    self.file:write(
+    self:write(
         string.format(
-            SVG_HEADER,
+            self.HEADER,
             self.box.uu[1] - self.box.ll[1],
             self.box.uu[2] - self.box.ll[2],
             self.box.ll[1], self.box.ll[2],
@@ -140,6 +146,10 @@ function SVGLinePlot:reflect(p)
     return {p[1], (self.y1 - p[2]) + self.y0}
 end
 
+function SVGLinePlot:write(str)
+    self.file:write(str)
+end
+
 function SVGLinePlot:update_particle(particle)
     local ind = particle.index
     local pos = self:reflect(particle.pos)
@@ -149,14 +159,14 @@ function SVGLinePlot:update_particle(particle)
     local pt = lpos and lpos or pos
 
     if self.count == 0 then
-        self.file:write(string.format(SVG_PATH_STR, self.lw, self.opacity))
-        self.file:write(string.format('M%f,%f ', pt[1], pt[2]))
+        self:write(string.format(self.PATH_START, self.lw, self.opacity))
+        self:write(string.format('M%f,%f ', pt[1], pt[2]))
     else
         if self.crosspath or (lind == ind) then
-            self.file:write(string.format('L%f,%f ', pos[1], pos[2]))
+            self:write(string.format('L%f,%f ', pos[1], pos[2]))
         else
-            self.file:write(string.format('M%f,%f ', pt[1], pt[2]))
-            self.file:write(string.format('L%f,%f ', pos[1], pos[2]))
+            self:write(string.format('M%f,%f ', pt[1], pt[2]))
+            self:write(string.format('L%f,%f ', pos[1], pos[2]))
         end
     end
 
@@ -165,16 +175,36 @@ function SVGLinePlot:update_particle(particle)
     self.count = self.count + 1
 
     if self.count > self.breakpt then
-        self.file:write(SVG_PATH_END)
+        self:write(self.PATH_END)
         self.count = 0
     end
 end
 
 function SVGLinePlot:close()
-    self.file:write(SVG_PATH_END)
-    self.file:write(SVG_FOOTER)
+    self:write(self.PATH_END)
+    self:write(self.FOOTER)
     self.file:flush()
     self.file:close()
+end
+
+-- =================================================================
+local SVGPathPrinter = util.class(SVGLinePlot)
+function SVGPathPrinter:init(...)
+    SVGLinePlot.init(self, '', ...)
+    self.PATH_START = SVG_PATH_RAW_STR
+    self.PATH_END = SVG_PATH_RAW_END
+end
+
+function SVGPathPrinter:begin()
+    self.count = 0
+end
+
+function SVGPathPrinter:write(str)
+    io.write(str)
+end
+
+function SVGPathPrinter:close()
+    self:write(self.PATH_END)
 end
 
 -- =================================================================
@@ -292,5 +322,6 @@ return {
     LastPositionRecorder=LastPositionRecorder,
     PointImageRecorder=PointImageRecorder,
     TimePrinter=TimePrinter,
-    SVGLinePlot=SVGLinePlot
+    SVGLinePlot=SVGLinePlot,
+    SVGPathPrinter=SVGPathPrinter
 }

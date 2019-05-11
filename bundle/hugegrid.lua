@@ -5,9 +5,8 @@ local opt = argparse(){name='hugegrid'}
 opt:option('-g', 'Fractional gap between circles', 1e-3, tonumber):argname('gap')
 opt:option('-d', 'Collision damping constant', 1.0, tonumber):argname('damp')
 opt:option('-N', 'Number of rows', 100, tonumber):argname('N')
-opt:option('-o', 'Type of output (svg, csv, pgm)', 'svg'):argname('filetype')
-opt:option('-p', 'If type pgm, the number of pixels wide.', 1080, tonumber):argname('pix')
-opt:argument('filename', 'Filename for output'):args('?')
+P.cli.options_seed(opt, '10')
+P.cli.options_observer(opt, 'hugegrid.pgm', '3200')
 local arg = opt:parse(arg)
 
 local O = arg.N
@@ -19,15 +18,6 @@ local w, h = bd[1], bd[2]
 local box = P.objects.Box({0, 0}, {w, h*1.1})
 obj[#obj + 1] = box
 
-local filename = (arg.filename or 'hugegrid') .. '.' .. arg.o
-local observers = {
-    svg = P.observers.SVGLinePlot(filename, box, 1e-5),
-    csv = P.observers.StateFileRecorder(filename),
-    pgm = P.observers.ImageRecorder(
-        filename, P.plotting.DensityPlot(box, arg.p/w), 'pgm5'
-    )
-}
-
 local conf = {
     dt = 1e-2,
     eps = 1e-4,
@@ -36,7 +26,7 @@ local conf = {
     particles = {P.objects.SingleParticle({w/2, h-0.5}, {0.1, 0}, {0, 0})},
     objects = obj,
     observers = {
-        observers[arg.o],
+        P.cli.args_to_observer(arg, box),
         P.observers.TimePrinter(1e6),
         P.interrupts.Collision(box.segments[4])
     },
