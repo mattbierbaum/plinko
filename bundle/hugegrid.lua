@@ -2,9 +2,9 @@ local P = require('plinko')
 
 local argparse = require('lib.argparse')
 local opt = argparse(){name='hugegrid'}
-opt:option('-g', 'Fractional gap between circles', 1e-3, tonumber):argname('gap')
-opt:option('-d', 'Collision damping constant', 1.0, tonumber):argname('damp')
-opt:option('-N', 'Number of rows', 100, tonumber):argname('N')
+opt:option('-g', 'Fractional gap between circles', '1e-3', tonumber):argname('gap')
+opt:option('-d', 'Collision damping constant', '1.0', tonumber):argname('damp')
+opt:option('-N', 'Number of rows', '100', tonumber):argname('N')
 P.cli.options_seed(opt, '10')
 P.cli.options_observer(opt, 'hugegrid.pgm', '3200')
 local arg = opt:parse(arg)

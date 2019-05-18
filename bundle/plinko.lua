@@ -2,9 +2,9 @@ local P = require('plinko')
 
 local argparse = require('lib.argparse')
 local opt = argparse(){name='plinko'}
-opt:option('-g', 'Fractional gap between circles', 0.2, tonumber):argname('gap')
-opt:option('-L', 'Lattice dimensions %i,%i', {3, 8}, P.util.tovec):argname('latt')
-opt:option('-d', 'Collision damping constant', 0.8, tonumber):argname('damp')
+opt:option('-g', 'Fractional gap between circles', '0.2', tonumber):argname('gap')
+opt:option('-L', 'Lattice dimensions %i,%i', '3,8', P.util.tovec):argname('latt')
+opt:option('-d', 'Collision damping constant', '0.8', tonumber):argname('damp')
 P.cli.options_seed(opt, '10')
 P.cli.options_observer(opt, 'plinko.svg', '1e4')
 local arg = opt:parse(arg)

@@ -1,9 +1,11 @@
 local P = require('plinko')
 local argparse = require('lib.argparse')
 
+-- -g 0.001 -o test.pgm -r 3000
+
 local opt = argparse(){name='diamond'}
-opt:option('-g', 'Fractional gap between squares.', 0.05, tonumber):argname('gap')
-opt:option('-d', 'Collision damping constant', 1.0, tonumber):argname('damp')
+opt:option('-g', 'Fractional gap between squares.', '0.05', tonumber):argname('gap')
+opt:option('-d', 'Collision damping constant', '1.0', tonumber):argname('damp')
 P.cli.options_seed(opt, '10')
 P.cli.options_observer(opt, 'diamond.svg', '1e2')
 local arg = opt:parse(arg)

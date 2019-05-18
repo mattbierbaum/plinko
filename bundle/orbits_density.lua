@@ -15,11 +15,11 @@ local opt = argparse(){
     description='Orbit paths within a circle',
     epilog=epilog
 }
-opt:option('-f', 'Fractional spread of particles', 0.1, tonumber):argname('bump')
-opt:option('-t', 'Number of timesteps to simulate', 1e4, tonumber):argname('maxt')
-opt:option('-N', 'Number of particles', 1000, tonumber):argname('N')
-opt:option('-p', 'Starting position "%f,%f"', {0.53, 0.20}, P.util.tovec):argname('p0')
-opt:option('-v', 'Starting velocity "%f,%f"', {0.6, 0.35}, P.util.tovec):argname('v0')
+opt:option('-f', 'Fractional spread of particles', '0.1', tonumber):argname('bump')
+opt:option('-t', 'Number of timesteps to simulate', '1e4', tonumber):argname('maxt')
+opt:option('-N', 'Number of particles', '1000', tonumber):argname('N')
+opt:option('-p', 'Starting position "%f,%f"', '0.53,0.20', P.util.tovec):argname('p0')
+opt:option('-v', 'Starting velocity "%f,%f"', '0.6,0.35', P.util.tovec):argname('v0')
 P.cli.options_seed(opt, '10')
 P.cli.options_observer(opt, 'orbits.pgm', '3200')
 local arg = opt:parse(arg)

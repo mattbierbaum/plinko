@@ -8,17 +8,25 @@ local epilog = [[Suggestions:
      0.50    0.50    0      3e6
      0.50    0.60    0      1e6
      0.50    0.63    0      6e6
-     0.20    0.75    0      1e6]]
+     0.20    0.75    0      1e6
+
+orbits -d 0.999 -t 1e6 -v 0.4,0.4
+orbits -d 0.999833 -t 4e6 -v 0.56,0.39
+orbits -d 0.999995 -t 6e7 -v 0.56,0.26
+orbits -d 0.999997 -t 6e7 -v 0.56,0.22
+orbits -d 0.999990 -t 2e7 -v 0.56,0.226
+]]
 
 local opt = argparse(){
     name='orbits',
     description='Orbit paths within a circle',
     epilog=epilog
 }
-opt:option('-b', 'Fractional bump size', 0.0, tonumber):argname('bump')
-opt:option('-t', 'Number of timesteps to simulate', 3e6, tonumber):argname('maxt')
-opt:option('-p', 'Starting position "%f,%f"', {0.53, 0.20}, P.util.tovec):argname('p0')
-opt:option('-v', 'Starting velocity "%f,%f"', {0.6, 0.35}, P.util.tovec):argname('v0')
+opt:option('-b', 'Fractional bump size', '0.0', tonumber):argname('bump')
+opt:option('-d', 'Collision fractional damping', '1.0', tonumber):argname('damp')
+opt:option('-t', 'Number of timesteps to simulate', '3e6', tonumber):argname('maxt')
+opt:option('-p', 'Starting position "%f,%f"', '0.53,0.20', P.util.tovec):argname('p0')
+opt:option('-v', 'Starting velocity "%f,%f"', '0.6,0.35', P.util.tovec):argname('v0')
 P.cli.options_seed(opt, '10')
 P.cli.options_observer(opt, 'orbits.pgm', '3200')
 local arg = opt:parse(arg)
@@ -30,6 +38,7 @@ local p0 = arg.p[1]
 local p1 = arg.p[2]
 local bump = arg.b
 local tmax = arg.t
+local cargs = {damp=arg.d}
 
 local box = P.objects.Box({0, 0}, {2*L, 2*L})
 local conf = {
@@ -38,8 +47,8 @@ local conf = {
     forces = {P.forces.force_gravity},
     particles = {P.objects.SingleParticle({p0*L, p1*L}, {-f0*L, -f1*L}, {0, 0})},
     objects = {
-        P.objects.Circle({L, 0}, bump*L),
-        P.objects.Circle({L, L}, L)
+        P.objects.Circle({L, 0}, bump*L, cargs),
+        P.objects.Circle({L, L}, L, cargs)
     },
     observers = {P.cli.args_to_observer(arg, box)}
 }
