@@ -331,7 +331,7 @@ end
 
 local function circle_nholes(nholes, eps, offset)
     return function(theta)
-        local r = nholes * theta / (2 * math.pi)
+        local r = nholes * (theta - offset) / (2 * math.pi)
         return math.abs(r - math.floor(r + 0.5)) > eps
     end
 end
