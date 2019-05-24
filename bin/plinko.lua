@@ -58,7 +58,14 @@ dynamics.
 ]]
 
 local epilog = [[
-See examples, wiki, etc at github.com/mattbierbaum/plinko.
+See examples, wiki, etc at github.com/mattbierbaum/plinko. Briefly, some usage
+examples are:
+
+plinko r examples/free_particle_box.lua
+plinko e plinko -- -o plinko.svg
+plinko e hugegrid -- -g 2e-2
+plinko e concentric -- -R 0.01 -g 2e-2 -N 1000 -t 1e5 -p 0.501,0.55 -v 3.1,0
+                    -r 10000 --offset 0.0 -H 12
 ]]
 
 local help_run = [[Run a script from the filesystem or stdin.]]

@@ -1,12 +1,19 @@
 local P = require('plinko')
 
--- -g 5e-3 -t 4e6 -r 10000 -N 250 -R 0.1 -p 0.501,0.87
--- -g 51e-3 -t 6e6 -r 8000 -N 100 -R 0.1 --offset 0.4 -H 2
--- -g 0.1 -t 2e6 -r 8000 -N 200 -R 0.3 --offset 0.5 -H 2
--- -g 0.25 -t 2e6 -r 8000 -N 200 -R 0.05 --offset 0.275 -H 1 -p 0.5,0.52
-
 local argparse = require('lib.argparse')
-local opt = argparse(){name='concentric'}
+local opt = argparse(){
+    name='concentric',
+    epilog=[[
+Suggestions:
+
+concentric -g 5e-3 -t 4e6 -r 10000 -N 250 -R 0.1 -p 0.501,0.87
+concentric -g 51e-3 -t 6e6 -r 8000 -N 100 -R 0.1 --offset 0.4 -H 2
+concentric -g 0.1 -t 2e6 -r 8000 -N 200 -R 0.3 --offset 0.5 -H 2
+concentric -g 0.25 -t 2e6 -r 8000 -N 200 -R 0.05 --offset 0.275 -H 1 -p 0.5,0.52
+concentric -R 0.01 -g 2e-2 -N 1000 -t 1e5 -p 0.501,0.55 -v 3.1,0 -r 10000 
+           --offset 0.0 -H 12
+]]
+}
 opt:option('-g', 'Circle slit size, 4 per circle', '1e-3', tonumber):argname('gap')
 opt:option('-R', 'Ratio of outer to inner circle radius', '0.76', tonumber):argname('ratio')
 opt:option('-d', 'Collision damping constant', '1.0', tonumber):argname('damp')
