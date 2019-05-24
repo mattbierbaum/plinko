@@ -55,6 +55,15 @@ function util.class(base, init)
    	return c
 end
 
+function util.table_keys(t)
+    out = {}
+    for k, v in pairs(t) do
+        out[#out + 1] = k
+    end
+    table.sort(out)
+    return out
+end
+
 function util.table_concat(t1,t2)
     for i=1, #t2 do
         t1[#t1+1] = t2[i]
@@ -100,6 +109,10 @@ function util.tovec(str)
     local comma, _ = string.find(str, ',')
     local a = string.sub(str, 1, comma-1)
     local b = string.sub(str, comma+1, string.len(str))
+
+    if a == 'nil' and b == 'nil' then
+        return {[-1] = 0}
+    end
     return {tonumber(a), tonumber(b)}
 end
 

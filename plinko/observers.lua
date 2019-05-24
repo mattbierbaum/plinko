@@ -1,6 +1,7 @@
 local util = require('plinko.util')
 local vector = require('plinko.vector')
 local objects = require('plinko.objects')
+local image = require('plinko.image')
 
 local Observer = util.class()
 function Observer:init() end
@@ -42,12 +43,21 @@ end
 
 -- =================================================================
 local ImageRecorder = util.class(Observer)
-function ImageRecorder:init(filename, plotter, format)
+function ImageRecorder:init(filename, plotter, format, toner)
     self.format = format or 'pgm5'
     self.filename = filename
     self.plotter = plotter
     self.lastposition = {}
     self.segment = objects.Segment({0,0}, {0,0})
+
+    self.cmap = image.cmaps.gray_r
+    self.norm = image.norms.eq_hist
+
+    if toner ~= nil then
+        self.cmap = toner.cmap ~= nil and toner.cmap or self.cmap
+        self.norm = toner.norm ~= nil and toner.norm or self.norm
+    end
+
 end
 
 function ImageRecorder:begin()
@@ -71,19 +81,50 @@ function ImageRecorder:update_particle(particle)
     end
 end
 
+function ImageRecorder:update_collision(particle, object, time)
+
+end
+
 function ImageRecorder:reset()
     self.lastposition = {}
 end
 
+function ImageRecorder:tone()
+    local n = self.norm(self.plotter:get_array())
+    return self.cmap(n)
+end
+
+function ImageRecorder:save_csv(fn)
+    local arr = self.plotter:get_array()
+    arr:save_csv(fn)
+end
+
+function ImageRecorder:save_bin(fn)
+    local arr = self.plotter:get_array()
+    arr:save_bin(fn)
+end
+
+function ImageRecorder:save_pgm2(fn)
+    self:tone():save_pgm2(fn)
+end
+
+function ImageRecorder:save_pgm5(fn)
+    self:tone():save_pgm5(fn)
+end
+
+function ImageRecorder:save_ppm()
+    self:tone():save_ppm(fn)
+end
+
 function ImageRecorder:close()
     if self.format == 'csv' then
-        self.plotter:save_csv(self.filename)
+        self:save_csv(self.filename)
     end
     if self.format == 'bin' then
-        self.plotter:save_bin(self.filename)
+        self:save_bin(self.filename)
     end
     if self.format == 'pgm5' then
-        self.plotter:save_pgm5(self.filename)
+        self:save_pgm5(self.filename)
     end
 end
 

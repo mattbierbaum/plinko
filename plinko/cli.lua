@@ -1,5 +1,7 @@
 local observers = require('plinko.observers')
 local plotting = require('plinko.plotting')
+local image = require('plinko.image')
+local util = require('plinko.util')
 
 local cli = {}
 
@@ -23,6 +25,13 @@ end
 function cli.options_observer(arg, filename, res)
     arg:help_max_width(80)
     arg:group('Output options',
+        arg:option('-o --out',
+                'Filename for output, where extension determines file type. ' ..
+                'Extensions can be one of (svg, csv, pgm).'
+           )
+           :default(filename)
+           :argname('filename'),
+
         arg:option('-r --res',
                 'Image resolution, ratio of image size to line width. ' ..
                 'For pgm, this is the resolution, svg is the relative linewidth'
@@ -31,12 +40,27 @@ function cli.options_observer(arg, filename, res)
            :default(res)
            :argname('res'),
 
-        arg:option('-o --out',
-                'Filename for output, where extension determines file type. ' ..
-                'Extensions can be one of (svg, csv, pgm).'
-           )
-           :default(filename)
-           :argname('filename')
+        arg:option('--cmap',
+                'Name of the color map with which to tone the image. Options are: ' ..
+                table.concat(util.table_keys(image.cmaps), ', ')
+            )
+            :default('gray_r')
+            :argname('cmap'),
+
+        arg:option('--norm',
+                'Name of the normalization procedure. Options are: ' ..
+                table.concat(util.table_keys(image.norms), ', ')
+            )
+            :default('eq_hist')
+            :argname('norm'),
+
+        arg:option('--clip',
+                'The clipping value for norm=clip, in the format %f,%f where each value ' ..
+                'is a multiplicative factor of the true density range. Examples: "nil,0.1" "0.1,1"'
+            )
+            :default('nil,nil')
+            :argname('clip')
+            :convert(util.tovec)
     )
 end
 
@@ -45,6 +69,19 @@ function cli.args_to_observer(arg, box)
     local ext = extension(filename)
     local res = arg.res
 
+    local clip = arg.clip
+    local cmap = image.cmaps[arg.cmap]
+    local norm = image.norms.eq_hist
+
+    if arg.norm == 'eq_hist' then
+        norm = image.norms.eq_hist
+    elseif arg.norm == 'clip' then
+        norm = function(d) return image.norms.clip(d, clip[1], clip[2]) end
+    else
+        print('Provided norm function doesnt match available options')
+        os.exit()
+    end
+
     local width = box.uu[1] - box.ll[1]
     if ext == 'svg' then
         return observers.SVGLinePlot(filename, box, 1.0/res/width/5)
@@ -52,7 +89,8 @@ function cli.args_to_observer(arg, box)
         return observers.StateFileRecorder(filename)
     elseif ext == 'pgm' then
         return observers.ImageRecorder(
-            filename, plotting.DensityPlot(box, res/width, 'pgm5')
+            filename, plotting.DensityPlot(box, res/width, 'pgm5'), 'pgm5',
+            {cmap=cmap, norm=norm}
         )
     else
         print('File extension must be one of (svg, pgm, csv)')

@@ -22,6 +22,8 @@ local function gw3c(a)
     end
 end
 
+local norms = {}
+local cmaps = {}
 local blendmodes = {}
 
 function blendmodes.normal(a, b)        return a end
@@ -107,7 +109,10 @@ local function cdf(data)
     return out
 end
 
-local function eq_hist(data, nbins)
+
+function norms.eq_hist(data, nbins)
+    print(data, data.size, data[0])
+    local nbins = nbins ~= nil and nbins or 256*256
     local min, max = data:minmax_nozero()
 
     local df = cdf(hist(data, nbins))
@@ -138,33 +143,37 @@ local function eq_hist(data, nbins)
     return out
 end
 
-local function normalize(data, vmin, vmax)
+function norms.clip(data, vmin, vmax)
     local out = alloc.create_array(data.shape, 'float')
     local min, max = data:minmax()
 
-    if vmin ~= nil then min = vmin end
-    if vmax ~= nil then max = vmax end
+    min = vmin ~= nil and vmin * min or min
+    max = vmax ~= nil and vmax * max or max
 
     for i = 0, data.size-1 do
-        local v = data[i]
-        out[i] = (v - min) / (max - min)
+        out.arr[i] = clip((data.arr[i] - min) / (max - min))
     end
     return out
 end
 
-local cmaps = {}
+function cmaps.gray(data)
+    local out = alloc.create_array(data.shape, 'ubyte')
+    for i = 0, data.size-1 do
+        out.arr[i] = math.floor(255 * data.arr[i])
+    end
+    return out
+end
 
 function cmaps.gray_r(data)
     local out = alloc.create_array(data.shape, 'ubyte')
     for i = 0, data.size-1 do
-        out.arr[i] = 255 - math.floor(256 * data.arr[i])
+        out.arr[i] = 255 - math.floor(255 * data.arr[i])
     end
     return out
 end
 
 return {
     blendmodes=blendmodes,
+    norms=norms,
     cmaps=cmaps,
-    normalize=normalize,
-    eq_hist=eq_hist
 }

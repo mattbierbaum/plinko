@@ -24,6 +24,7 @@ function DensityPlot:init(box, dpi)
     }
     self.array = alloc.create_array(self.N, 'float')
     self.grid = self.array.arr
+    self.minlen = 1 / self.dpi
 end
 
 function DensityPlot:reflect(y)
@@ -120,21 +121,9 @@ function DensityPlot:draw_point(p)
     self:_plot(x, y, 1)
 end
 
-function DensityPlot:save_csv(fn)
-    self.array:save_csv(fn)
+function DensityPlot:get_array()
+    return self.array
 end
-
-function DensityPlot:save_bin(fn)
-    self.array:save_bin(fn)
-end
-
-function DensityPlot:save_pgm2(fn) end
-function DensityPlot:save_pgm5(fn)
-    local img = image.cmaps.gray_r(image.eq_hist(self.array, 256*256))
-    img:save_pgm5(fn)
-end
-
-function DensityPlot:save_ppm() end
 
 function DensityPlot:show()
     for j = self.N[2]-1, 0, -1 do
