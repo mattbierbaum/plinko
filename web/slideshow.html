@@ -31,7 +31,7 @@ function switchimage() {
 }
 
 $(document).ready(function() {
-    $.getJSON('./files.json', function(data) {
+    $.getJSON('./slideshow.json', function(data) {
         filenames = data;
         switchimage();
      })
