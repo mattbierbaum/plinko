@@ -4,6 +4,7 @@ import random
 import shlex
 import numpy as np
 from subprocess import check_call
+from multiprocessing import Pool
 
 def rand_bin():
     return (random.random() > 0.5)
@@ -21,7 +22,7 @@ def rand_logint(xmin, xmax):
 def rand_int(xmin, xmax):
     return random.randint(xmin, xmax)
 
-def concentric(seed):
+def concentric(seed, resolution=720, outdir='/dev/shm'):
     random.seed(seed)
 
     g = rand_log(1e-4, 1)
@@ -42,7 +43,25 @@ def concentric(seed):
         for i in (list('gRdtNHpv') + ['offset', 'rand'])
     ])
 
-    cmd = 'plinko exec concentric -- {} -r 720 -o concentric-{:04d}.pgm'
-    cmd = shlex.split(cmd.format(params, seed))
+    fn0 = os.path.join(outdir, 'concentric-{:04d}.pgm'.format(seed))
+    fn1 = os.path.join(outdir, 'concentric-{:04d}.png'.format(seed))
 
-    check_call(cmd)
+    cmd = 'plinko exec concentric -- {} -r {} -o {}'
+    cmd = shlex.split(cmd.format(params, resolution, fn0))
+
+    cvt = 'convert {} {}'
+    cvt = shlex.split(cvt.format(fn0, fn1))
+
+    try:
+        print(seed)
+        check_call(cmd)
+        check_call(cvt)
+    except Exception as e:
+        print(seed + ': ' + e)
+
+def parallel(func, processes=30, jobs=1000):
+    pool = Pool(processes)    
+    pool.map(func, list(range(jobs)))
+
+if __name__ == '__main__':
+    parallel(concentric)

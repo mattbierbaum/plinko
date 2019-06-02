@@ -111,7 +111,6 @@ end
 
 
 function norms.eq_hist(data, nbins)
-    print(data, data.size, data[0])
     local nbins = nbins ~= nil and nbins or 256*256
     local min, max = data:minmax_nozero()
 
