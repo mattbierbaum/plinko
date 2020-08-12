@@ -128,8 +128,8 @@ function norms.eq_hist(data, nbins)
     local out = alloc.create_array(data.shape, 'float')
     for i = 0, data.size-1 do
         local v = data.arr[i]
-        if v <= b0 then out[i] = 0.0 end
-        if v >= b1 then out[i] = 1.0 end
+        if v <= b0 then out.arr[i] = 0.0 end
+        if v >= b1 then out.arr[i] = 1.0 end
         if v > b0 and v < b1 then
             local bin = math.floor((v - b0)/dx)
             local x1 = bincenter(bin)
