@@ -16,18 +16,29 @@ def rand_log(xmin, xmax):
     t = random.random()*(np.log10(xmax) - np.log10(xmin)) + np.log10(xmin)
     return 10**t
 
+def rand_exp(xmin, xmax, scale=3, right=True):
+    t = np.clip(-np.log10(1 - random.random()) * (xmax-xmin)/scale + xmin, xmin, xmax)
+    return right and (xmax - t + xmin) or t
+
 def rand_logint(xmin, xmax):
     return int(rand_log(xmin, xmax))
 
 def rand_int(xmin, xmax):
     return random.randint(xmin, xmax)
 
-def concentric(seed, resolution=720, outdir='/dev/shm'):
-    random.seed(seed)
+def concentric(seed, resolution=720, outdir='/dev/shm', svg=False, overwrite=False):
+    fn_pgm = os.path.join(outdir, 'concentric-{:04d}.pgm'.format(seed))
+    fn_png = os.path.join(outdir, 'concentric-{:04d}.png'.format(seed))
+    fn_svg = os.path.join(outdir, 'concentric-{:04d}.svg'.format(seed))
 
+    if not overwrite and any([os.path.exists(f) for f in [fn_pgm, fn_png, fn_svg]]):
+        print("Output already exists")
+        return
+
+    random.seed(seed)
     g = rand_log(1e-4, 1)
     R = rand_log(1e-3, 0.98)
-    d = rand_bin() and 1.0 or rand_log(0.3, 1)
+    d = rand_bin() and 1.0 or rand_exp(0.99, 1.0, scale=12, right=True)
     t = rand_logint(1e4, 3e7)
     N = rand_logint(2, 1e4)
     H = rand_logint(1, 100)
@@ -43,25 +54,27 @@ def concentric(seed, resolution=720, outdir='/dev/shm'):
         for i in (list('gRdtNHpv') + ['offset', 'rand'])
     ])
 
-    fn0 = os.path.join(outdir, 'concentric-{:04d}.pgm'.format(seed))
-    fn1 = os.path.join(outdir, 'concentric-{:04d}.png'.format(seed))
-
+    fn = svg and fn_svg or fn_pgm
     cmd = 'plinko exec concentric -- {} -r {} -o {}'
-    cmd = shlex.split(cmd.format(params, resolution, fn0))
+    cmd = shlex.split(cmd.format(params, resolution, fn))
+    print(' '.join(cmd))
 
     cvt = 'convert {} {}'
-    cvt = shlex.split(cvt.format(fn0, fn1))
+    cvt = shlex.split(cvt.format(fn, fn_png))
 
     try:
         print(seed)
         check_call(cmd)
-        check_call(cvt)
+
+        if not svg:
+            check_call(cvt)
     except Exception as e:
-        print(seed + ': ' + e)
+        print('{}: {}'.format(seed, e))
 
-def parallel(func, processes=30, jobs=1000):
-    pool = Pool(processes)    
-    pool.map(func, list(range(jobs)))
+def parallel(func, processes=30, jobs=1000, seeds=None):
+    pool = Pool(processes)
+    jobs = list(range(jobs)) if seeds is None else seeds
+    pool.map(func, seeds)
 
-if __name__ == '__main__':
-    parallel(concentric)
+#if __name__ == '__main__':
+#    parallel(concentric)
