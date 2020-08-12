@@ -27,6 +27,7 @@ local cmaps = {}
 local blendmodes = {}
 
 function blendmodes.normal(a, b)        return a end
+function blendmodes.max(a, b)           return math.max(a, b) end
 function blendmodes.additive(a, b)      return a + b end
 function blendmodes.subtractive(a, b)   return a + b - 1 end
 function blendmodes.stamp(a, b)         return b + 2*a - 1 end

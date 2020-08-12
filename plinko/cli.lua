@@ -60,7 +60,13 @@ function cli.options_observer(arg, filename, res)
             )
             :default('nil,nil')
             :argname('clip')
-            :convert(util.tovec)
+            :convert(util.tovec),
+        arg:option('--blendmode',
+                'The blend mode for adding colors when generating density plots. Options are: ' ..
+                table.concat(util.table_keys(image.blendmodes), ', ')
+            )
+            :default('additive')
+            :argname('blendmode')
     )
 end
 
@@ -70,8 +76,9 @@ function cli.args_to_observer(arg, box)
     local res = arg.res
 
     local clip = arg.clip
-    local cmap = image.cmaps[arg.cmap]
-    local norm = image.norms.eq_hist
+    local blend = nil
+    local cmap = nil
+    local norm = nil
 
     if arg.norm == 'eq_hist' then
         norm = image.norms.eq_hist
@@ -82,6 +89,20 @@ function cli.args_to_observer(arg, box)
         os.exit()
     end
 
+    if image.cmaps[arg.cmap] ~= nil then
+        cmap = image.cmaps[arg.cmap]
+    else
+        print('Provided cmap function doesnt match available options')
+        os.exit()
+    end
+
+    if image.blendmodes[arg.blendmode] ~= nil then
+        blend = image.blendmodes[arg.blendmode]
+    else
+        print('Provided blendmode function doesnt match available options')
+        os.exit()
+    end
+
     local width = box.uu[1] - box.ll[1]
     if ext == 'svg' then
         return observers.SVGLinePlot(filename, box, 1.0/res/width/5)
@@ -89,7 +110,7 @@ function cli.args_to_observer(arg, box)
         return observers.StateFileRecorder(filename)
     elseif ext == 'pgm' then
         return observers.ImageRecorder(
-            filename, plotting.DensityPlot(box, res/width, 'pgm5'), 'pgm5',
+            filename, plotting.DensityPlot(box, res/width, blend), 'pgm5',
             {cmap=cmap, norm=norm}
         )
     else

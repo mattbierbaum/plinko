@@ -15,7 +15,7 @@ end
 -- ========================================================
 local DensityPlot = util.class()
 
-function DensityPlot:init(box, dpi)
+function DensityPlot:init(box, dpi, blendmode)
     self.box = box
     self.dpi = dpi
     self.N = {
@@ -25,6 +25,7 @@ function DensityPlot:init(box, dpi)
     self.array = alloc.create_array(self.N, 'float')
     self.grid = self.array.arr
     self.minlen = 1 / self.dpi
+    self.blendmode = blendmode ~= nil and blendmode or image.blendmodes.additive
 end
 
 function DensityPlot:reflect(y)
@@ -39,7 +40,7 @@ function DensityPlot:_plot(x, y, c)
     local x = floor(x)
     local y = floor(self:reflect(y))
     local ind = x + y*self.N[1]
-    self.grid[ind] = self.grid[ind] + c
+    self.grid[ind] = self.blendmode(c, self.grid[ind])
 end
 
 function DensityPlot:_plot_line(x0, y0, x1, y1)
