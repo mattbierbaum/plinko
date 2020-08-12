@@ -12,6 +12,11 @@ concentric -g 0.1 -t 2e6 -r 8000 -N 200 -R 0.3 --offset 0.5 -H 2
 concentric -g 0.25 -t 2e6 -r 8000 -N 200 -R 0.05 --offset 0.275 -H 1 -p 0.5,0.52
 concentric -R 0.01 -g 2e-2 -N 1000 -t 1e5 -p 0.501,0.55 -v 3.1,0 -r 10000 
            --offset 0.0 -H 12
+concentric -g 1e-3 -R 1e-2 -N 100 -H 1 -r 1e4 --offset 1.5 -p 0.5,0.57 -t 1e7
+concentric -g 2e-3 -R 1e-2 -N 100 -H 2 -r 1e4 --offset 0.0 -p 0.5,0.57
+           -v 0.3,0.1 -t 1e7
+concentric -g 1e-3 -R 1e-2 -N 30 -H 2 -r 1e4 --offset 0.0 -p 0.5,0.57 -v 0.3,0.1
+           -t 7e6 -d 0.999999
 ]]
 }
 opt:option('-g', 'Circle slit size, 4 per circle', '1e-3', tonumber):argname('gap')
@@ -48,7 +53,7 @@ function concentric_circles(N, minr, eps)
     for i = 1, N do
         local r = 0.5 - dr * i
         objs[#objs + 1] = P.objects.MaskedCircle(p, r,
-            P.objects.circle_masks.circle_nholes(H, eps, 2*math.pi*math.random()*dorand + math.pi*off)
+            P.objects.circle_masks.circle_nholes(H, eps, 2*math.pi*math.random()*dorand + math.pi*off), cargs
         )
     end
 
