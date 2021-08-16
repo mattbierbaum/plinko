@@ -74,7 +74,7 @@ def concentric(seed, resolution=720, outdir='/dev/shm', svg=False, overwrite=Fal
 def parallel(func, processes=30, jobs=1000, seeds=None):
     pool = Pool(processes)
     jobs = list(range(jobs)) if seeds is None else seeds
-    pool.map(func, seeds)
+    pool.map(func, jobs)
 
 #if __name__ == '__main__':
 #    parallel(concentric)

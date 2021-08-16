@@ -41,12 +41,15 @@ local p1 = P.vector.vaddv(p0, P.vector.vmuls(n, dist))
 
 local box = P.objects.Box({0, 0}, {2*L, 2*L})
 local conf = {
-    dt = 1e-2,
+    dt = 1e-1,
     eps = 1e-4,
     forces = {P.forces.force_gravity},
     particles = {P.objects.UniformParticles(p0, p1, v0, v1, arg.N)},
     objects = {P.objects.Circle({L, L}, L)},
-    observers = {P.cli.args_to_observer(arg, box)}
+    observers = {
+        P.cli.args_to_observer(arg, box),
+        P.observers.TimePrinter(1e4)
+    }
 }
 
 local s = P.ics.create_simulation(conf)
