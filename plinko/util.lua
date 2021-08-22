@@ -116,4 +116,8 @@ function util.tovec(str)
     return {tonumber(a), tonumber(b)}
 end
 
+function util.tobool(str)
+    return str == 'true'
+end
+
 return util

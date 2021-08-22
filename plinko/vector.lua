@@ -53,4 +53,8 @@ function vector.rotate(v, theta)
     return {v[1]*c - v[2]*s, v[1]*s + v[2]*c}
 end
 
+function vector.repr(v)
+    return v[1] .. ',' .. v[2]
+end
+
 return vector

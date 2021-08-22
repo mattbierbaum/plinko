@@ -1,5 +1,7 @@
+local objects = require('plinko.objects')
 local observers = require('plinko.observers')
 local plotting = require('plinko.plotting')
+local vector = require('plinko.vector')
 local image = require('plinko.image')
 local util = require('plinko.util')
 
@@ -13,6 +15,55 @@ local function convert_seed(str)
     local seed = tonumber(str)
     math.randomseed(seed)
     return seed
+end
+
+function cli.options_particles(arg, p0, v0, density)
+    p0 = p0 or {0, 0}
+    v0 = v0 or {0, 0}
+    density = density or 'single'
+
+    arg:group('Particle options',
+        arg:option('--particle_distribution',
+                'Particle distribution for creating initial conditions. '..
+                'Options available: (single, uniform).'
+           )
+           :default(density)
+           :argname('particle_distribution'),
+
+        arg:option('--p0', 'Initial position vector "%f,%f"')
+           :convert(util.tovec)
+           :default(vector.repr(p0)),
+        arg:option('--v0', 'Initial velocity vector "%f,%f"')
+           :convert(util.tovec)
+           :default(vector.repr(v0)),
+        arg:option('--p1', 'Spread of position vector, "%f,%f"')
+           :convert(util.tovec)
+           :default('0,0'),
+        arg:option('--v1', 'Spread of velocity vector, "%f,%f"')
+           :convert(util.tovec)
+           :default('0,0'),
+
+        arg:option('--nparticles', 'Number of particles to sample.')
+           :convert(tonumber)
+           :default(1)
+           :argname('N')
+    )
+end
+
+function cli.args_to_particles(arg, pos_offset)
+    offset = pos_offset or {0,0}
+
+    if arg.particle_distribution == 'single' then
+        return objects.SingleParticle(vector.vaddv(arg.p0, offset), arg.v0)
+    elseif arg.particle_distribution == 'uniform' then
+        return objects.UniformParticles(
+            vector.vaddv(arg.p0, offset), 
+            vector.vaddv(arg.p1, offset),
+            arg.v0, arg.v1, arg.nparticles)
+    else
+        print('Invalid particle distribution "' .. arg.particle_distribution .. '"')
+        os.exit()
+    end
 end
 
 function cli.options_seed(arg, seed)

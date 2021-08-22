@@ -1,7 +1,11 @@
 local P = require('plinko')
+local argparse = require('lib.argparse')
 
 local O = 100
 local rad = 0.4995
+local opt = argparse(){name='bowtie'}
+P.cli.options_observer(opt, 'bowtie.csv', '4e4')
+local arg = opt:parse(arg)
 
 local obj, bd = P.ics.hex_grid_object(O, 2*O, P.ics.obj_funcs.circle, rad)
 local w, h = bd[1], bd[2]
@@ -21,14 +25,11 @@ local conf = {
     particles = {P.objects.SingleParticle({w/2, h-0.5}, {0.1, 0}, {0, 0})},
     objects = obj,
     observers = {
-        P.observers.StateFileRecorder('/dev/shm/test.csv'),
-        --observers.ImageRecorder('./test.img',
-        --    plotting_image.DensityPlot(box2, 2000/(box2.uu[1] - box2.ll[1]) )
-        --),
+        P.cli.args_to_observer(arg, box2),
         P.observers.TimePrinter(1e6),
         P.interrupts.Collision(box0.segments[4])
     },
 }
 
 local s = P.ics.create_simulation(conf)
-s:step(1e10)
+s:step(1e7)

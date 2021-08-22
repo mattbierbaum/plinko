@@ -5,18 +5,15 @@ local opt = argparse(){name='hexngons'}
 opt:option('-R', 'Radius of polygon cirumscribed circle', '0.577255', tonumber):argname('gap')
 opt:option('-d', 'Collsion damping constant.', '1.0', tonumber):argname('damp')
 opt:option('-N', 'Number of rows, cols', '8,16', P.util.tovec):argname('N')
-opt:option('-v', 'Starting velocity "%f,%f"', '0.1,0.0', P.util.tovec):argname('v0')
-opt:option('-p', 'Starting position "%f,%f"', '0.0,0.0', P.util.tovec):argname('v0')
 opt:option('-S', 'Polygon sides', '4', tonumber):argname('sides')
 P.cli.options_seed(opt, '100')
 P.cli.options_observer(opt, 'hexngons.pgm', '4e3')
+P.cli.options_particles(opt, {0,0}, {0.1,0}, 'single')
 local arg = opt:parse(arg)
 
 local O = arg.N
 local rad = arg.R
 local damp = arg.d
-local p0 = arg.p
-local v0 = arg.v
 
 math.randomseed(arg.seed)
 function rotated_octagon(pos, rad)
@@ -38,9 +35,7 @@ local conf = {
     eps = 1e-4,
     nbl = P.neighborlist.CellNeighborlist(box1, {200, 200}, 1e-1),
     forces = {P.forces.force_gravity},
-    particles = {
-        P.objects.SingleParticle({w/2+p0[1], h-0.5+p0[2]}, v0, {0, 0}),
-    },
+    particles = {P.cli.args_to_particles(arg, {w/2, h-0.5})},
     objects = obj,
     observers = {
         P.cli.args_to_observer(arg, box0),
