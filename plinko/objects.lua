@@ -11,9 +11,10 @@ local Object = util.class()
 function Object:init(cargs)
     self.cargs = cargs or {}
     self.damp = self.cargs.damp or 1.0
+    self.obj_index = 0
 end
 
-function Object:collide(stotal, scoll, vel)
+function Object:collide(stotal, scoll, vseg)
     --[[
     --  stotal is the total timestep of the particle from t0 to t1
     --  scoll is the segment from t0 to t_collision
@@ -24,9 +25,15 @@ function Object:collide(stotal, scoll, vel)
 
     stotal.p0 = scoll.p1
     stotal.p1 = vector.vaddv(scoll.p1, dir)
-    vel = vector.reflect(vel, norm)
-    vel = vector.vmuls(vel, self.damp)
-    return stotal, vel
+    vseg.p0 = vector.reflect(vseg.p0, norm)
+    vseg.p1 = vector.reflect(vseg.p1, norm)
+    vseg.p0 = vector.vmuls(vseg.p0, self.damp)
+    vseg.p1 = vector.vmuls(vseg.p1, self.damp)
+    return stotal, vseg
+end
+
+function Object:set_object_index(i)
+    self.obj_index = i
 end
 
 -- ---------------------------------------------------------------
@@ -370,6 +377,11 @@ function Segment:intersection(seg)
     local t = vector.vcrossv(vector.vsubv(s1, s0), d0) / cross
     local p = -vector.vcrossv(vector.vsubv(s0, s1), d1) / cross
 
+    --http://numerical.recipes/forum/showthread.php?p=5180
+    --denom = (b0-b1)*(x0-x1)+(a1-a0) = 56.1953
+    --S =- (ao*(b1-y1) + a1*(y1-b0) + x1*(b0-b1)) / denom = 0.645
+    --T =( y1*(x0-a1) + b1*(x1-x0) +y0*(a1-x1)) / denom =0.419
+
     if 0 <= t and t <= 1 and 0 <= p and p <= 1 then
         return self, t
     end
@@ -681,7 +693,34 @@ function SingleParticle:index(i) return i == 1 and self.particle or nil end
 function SingleParticle:count() return 1 end
 
 -- -------------------------------------------------------------
-local UniformParticles = util.class(ParticleGroup)
+local ParticleList = util.class(ParticleGroup)
+function ParticleList:init(particles)
+    self.particles = particles
+end
+
+function ParticleList:index(i)
+    return self.particles[i]
+end
+
+function ParticleList:count()
+    return #self.particles
+end
+
+function ParticleList:partition(total)
+    local size = math.floor(self.count() / total)
+    local out = {}
+    for i = 1, total do
+        local particles = {}
+        for ind = 1 + (i-1)*size, 1 + i*size do
+            particles[i] = self.particles[ind]
+        end
+        out[i] = ParticleList(particles)
+    end
+    return out
+end
+
+-- -------------------------------------------------------------
+local UniformParticles = util.class(ParticleList)
 function UniformParticles:init(p0, p1, v0, v1, N)
     self.p0 = p0
     self.p1 = p1
@@ -706,18 +745,42 @@ function UniformParticles:count()
     return self.N
 end
 
-function UniformParticles:partition(total)
-    local out = {}
-    for i = 1, total do
-        local p0 = vector.lerp(self.p0, self.p1, (i-1) / total)
-        local p1 = vector.lerp(self.p0, self.p1, (i+0) / total)
-        local v0 = vector.lerp(self.v0, self.v1, (i-1) / total)
-        local v1 = vector.lerp(self.v0, self.v1, (i+0) / total)
+-- -------------------------------------------------------------
+local UniformParticles2D = util.class(ParticleGroup)
+function UniformParticles2D:init(p0, p1, v0, v1, N)
+    self.Nx = N[1]
+    self.Ny = N[2]
+    self.N = self.Nx * self.Ny
 
-        out[i] = UniformParticles(p0, p1, v0, v1, math.floor(self.N / total))
+    local x0 = p0[1]
+    local x1 = p1[1]
+    local y0 = p0[2]
+    local y1 = p1[2]
+    local vx0 = v0[1]
+    local vx1 = v1[1]
+    local vy0 = v0[2]
+    local vy1 = v1[2]
+
+    self.particles = {}
+    for i = 1, self.N do
+        local fx = (i % self.Nx) / self.Nx
+        local fy = math.floor(i / self.Nx) / self.Ny
+
+        local pos = {(1-fx)*x0  + fx*x1,  (1-fy)*y0  + fy*y1}
+        local vel = {(1-fx)*vx0 + fx*vx1, (1-fy)*vy0 + fy*vy1}
+        local p = PointParticle(pos, vel, {0, 0}, i)
+        self.particles[i] = p
     end
-    return out
 end
+
+function UniformParticles2D:index(i)
+    return self.particles[i]
+end
+
+function UniformParticles2D:count()
+    return self.N
+end
+
 
 return {
     circle_masks = {
@@ -736,6 +799,8 @@ return {
     BezierCurveQuadratic = BezierCurveQuadratic,
 
     PointParticle = PointParticle,
+    ParticeList = ParticeList,
     SingleParticle = SingleParticle,
-    UniformParticles = UniformParticles
+    UniformParticles = UniformParticles,
+    UniformParticles2D = UniformParticles2D
 }
