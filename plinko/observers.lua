@@ -74,6 +74,7 @@ function ImageRecorder:update_particle(particle)
         self.segment.p1[2] = particle.pos[2]
 
         self.plotter:draw_segment(self.segment)
+        --self.plotter:draw_point(self.segment.p0)
         lastposition[1] = particle.pos[1]
         lastposition[2] = particle.pos[2]
     else
@@ -249,29 +250,115 @@ function SVGPathPrinter:close()
 end
 
 -- =================================================================
-local LastPositionRecorder = util.class(Observer)
-function LastPositionRecorder:init(filename)
+local InitialStateRecorder = util.class(Observer)
+function InitialStateRecorder:init(filename)
     self.filename = filename
-    self.pos = {}
+    self.particle = {}
+    self.recorded = {}
 end
 
-function LastPositionRecorder:update_particle(particle)
-    self.pos[particle.index] = particle.pos
+function InitialStateRecorder:update_particle(particle)
+    local i = particle.index
+    if not self.recorded[i] then
+        self.particle[i] = objects.PointParticle(particle.pos, particle.vel, particle.acc)
+        self.recorded[i] = true
+    end
+end
+
+function InitialStateRecorder:close()
+    local file = io.open(self.filename, 'w')
+
+    for i = 1, #self.particles do
+        pos = self.particle[i].pos
+        vel = self.particle[i].vel
+        acc = self.particle[i].acc
+        file:write(
+            string.format('%f %f %f %f %f %f\n',
+                pos[1], pos[2], vel[1], vel[2], acc[1], acc[2]
+            )
+        )
+    end
+
+    file:flush()
+    file:close()
 end
 
 -- =================================================================
-local BounceCountRecorder = util.class(Observer)
-function BounceCountRecorder:init(filename)
+local LastStateRecorder = util.class(Observer)
+function LastStateRecorder:init(filename)
+    self.filename = filename
+    self.particle = {}
+end
+
+function LastStateRecorder:update_particle(particle)
+    self.particle[particle.index] = objects.PointParticle(particle.pos, particle.vel, particle.acc)
+end
+
+function InitialStateRecorder:close()
+    local file = io.open(self.filename, 'w')
+
+    for i = 1, #self.particles do
+        pos = self.particle[i].pos
+        vel = self.particle[i].vel
+        acc = self.particle[i].acc
+        file:write(
+            string.format('%f %f %f %f %f %f\n',
+                pos[1], pos[2], vel[1], vel[2], acc[1], acc[2]
+            )
+        )
+    end
+
+    file:flush()
+    file:close()
+end
+
+-- =================================================================
+local LastCollisionRecorder = util.class(Observer)
+function LastCollisionRecorder:init(filename)
+    self.filename = filename
+    self.object_index = {}
+end
+
+function LastCollisionRecorder:update_collision(particle, object, time)
+    local i = particle.index
+    self.object_index[i] = object.obj_index
+end
+
+function LastCollisionRecorder:close()
+    local file = io.open(self.filename, 'w')
+    for i = 1, #self.object_index do
+        file:write(
+            string.format('%d\n', self.object_index[i])
+        )
+    end
+    file:flush()
+    file:close()
+end
+
+-- =================================================================
+local CollisionCountRecorder = util.class(Observer)
+function CollisionCountRecorder:init(filename)
     self.filename = filename
     self.bounces = {}
 end
 
-function BounceCountRecorder:update_collision(particle, object, time)
+function CollisionCountRecorder:update_collision(particle, object, time)
     local i = particle.index
     if not self.bounces[i] then
         self.bounces[i] = 0
     end
     self.bounces[i] = self.bounces[i] + 1
+end
+
+function CollisionCountRecorder:close()
+    local file = io.open(self.filename, 'w')
+    for i = 1, #self.bounces do
+        file:write(
+            string.format('%d\n', self.bounces[i])
+        )
+    end
+    file:flush()
+    file:close()
 end
 
 -- =================================================================
@@ -360,7 +447,10 @@ return {
     ObserverGroup=ObserverGroup,
     StateFileRecorder=StateFileRecorder,
     ImageRecorder=ImageRecorder,
-    LastPositionRecorder=LastPositionRecorder,
+    InitialStateRecorder=InitialStateRecorder,
+    LastStateRecorder=LastStateRecorder,
+    LastCollisionRecorder=LastCollisionRecorder,
+    CollisionCountRecorder=CollisionCountRecorder,
     PointImageRecorder=PointImageRecorder,
     TimePrinter=TimePrinter,
     SVGLinePlot=SVGLinePlot,
