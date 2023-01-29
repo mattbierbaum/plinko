@@ -10,6 +10,8 @@ local MAX_BOUNCE = 10000
 -- a bunch of module-local items to save on gc
 local nseg = objects.Segment({0, 0}, {0, 0})
 local pseg = objects.Segment({0, 0}, {0, 0})
+local wseg = objects.Segment({0, 0}, {0, 0})
+local vseg = objects.Segment({0, 0}, {0, 0})
 local part0 = objects.PointParticle(nil, nil, nil, -100)
 local part1 = objects.PointParticle(nil, nil, nil, -100)
 local vel = {0, 0}
@@ -24,12 +26,15 @@ function Simulation:init(dt, eps)
     self.particle_groups = {}
     self.force_func = {}
     self.observers = {}
+    self.integrator = nil
 
     self.nbl = neighborlist.NaiveNeighborlist()
 end
 
 function Simulation:add_object(obj)
-    self.objects[#self.objects + 1] = obj
+    index = #self.objects + 1
+    obj:set_object_index(index)
+    self.objects[index] = obj
 end
 
 function Simulation:add_particle(particle)
@@ -44,9 +49,13 @@ function Simulation:add_observer(obv)
     self.observers[#self.observers + 1] = obv
 end
 
-function Simulation:initalize()
+function Simulation:initialize()
     self.observer_group = observers.ObserverGroup(self.observers)
     self.observer_group:begin()
+end
+
+function Simulation:set_integrator(integrator)
+    self.integrator = integrator
 end
 
 function Simulation:set_neighborlist(nbl)
@@ -90,11 +99,11 @@ function Simulation:intersection(seg)
     return mint, mino
 end
 
-function Simulation:linear_project(part, seg, vel)
+function Simulation:linear_project(part, pseg, vseg)
     local running = true
 
     for collision = 1, MAX_BOUNCE do
-        local mint, mino = self:intersection(seg)
+        local mint, mino = self:intersection(pseg)
 
         if not mino then
             break
@@ -102,16 +111,20 @@ function Simulation:linear_project(part, seg, vel)
 
         mint = (1 - self.eps) * mint
 
-        nseg.p0 = seg.p1
-        nseg.p1 = vector.lerp(seg.p0, seg.p1, mint)
+        nseg.p0 = pseg.p1
+        nseg.p1 = vector.lerp(pseg.p0, pseg.p1, mint)
+
+        wseg.p0 = vseg.p1
+        wseg.p1 = vector.lerp(vseg.p0, vseg.p1, mint)
+
+        self.observer_group:update_collision(part0, mino, mint)
+        pseg, vseg = mino:collide(pseg, nseg, wseg)
 
         if not self.equal_time then
-            vector.copy(nseg.p1, part.pos)
-            vector.copy(vel,     part.vel)
+            vector.copy(pseg.p0, part.pos)
+            vector.copy(vseg.p0, part.vel)
             self.observer_group:update_particle(part)
         end
-        self.observer_group:update_collision(part0, mino, mint)
-        seg, vel = mino:collide(seg, nseg, vel)
 
         if collision == MAX_BOUNCE then
             print('* Max bounces reached')
@@ -119,7 +132,7 @@ function Simulation:linear_project(part, seg, vel)
         end
     end
 
-    return part, seg, vel, running
+    return part, pseg, vseg, running
 end
 
 function Simulation:step_particle(part0)
@@ -129,15 +142,16 @@ function Simulation:step_particle(part0)
         return
     end
 
-    forces.integrate_euler(part0, part1, self.dt)
+    self.integrator(part0, part1, self.dt)
 
-    vector.copy(part1.vel, vel)
+    vector.copy(part0.vel, vseg.p0)
     vector.copy(part0.pos, pseg.p0)
+    vector.copy(part1.vel, vseg.p1)
     vector.copy(part1.pos, pseg.p1)
-    part0, pseg, vel, is_running = self:linear_project(part0, pseg, vel)
+    part0, pseg, vseg, is_running = self:linear_project(part0, pseg, vseg)
 
     vector.copy(pseg.p1, part0.pos)
-    vector.copy(vel,     part0.vel)
+    vector.copy(vseg.p1, part0.vel)
     self.observer_group:update_particle(part0)
 
     part0.active = part0.active and not self.observer_group:is_triggered_particle(part0)

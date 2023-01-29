@@ -44,7 +44,7 @@ function ics.square_grid_object(rows, cols, func, ...)
     local a = 1
     
     local out = {}
-    for i = 1, rows+1 do
+    for i = 1, rows+2 do
         for j = 1, cols+2 do
             out[#out + 1] = func({a*(j-1), a*(i-1)}, ...)
         end
@@ -94,6 +94,12 @@ function ics.create_simulation(conf)
         s:add_force(forces.force_none)
     end
 
+    if conf.integrator then
+        s:set_integrator(conf.integrator)
+    else
+        s:set_integrator(forces.integrate_velocity_verlet)
+    end
+
     for _, i in pairs(conf.objects) do
         s:add_object(i)
     end
@@ -114,7 +120,7 @@ function ics.create_simulation(conf)
         s:set_neighborlist(neighborlist.NaiveNeighborlist())
     end
 
-    s:initalize()
+    s:initialize()
     return s
 end
 

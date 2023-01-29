@@ -17,15 +17,17 @@ local function convert_seed(str)
     return seed
 end
 
-function cli.options_particles(arg, p0, v0, density)
+function cli.options_particles(arg, p0, v0, p1, v1, density)
     p0 = p0 or {0, 0}
     v0 = v0 or {0, 0}
+    p1 = p1 or {0, 0}
+    v1 = v1 or {0, 0}
     density = density or 'single'
 
     arg:group('Particle options',
         arg:option('--particle_distribution',
                 'Particle distribution for creating initial conditions. '..
-                'Options available: (single, uniform).'
+                'Options available: (single, uniform, uniform2d).'
            )
            :default(density)
            :argname('particle_distribution'),
@@ -38,15 +40,20 @@ function cli.options_particles(arg, p0, v0, density)
            :default(vector.repr(v0)),
         arg:option('--p1', 'Spread of position vector, "%f,%f"')
            :convert(util.tovec)
-           :default('0,0'),
+           :default(vector.repr(p1)),
         arg:option('--v1', 'Spread of velocity vector, "%f,%f"')
            :convert(util.tovec)
-           :default('0,0'),
+           :default(vector.repr(v1)),
 
         arg:option('--nparticles', 'Number of particles to sample.')
            :convert(tonumber)
            :default(1)
-           :argname('N')
+           :argname('N'),
+
+        arg:option('--vparticles', 'Vector number of particles to sample (Nx, Ny).')
+           :convert(util.tovec)
+           :default('1,1')
+           :argname('Nv')
     )
 end
 
@@ -60,6 +67,11 @@ function cli.args_to_particles(arg, pos_offset)
             vector.vaddv(arg.p0, offset), 
             vector.vaddv(arg.p1, offset),
             arg.v0, arg.v1, arg.nparticles)
+    elseif arg.particle_distribution == 'uniform2d' then
+        return objects.UniformParticles2D(
+            vector.vaddv(arg.p0, offset),
+            vector.vaddv(arg.p1, offset),
+            arg.v0, arg.v1, arg.vparticles)
     else
         print('Invalid particle distribution "' .. arg.particle_distribution .. '"')
         os.exit()
@@ -164,10 +176,16 @@ function cli.args_to_observer(arg, box)
             filename, plotting.DensityPlot(box, res/width, blend), 'pgm5',
             {cmap=cmap, norm=norm}
         )
+    elseif ext == 'collisions' then
+        return observers.CollisionCountRecorder(filename)
     else
-        print('File extension must be one of (svg, pgm, csv)')
+        print('File extension must be one of (svg, pgm, csv, collisions)')
         os.exit()
     end
+end
+
+function cli.args_to_forces(arg)
+
 end
 
 return cli
