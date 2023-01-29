@@ -99,6 +99,10 @@ function Simulation:intersection(seg)
     return mint, mino
 end
 
+function Simulation:intersection_closest(seg)
+
+end
+
 function Simulation:linear_project(part, pseg, vseg)
     local running = true
 

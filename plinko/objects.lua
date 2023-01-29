@@ -754,8 +754,9 @@ function UniformParticles2D:init(p0, p1, v0, v1, N)
 
     self.particles = {}
     for i = 1, self.N + 1 do
-        local fx = (i % self.Nx) / self.Nx
-        local fy = math.floor(i / self.Nx) / self.Ny
+        j = i - 1
+        local fx = (j % self.Nx) / self.Nx
+        local fy = math.ceil(j / self.Nx) / self.Ny
 
         local pos = {(1-fx)*p0[1] + fx*p1[1], (1-fy)*p0[2] + fy*p1[2]}
         local vel = {(1-fx)*v0[1] + fx*v1[1], (1-fy)*v0[2] + fy*v1[2]}

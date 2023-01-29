@@ -253,14 +253,15 @@ end
 local InitialStateRecorder = util.class(Observer)
 function InitialStateRecorder:init(filename)
     self.filename = filename
-    self.particle = {}
+    self.particles = {}
     self.recorded = {}
 end
 
 function InitialStateRecorder:update_particle(particle)
     local i = particle.index
-    if not self.recorded[i] then
-        self.particle[i] = objects.PointParticle(particle.pos, particle.vel, particle.acc)
+    if self.recorded[i] == nil then
+        self.particles[i] = objects.PointParticle()
+        self.particles[i]:copy(particle)
         self.recorded[i] = true
     end
 end
@@ -269,9 +270,9 @@ function InitialStateRecorder:close()
     local file = io.open(self.filename, 'w')
 
     for i = 1, #self.particles do
-        pos = self.particle[i].pos
-        vel = self.particle[i].vel
-        acc = self.particle[i].acc
+        pos = self.particles[i].pos
+        vel = self.particles[i].vel
+        acc = self.particles[i].acc
         file:write(
             string.format('%f %f %f %f %f %f\n',
                 pos[1], pos[2], vel[1], vel[2], acc[1], acc[2]
@@ -287,20 +288,22 @@ end
 local LastStateRecorder = util.class(Observer)
 function LastStateRecorder:init(filename)
     self.filename = filename
-    self.particle = {}
+    self.particles = {}
 end
 
 function LastStateRecorder:update_particle(particle)
-    self.particle[particle.index] = objects.PointParticle(particle.pos, particle.vel, particle.acc)
+    i = particle.index
+    self.particles[i] = objects.PointParticle()
+    self.particles[i]:copy(particle)
 end
 
 function InitialStateRecorder:close()
     local file = io.open(self.filename, 'w')
 
     for i = 1, #self.particles do
-        pos = self.particle[i].pos
-        vel = self.particle[i].vel
-        acc = self.particle[i].acc
+        pos = self.particles[i].pos
+        vel = self.particles[i].vel
+        acc = self.particles[i].acc
         file:write(
             string.format('%f %f %f %f %f %f\n',
                 pos[1], pos[2], vel[1], vel[2], acc[1], acc[2]
