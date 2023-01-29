@@ -135,7 +135,8 @@ function Simulation:linear_project(part, pseg, vseg)
     return part, pseg, vseg, running
 end
 
-function Simulation:step_particle(part0)
+function Simulation:step_particle(in_part)
+    part0:copy(in_part)
     self.observer_group:set_particle(part0)
 
     if not part0.active then
@@ -155,6 +156,7 @@ function Simulation:step_particle(part0)
     self.observer_group:update_particle(part0)
 
     part0.active = part0.active and not self.observer_group:is_triggered_particle(part0)
+    in_part:copy(part0)
 end
 
 function Simulation:step(steps)

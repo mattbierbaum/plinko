@@ -344,7 +344,8 @@ end
 
 function CollisionCountRecorder:update_collision(particle, object, time)
     local i = particle.index
-    if not self.bounces[i] then
+
+    if self.bounces[i] == nil then
         self.bounces[i] = 0
     end
     self.bounces[i] = self.bounces[i] + 1

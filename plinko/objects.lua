@@ -678,6 +678,14 @@ function PointParticle:init(pos, vel, acc, index)
     end
 end
 
+function PointParticle:copy(other)
+    vector.copy(other.pos, self.pos)
+    vector.copy(other.vel, self.vel)
+    vector.copy(other.acc, self.acc)
+    self.active = other.active
+    self.index = other.index
+end
+
 -- -------------------------------------------------------------
 local ParticleGroup = util.class()
 function ParticleGroup:init() end
@@ -737,48 +745,23 @@ function UniformParticles:init(p0, p1, v0, v1, N)
     end
 end
 
-function UniformParticles:index(i)
-    return self.particles[i]
-end
-
-function UniformParticles:count()
-    return self.N
-end
-
 -- -------------------------------------------------------------
-local UniformParticles2D = util.class(ParticleGroup)
+local UniformParticles2D = util.class(ParticleList)
 function UniformParticles2D:init(p0, p1, v0, v1, N)
     self.Nx = N[1]
     self.Ny = N[2]
     self.N = self.Nx * self.Ny
 
-    local x0 = p0[1]
-    local x1 = p1[1]
-    local y0 = p0[2]
-    local y1 = p1[2]
-    local vx0 = v0[1]
-    local vx1 = v1[1]
-    local vy0 = v0[2]
-    local vy1 = v1[2]
-
     self.particles = {}
-    for i = 1, self.N do
+    for i = 1, self.N + 1 do
         local fx = (i % self.Nx) / self.Nx
         local fy = math.floor(i / self.Nx) / self.Ny
 
-        local pos = {(1-fx)*x0  + fx*x1,  (1-fy)*y0  + fy*y1}
-        local vel = {(1-fx)*vx0 + fx*vx1, (1-fy)*vy0 + fy*vy1}
+        local pos = {(1-fx)*p0[1] + fx*p1[1], (1-fy)*p0[2] + fy*p1[2]}
+        local vel = {(1-fx)*v0[1] + fx*v1[1], (1-fy)*v0[2] + fy*v1[2]}
         local p = PointParticle(pos, vel, {0, 0}, i)
         self.particles[i] = p
     end
-end
-
-function UniformParticles2D:index(i)
-    return self.particles[i]
-end
-
-function UniformParticles2D:count()
-    return self.N
 end
 
 
