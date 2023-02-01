@@ -7,15 +7,6 @@ local observers = require('plinko.observers')
 
 local MAX_BOUNCE = 10000
 
--- a bunch of module-local items to save on gc
-local nseg = objects.Segment({0, 0}, {0, 0})
-local pseg = objects.Segment({0, 0}, {0, 0})
-local wseg = objects.Segment({0, 0}, {0, 0})
-local vseg = objects.Segment({0, 0}, {0, 0})
-local part0 = objects.PointParticle(nil, nil, nil, -100)
-local part1 = objects.PointParticle(nil, nil, nil, -100)
-local vel = {0, 0}
-
 local Simulation = util.class()
 function Simulation:init(dt, eps)
     self.t = 0
@@ -99,9 +90,56 @@ function Simulation:intersection(seg)
     return mint, mino
 end
 
-function Simulation:intersection_closest(seg)
+local s = objects.Segment()
+local refine = objects.PointParticle(nil, nil, nil, -100)
+local nextpart = objects.PointParticle(nil, nil, nil, -100)
 
+function print_seg(label, a, b)
+    print(string.format("%s: %0.16f %0.16f | %0.16f %0.16f", label, a[1], a[2], b[1], b[2]))
 end
+
+function Simulation:refine_collision(part, obj, seg, tguess, dt, time)
+    local nexttime = 0
+    local outtime = 0
+    self.integrator(part, refine, tguess * dt)
+
+    nextpart:copy(part)
+    s:update(seg.p0, refine.pos)
+    _, t = obj:intersection(s)
+
+
+    if not t then
+        nextpart:copy(refine)
+        s:update(refine.pos, seg.p1)
+        _, t = obj:intersection(s)
+        if not t then
+            print('none')
+            return nil
+        else
+            nexttime = time + tguess*dt
+            outtime = time + tguess*dt + t*(1-tguess)*dt
+        end
+    else
+        nexttime = time
+        outtime = time + t*dt*tguess
+    end
+
+    if t < self.eps or t > 1 - self.eps then
+        print('done')
+        return part
+    end
+
+    return self:refine_collision(nextpart, obj, s, t, dt*tguess, nexttime)
+end
+
+-- a bunch of module-local items to save on gc
+local nseg = objects.Segment({0, 0}, {0, 0})
+local pseg = objects.Segment({0, 0}, {0, 0})
+local wseg = objects.Segment({0, 0}, {0, 0})
+local vseg = objects.Segment({0, 0}, {0, 0})
+local part0 = objects.PointParticle(nil, nil, nil, -100)
+local part1 = objects.PointParticle(nil, nil, nil, -100)
+
 
 function Simulation:linear_project(part, pseg, vseg)
     local running = true
@@ -113,12 +151,12 @@ function Simulation:linear_project(part, pseg, vseg)
             break
         end
 
+        -- out = self:refine_collision(part, mino, pseg, mint, self.dt, 0)
+
         mint = (1 - self.eps) * mint
-
-        nseg.p0 = pseg.p1
+        vector.copy(pseg.p1, nseg.p0)
         nseg.p1 = vector.lerp(pseg.p0, pseg.p1, mint)
-
-        wseg.p0 = vseg.p1
+        vector.copy(vseg.p1, wseg.p0)
         wseg.p1 = vector.lerp(vseg.p0, vseg.p1, mint)
 
         self.observer_group:update_collision(part0, mino, mint)
@@ -159,7 +197,11 @@ function Simulation:step_particle(in_part)
     vector.copy(vseg.p1, part0.vel)
     self.observer_group:update_particle(part0)
 
-    part0.active = part0.active and not self.observer_group:is_triggered_particle(part0)
+    part0.active = (
+        part0.active
+        and is_running
+        and not self.observer_group:is_triggered_particle(part0)
+    )
     in_part:copy(part0)
 end
 
@@ -227,4 +269,5 @@ function Simulation:parallelize(threads)
 
     return step, out
 end
+
 return {Simulation=Simulation}

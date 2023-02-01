@@ -356,8 +356,8 @@ end
 local Segment = util.class(Object)
 function Segment:init(p0, p1, cargs)
     Object.init(self, cargs)
-    self.p0 = p0
-    self.p1 = p1
+    self.p0 = p0 or {0, 0}
+    self.p1 = p1 or {0, 0}
     self.name = 'segment'
 end
 
