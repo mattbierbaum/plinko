@@ -153,6 +153,153 @@ local function cubic2(poly)
     return sort(t)
 end
 
+
+local function brent(arg)
+    -- func, bracket, args, tol, maxiter, full_outpuer, disp
+    tol = arg.tol or 1.48e-8
+    maxiter = arg.maxiter or 500
+    _mintol = 1.0e-11
+    _cg = 0.3819660
+    xmin = nil
+    fval = nil
+    iter = 0
+
+    xa = arg.bracket[1]
+    fa = arg.func(xa)
+    xb = (arg.bracket[1] + arg.bracket[2])/2
+    fb = arg.func(xb)
+    xc = arg.bracket[2]
+    fc = arg.func(xc)
+    funcalls = 3
+
+    _mintol = _mintol
+    _cg = _cg
+
+    x = xb
+    w = xb
+    v = xb
+    fw = fb
+    fv = fb
+    fx = fb
+    if (xa < xc) then
+        a = xa
+        b = xc
+    else
+        a = xc
+        b = xa
+    end
+    deltax = 0.0
+    iter = 0
+
+    if arg.disp > 2 then
+        print(" ")
+        print(f"{'Func-count':^12} {'x':^12} {'f(x)': ^12}")
+        print(f"{funcalls:^12g} {x:^12.6g} {fx:^12.6g}")
+    end
+
+    while (iter < maxiter) do
+        tol1 = tol * math.abs(x) + _mintol
+        tol2 = 2.0 * tol1
+        xmid = 0.5 * (a + b)
+        if math.abs(x - xmid) < (tol2 - 0.5 * (b - a)) then
+            break
+        end
+        if (math.abs(deltax) <= tol1) then
+            if (x >= xmid) then
+                deltax = a - x
+            else
+                deltax = b - x
+            end
+            rat = _cg * deltax
+        else
+            tmp1 = (x - w) * (fx - fv)
+            tmp2 = (x - v) * (fx - fw)
+            p = (x - v) * tmp2 - (x - w) * tmp1
+            tmp2 = 2.0 * (tmp2 - tmp1)
+            if (tmp2 > 0.0) then
+                p = -p
+            end
+            tmp2 = math.abs(tmp2)
+            dx_temp = deltax
+            deltax = rat
+            if ((p > tmp2 * (a - x)) and (p < tmp2 * (b - x)) and
+                (math.abs(p) < math.abs(0.5 * tmp2 * dx_temp))) then
+                rat = p * 1.0 / tmp2
+                u = x + rat
+                if ((u - a) < tol2 or (b - u) < tol2) then
+                    if xmid - x >= 0 then
+                        rat = tol1
+                    else
+                        rat = -tol1
+                    end
+                end
+            else
+                if (x >= xmid) then
+                    deltax = a - x
+                else
+                    deltax = b - x
+                end
+                rat = _cg * deltax
+            end
+        end
+
+        if (math.abs(rat) < tol1) then
+            if rat >= 0 then
+                u = x + tol1
+            else
+                u = x - tol1
+            end
+        else
+            u = x + rat
+        end
+        fu = arg.func(u)
+        funcalls = funcalls + 1
+
+        if (fu > fx) then
+            if (u < x) then
+                a = u
+            else
+                b = u
+            end
+
+            if (fu <= fw) or (w == x) then
+                v = w
+                w = u
+                fv = fw
+                fw = fu
+            elseif (fu <= fv) or (v == x) or (v == w) then
+                v = u
+                fv = fu
+            end
+        else
+            if (u >= x) then
+                a = x
+            else
+                b = x
+            end
+            v = w
+            w = x
+            x = u
+            fv = fw
+            fw = fx
+            fx = fu
+        end
+
+        if arg.disp > 2 then
+            print(f"{funcalls:^12g} {x:^12.6g} {fx:^12.6g}")
+        end
+
+        iter = iter + 1
+    end
+
+    xmin = x
+    fval = fx
+    iter = iter
+    funcalls = funcalls
+    return xmin
+end
+
+
 local solvers = {linear, quadratic, cubic, generic}
 
 if not math.cosh then
@@ -175,6 +322,7 @@ local function roots(poly)
 end
 
 return {
+    brent=brent,
     quadratic=quadratic,
     cubic=cubic,
     first_root=first_root,

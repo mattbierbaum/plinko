@@ -4,6 +4,7 @@ local objects = require('plinko.objects')
 local forces = require('plinko.forces')
 local neighborlist = require('plinko.neighborlist')
 local observers = require('plinko.observers')
+local roots = require('plinko.roots')
 
 local MAX_BOUNCE = 10000
 
@@ -57,6 +58,9 @@ function Simulation:set_neighborlist(nbl)
     self.nbl:calculate()
 end
 
+local s = objects.Segment()
+local project = objects.PointParticle(nil, nil, nil, -100)
+
 function Simulation:intersection_bruteforce(seg)
     local mint = 2
     local mino = nil
@@ -90,46 +94,21 @@ function Simulation:intersection(seg)
     return mint, mino
 end
 
-local s = objects.Segment()
-local refine = objects.PointParticle(nil, nil, nil, -100)
-local nextpart = objects.PointParticle(nil, nil, nil, -100)
+function Simulation:refine_intersection(part0, part1, obj, dt)
+    function _func(dt)
+        self:integrator(part0, project, dt)
 
-function print_seg(label, a, b)
-    print(string.format("%s: %0.16f %0.16f | %0.16f %0.16f", label, a[1], a[2], b[1], b[2]))
-end
-
-function Simulation:refine_collision(part, obj, seg, tguess, dt, time)
-    local nexttime = 0
-    local outtime = 0
-    self.integrator(part, refine, tguess * dt)
-
-    nextpart:copy(part)
-    s:update(seg.p0, refine.pos)
-    _, t = obj:intersection(s)
-
-
-    if not t then
-        nextpart:copy(refine)
-        s:update(refine.pos, seg.p1)
+        s:update(part0.pos, project.pos)
         _, t = obj:intersection(s)
         if not t then
-            print('none')
-            return nil
-        else
-            nexttime = time + tguess*dt
-            outtime = time + tguess*dt + t*(1-tguess)*dt
+            s:update(project.pos, part1.pos)
+            _, t = obj:intersection(s)
         end
-    else
-        nexttime = time
-        outtime = time + t*dt*tguess
+
+        return vector.vlensq(vector.vsubv(project.pos, vector.lerp(s.p0, s.p1, t)))
     end
 
-    if t < self.eps or t > 1 - self.eps then
-        print('done')
-        return part
-    end
-
-    return self:refine_collision(nextpart, obj, s, t, dt*tguess, nexttime)
+    return roots.brent{func=_func, bracket={0, dt}, tol=1e-12, maxiter=20}
 end
 
 -- a bunch of module-local items to save on gc
@@ -150,8 +129,6 @@ function Simulation:linear_project(part, pseg, vseg)
         if not mino then
             break
         end
-
-        -- out = self:refine_collision(part, mino, pseg, mint, self.dt, 0)
 
         mint = (1 - self.eps) * mint
         vector.copy(pseg.p1, nseg.p0)
