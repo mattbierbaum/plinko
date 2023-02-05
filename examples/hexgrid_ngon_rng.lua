@@ -1,6 +1,7 @@
 local P = require('plinko')
 local argparse = require('lib.argparse')
 
+-- 0.577251005 
 local opt = argparse(){name='hexngons'}
 opt:option('-R', 'Radius of polygon cirumscribed circle', '0.577255', tonumber):argname('gap')
 opt:option('-d', 'Collsion damping constant.', '1.0', tonumber):argname('damp')
@@ -8,7 +9,7 @@ opt:option('-N', 'Number of rows, cols', '8,16', P.util.tovec):argname('N')
 opt:option('-S', 'Polygon sides', '4', tonumber):argname('sides')
 P.cli.options_seed(opt, '100')
 P.cli.options_observer(opt, 'hexngons.pgm', '4e3')
-P.cli.options_particles(opt, {0,0}, {0.1,0}, 'single')
+P.cli.options_particles(opt, {0,0}, {0,0}, {0.1,0}, {0,0}, 'single')
 local arg = opt:parse(arg)
 
 local O = arg.N
