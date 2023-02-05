@@ -14,6 +14,22 @@ function Object:init(cargs)
     self.obj_index = 0
 end
 
+function Object:collide_(part0, parti, part1)
+    scoll = Segment(part0.pos, parti.pos)
+    stotal = Segment(part0.pos, part1.pos)
+    vel = part0.vel
+    local norm = self:normal(scoll)
+    local dir = vector.reflect(vector.vsubv(stotal.p1, scoll.p1), norm)
+
+    stotal.p0 = scoll.p1
+    stotal.p1 = vector.vaddv(scoll.p1, dir)
+    vseg.p0 = vector.reflect(vseg.p0, norm)
+    vseg.p1 = vector.reflect(vseg.p1, norm)
+    vseg.p0 = vector.vmuls(vseg.p0, self.damp)
+    vseg.p1 = vector.vmuls(vseg.p1, self.damp)
+    return stotal, vseg
+end
+
 function Object:collide(stotal, scoll, vseg)
     --[[
     --  stotal is the total timestep of the particle from t0 to t1

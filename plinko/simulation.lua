@@ -19,6 +19,7 @@ function Simulation:init(dt, eps)
     self.force_func = {}
     self.observers = {}
     self.integrator = nil
+    self.accuracy_mode = false
 
     self.nbl = neighborlist.NaiveNeighborlist()
 end
@@ -58,9 +59,6 @@ function Simulation:set_neighborlist(nbl)
     self.nbl:calculate()
 end
 
-local s = objects.Segment()
-local project = objects.PointParticle(nil, nil, nil, -100)
-
 function Simulation:intersection_bruteforce(seg)
     local mint = 2
     local mino = nil
@@ -94,23 +92,6 @@ function Simulation:intersection(seg)
     return mint, mino
 end
 
-function Simulation:refine_intersection(part0, part1, obj, dt)
-    function _func(dt)
-        self:integrator(part0, project, dt)
-
-        s:update(part0.pos, project.pos)
-        _, t = obj:intersection(s)
-        if not t then
-            s:update(project.pos, part1.pos)
-            _, t = obj:intersection(s)
-        end
-
-        return vector.vlensq(vector.vsubv(project.pos, vector.lerp(s.p0, s.p1, t)))
-    end
-
-    return roots.brent{func=_func, bracket={0, dt}, tol=1e-12, maxiter=20}
-end
-
 -- a bunch of module-local items to save on gc
 local nseg = objects.Segment({0, 0}, {0, 0})
 local pseg = objects.Segment({0, 0}, {0, 0})
@@ -118,7 +99,7 @@ local wseg = objects.Segment({0, 0}, {0, 0})
 local vseg = objects.Segment({0, 0}, {0, 0})
 local part0 = objects.PointParticle(nil, nil, nil, -100)
 local part1 = objects.PointParticle(nil, nil, nil, -100)
-
+local parti = objects.PointParticle(nil, nil, nil, -100)
 
 function Simulation:linear_project(part, pseg, vseg)
     local running = true
@@ -245,6 +226,93 @@ function Simulation:parallelize(threads)
     end
 
     return step, out
+end
+
+local s = objects.Segment()
+local pseg = objects.Segment()
+local project = objects.PointParticle(nil, nil, nil, -100)
+
+
+function Simulation:_intersection(part0, part1, parti)
+    local mint = 2
+    local mino = nil
+
+    vector.copy(part0.pos, pseg.p0)
+    vector.copy(part1.pos, pseg.p1)
+    local objs = self.nbl:near(pseg)
+    for ind = 1, #objs do
+        local obj = objs[ind]
+        local o, t = obj:intersection(pseg)
+        if t and t < mint and t <= 1 and t >= 0 then
+            mint = t
+            mino = o
+        end
+    end
+
+    if not mino then
+        return mino, mint
+    end
+    if self.accuracy_mode then
+        mint = self:refine_intersection(part0, part1, mino, self.dt)
+        self:integrator(part0, parti, mint)
+    else
+        mint = (1 - self.eps) * mint
+        vector.copy(vector.lerp(part0.pos, part1.pos, mint), parti.pos)
+        vector.copy(vector.lerp(part0.vel, part1.vel, mint), parti.vel)
+    end
+    return mino, mint
+end
+
+function Simulation:_refine_intersection(part0, part1, obj, dt)
+    function _func(dt)
+        self:integrator(part0, project, dt)
+
+        s:update(part0.pos, project.pos)
+        _, t = obj:intersection(s)
+        if not t then
+            s:update(project.pos, part1.pos)
+            _, t = obj:intersection(s)
+        end
+
+        return vector.vlensq(vector.vsubv(project.pos, vector.lerp(s.p0, s.p1, t)))
+    end
+
+    return roots.brent{func=_func, bracket={0, dt}, tol=1e-12, maxiter=20}
+end
+
+function Simulation:_linear_project(part0, part1)
+    local mino, mint = self:intersection(part0, part1, parti)
+    self.observer_group:update_collision(parti, mino, mint)
+    pseg, vseg = mino:collide(part0, parti, part1)
+
+    if not self.equal_time then
+        vector.copy(pseg.p0, part0.pos)
+        vector.copy(vseg.p0, part0.vel)
+        self.observer_group:update_particle(part0)
+    end
+
+    return parti, running
+end
+
+function Simulation:_step_particle(in_part)
+    part0:copy(in_part)
+    self.observer_group:set_particle(part0)
+
+    if not part0.active then
+        return
+    end
+
+    self.integrator(part0, part1, self.dt)
+    parti, is_running = self:linear_project(part0, part1)
+    part0:copy(part1)
+    self.observer_group:update_particle(part0)
+
+    part0.active = (
+        part0.active
+        and is_running
+        and not self.observer_group:is_triggered_particle(part0)
+    )
+    in_part:copy(part0)
 end
 
 return {Simulation=Simulation}
