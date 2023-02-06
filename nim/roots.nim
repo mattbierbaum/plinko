@@ -1,7 +1,7 @@
 import std/math
 
-proc sign*(x: float64): float64 =
-    return (if x > 0:  1 else: -1)
+proc sign(x: float): float =
+    return (if x > 0: 1 else: -1)
 
 let sort_networks: seq[seq[array[2, int]]] = @[
     @[[0,0]],
@@ -11,13 +11,13 @@ let sort_networks: seq[seq[array[2, int]]] = @[
     @[[1,2], [4,5], [3,5], [3,4], [2,5], [1,4], [1,3], [2,4], [2,3]],
 ]
 
-proc cswap(arr: var seq[float64], i0: int, i1: int) =
+proc cswap(arr: var seq[float], i0: int, i1: int) =
     if arr[i0] > arr[i1]:
         let t = arr[i0]
         arr[i0] = arr[i1]
         arr[i1] = t
 
-proc sort(arr: var seq[float64]): seq[float64] =
+proc sort(arr: var seq[float]): seq[float] =
     if len(arr) <= len(sort_networks):
         let network = sort_networks[len(arr)]
         for i, inds in network:
@@ -26,10 +26,10 @@ proc sort(arr: var seq[float64]): seq[float64] =
     else:
         return arr.sort()
 
-proc linear(poly: seq[float64]): seq[float64] =
+proc linear*(poly: seq[float]): seq[float] =
     return @[-poly[1] / poly[0]]
 
-proc quadratic(poly: seq[float64]): seq[float64] =
+proc quadratic*(poly: seq[float]): seq[float] =
     let a = poly[2]
     let b = poly[1]
     let c = poly[0]
@@ -45,10 +45,10 @@ proc quadratic(poly: seq[float64]): seq[float64] =
 
     let x1 = (-b - sign(b) * sqrt(desc)) / (2*a)
     let x2 = c / (a * x1)
-    var roots: seq[float64] = @[x1, x2]
+    var roots: seq[float] = @[x1, x2]
     return sort(roots)
 
-proc cubic(poly: seq[float64]): seq[float64] =
+proc cubic*(poly: seq[float]): seq[float] =
     let a = poly[3]
     let b = poly[2]
     let c = poly[1]
@@ -93,7 +93,7 @@ proc cubic(poly: seq[float64]): seq[float64] =
             return @[x0]
     return @[]
 
-proc cubic2(poly: seq[float64]): seq[float64] =
+proc cubic2*(poly: seq[float]): seq[float] =
     let a = poly[3]
     let b = poly[2]
     let c = poly[1]
@@ -107,12 +107,12 @@ proc cubic2(poly: seq[float64]): seq[float64] =
     let R = (9*A*B - 27*C - 2*A*A*A)/54
     let D = Q*Q*Q + R*R
 
-    var t: seq[float64] = @[]
+    var t: seq[float] = @[]
 
     if (D >= 0):
         let S = sign(R + math.sqrt(D))*math.pow(abs(R + math.sqrt(D)), (1.0/3))
         let T = sign(R - math.sqrt(D))*math.pow(abs(R - math.sqrt(D)), (1.0/3))
-        let Im = abs(sqrt(3)*(S - T)/2)
+        let Im = abs(sqrt(3.0)*(S - T)/2)
 
         t.add(-A/3 + (S + T))
 
@@ -128,24 +128,24 @@ proc cubic2(poly: seq[float64]): seq[float64] =
 
     return sort(t)
 
-proc brent(f: proc(t: float64):float64, 
-           bracket: array[2, float64], 
-           tol: float64 = 1.48e-8, 
-           maxiter: int64 = 500, 
-           disp: int): float64 =
+proc brent*(f: proc(t: float):float, 
+           bracket: array[2, float], 
+           tol: float = 1.48e-8, 
+           maxiter: int = 500, 
+           disp: int): float =
     let mintol = 1.0e-11
     let cg = 0.3819660
-    var xmin: float64 = 0
-    var fval: float64 = 0
-    var iter: int64 = 0
+    var xmin: float = 0
+    var fval: float = 0
+    var iter: int = 0
 
-    var xa: float64 = bracket[0]
-    var xb: float64 = (bracket[0] + bracket[1])/2
-    var xc: float64 = bracket[1]
-    var fb: float64 = f(xb)
+    var xa: float = bracket[0]
+    var xb: float = (bracket[0] + bracket[1])/2
+    var xc: float = bracket[1]
+    var fb: float = f(xb)
     var funcalls = 3
-    var a: float64 = 0
-    var b: float64 = 0
+    var a: float = 0
+    var b: float = 0
 
     var x = xb
     var w = xb
@@ -168,9 +168,9 @@ proc brent(f: proc(t: float64):float64,
         #print(f"{funcalls:^12g} {x:^12.6g} {fx:^12.6g}")
 
     while iter < maxiter:
-        var rat: float64 = 0
-        var u: float64 = 0
-        var fu: float64 = 0
+        var rat: float = 0
+        var u: float = 0
+        var fu: float = 0
         let tol1 = tol * abs(x) + mintol
         let tol2 = 2.0 * tol1
         let xmid = 0.5 * (a + b)
@@ -255,7 +255,7 @@ proc brent(f: proc(t: float64):float64,
     funcalls = funcalls
     return xmin
 
-proc root*(poly: seq[float64]): seq[float64] =
+proc roots*(poly: seq[float]): seq[float] =
     let N = len(poly)
 
     if N == 1:

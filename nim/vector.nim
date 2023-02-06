@@ -1,85 +1,49 @@
 import std/math
 
-type
-    Vector = ref object of RootObj
-        x, y: float64
+type Vec* = array[2, float]
 
-proc `[]`* (v: Vector, i: int): float =
-  case i
-  of 0: result = v.x
-  of 1: result = v.y
-  else: assert(false)
+proc `+`*(v: Vec, u: Vec): Vec {.inline.} = [v[0] + u[0], v[1] + u[1]]
+proc `+`*(v: Vec, u: float): Vec {.inline.} = [v[0] + u, v[1] + u]
+proc `+`*(u: float, v: Vec): Vec {.inline.} = v + u
 
-proc `+`*(self: Vector, other: Vector): Vector =
-    return Vector(x: self.x + other.x, y: self.y + other.y)
+proc `-`*(v: Vec, u: Vec): Vec {.inline.} = [v[0] - v[0], v[1] - u[1]]
+proc `-`*(v: Vec, s: float): Vec {.inline.} = [v[0] - s, v[1] - s]
+proc `-`*(s: float, v: Vec): Vec {.inline.} = [s - v[0], s - v[1]]
 
-proc `+`*(self: Vector, other: float64): Vector =
-    return Vector(x: self.x + other, y: self.y + other)
+proc `*`*(v: Vec, u: Vec): Vec {.inline.} = [v[0] * u[0], v[1] * u[1]]
+proc `*`*(v: Vec, s: float): Vec {.inline.} = [v[0] * s, v[1] * s]
+proc `*`*(s: float, v: Vec): Vec {.inline.} = v * s
 
-proc `+`*(other: float64, self: Vector): Vector =
-    return Vector(x: self.x + other, y: self.y + other)
+proc `/`*(v: Vec, u: Vec): Vec {.inline.} = [v[0] / u[0], v[1] / u[1]]
+proc `/`*(v: Vec, s: float): Vec {.inline.} = v * (1/s)
 
-proc `-`*(self: Vector, other: Vector): Vector =
-    return Vector(x: self.x - other.x, y: self.y - other.y)
+proc `dot`*(v: Vec, u: Vec): float {.inline.} = v[0] * u[0] + v[1] * u[1]
+proc length*(v: Vec): float {.inline.} = math.sqrt(v.dot(v))
+proc lengthsq*(v: Vec): float {.inline.} = v.dot(v)
 
-proc `-`*(self: Vector, other: float64): Vector =
-    return Vector(x: self.x - other, y: self.y - other)
+proc cross*(v: Vec, u: Vec): float {.inline.} = v[0] * u[1] - v[1] * u[0]
 
-proc `-`*(other: float64, self: Vector): Vector =
-    return Vector(x: self.x - other, y: self.y - other)
+proc norm*(v: Vec): Vec {.inline.} =
+    var len = v.length
+    return v / len
 
-proc `*`*(self: Vector, other: Vector): Vector =
-    return Vector(x: self.x * other.x, y: self.y * other.y)
+proc reflect*(v: Vec, normal: Vec): Vec {.inline.} =
+    let ddot = v.dot(normal)
+    return v - (2.0 * ddot * normal)
 
-proc `*`*(self: Vector, other: float64): Vector =
-    return Vector(x: self.x * other, y: self.y * other)
-
-proc `*`*(other: float64, self: Vector): Vector =
-    return Vector(x: self.x * other, y: self.y * other)
-
-proc `/`*(self: Vector, other: Vector): Vector =
-    return Vector(x: self.x / other.x, y: self.y / other.y)
-
-proc `/`*(self: Vector, other: float64): Vector =
-    return Vector(x: self.x / other, y: self.y / other)
-
-proc `/`*(other: float64, self: Vector): Vector =
-    return Vector(x: self.x / other, y: self.y / other)
-
-proc `dot`*(self: Vector, other: Vector): float64 =
-    return self.x * other.x + self.y * other.y
-
-proc length*(self: Vector): float64 =
-    return math.sqrt(self.dot(self))
-
-proc lengthsq*(self: Vector): float64 =
-    return self.dot(self)
-
-proc rot90*(self: Vector): Vector = 
-    return Vector(x: -self.y, y: self.x)
-
-proc cross*(self: Vector, other: Vector): float64 =
-    return self.x * other.y - self.y * other.x
-
-proc norm*(self: Vector): Vector =
-    var len = self.length
-    return Vector(x: self.x / len, y: self.y / len)
-
-proc reflect*(self: Vector, normal: Vector): Vector =
-    let ddot = self.dot(normal)
-    return self - (2.0 * ddot * normal)
-
-proc lerp*(v0: Vector, v1: Vector, t: float64): Vector =
+proc lerp*(v0: Vec, v1: Vec, t: float): Vec {.inline.} =
     return (1 - t)*v0 + t*v1
 
-proc ilerp*(v0: Vector, v1: Vector, t: Vector): float64 =
+proc ilerp*(v0: Vec, v1: Vec, t: Vec): float {.inline.} =
     let d = v0 - v1
-    if abs(d.x) < abs(d.y):
-        return (t.y - v0.y) / d.y
+    if abs(d[0]) < abs(d[1]):
+        return (t[1] - v0[1]) / d[1]
     else:
-        return (t.x - v0.x) / d.x
+        return (t[0] - v0[0]) / d[0]
 
-proc rotate*(v: Vector, theta: float64): Vector = 
+proc rot90*(v: Vec): Vec {.inline.} = [-v[1], v[0]]
+
+proc rotate*(v: Vec, theta: float): Vec {.inline.} = 
     let c = cos(theta)
     let s = sin(theta)
-    return Vector(x: v.x*c - v.y*s, y: v.x*s + v.y*c)
+    return [v[0]*c - v[1]*s, v[0]*s + v[1]*c]
