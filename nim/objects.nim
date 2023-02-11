@@ -14,19 +14,21 @@ type
         index: int
 
 proc initPointParticle*(
-            pos: Vec = [0.0, 0.0], 
-            vel: Vec = [0.0, 0.0], 
-            acc: Vec = [0.0, 0.0]): PointParticle =
-    result.pos = pos
-    result.vel = vel
-    result.acc = acc
-    result.index = OBJECT_INDEX
+        self: PointParticle,
+        pos: Vec = [0.0, 0.0], 
+        vel: Vec = [0.0, 0.0], 
+        acc: Vec = [0.0, 0.0]): PointParticle =
+    self.pos = pos
+    self.vel = vel
+    self.acc = acc
+    self.index = OBJECT_INDEX
     OBJECT_INDEX = OBJECT_INDEX + 1
+    return self
 
 # -------------------------------------------------------------
 type
     ParticleGroup* = ref object of RootObj
-proc init*(self: ParticleGroup): ParticleGroup = result
+
 method index*(self: ParticleGroup, index: int): PointParticle {.base.} = result
 method count*(self: ParticleGroup): int {.base.} = result
 
@@ -34,10 +36,15 @@ method count*(self: ParticleGroup): int {.base.} = result
 type
     SingleParticle* = ref object of ParticleGroup
         particle: PointParticle
-proc init*(self: PointParticle, particle: PointParticle): SingleParticle = result.particle = particle
+
+proc initSingleParticle*(self: SingleParticle, particle: PointParticle): SingleParticle = 
+    self.particle = particle
+    return self
+
 method index*(self: SingleParticle, index: int): PointParticle = 
     if index == 1:
         return self.particle
+
 method count*(self: SingleParticle): int = 1
 
 # -------------------------------------------------------------
@@ -45,7 +52,10 @@ type
     ParticleList* = ref object of ParticleGroup
         particles: seq[PointParticle]
 
-proc init*(self: ParticleList, particles: seq[PointParticle]): ParticleList = result.particles = particles
+proc initParticleList*(self: ParticleList, particles: seq[PointParticle]): ParticleList = 
+    self.particles = particles
+    return self
+
 method index*(self: ParticleList, index: int): PointParticle = result = self.particles[index]
 method count*(self: ParticleList): int = len(self.particles)
 
@@ -56,28 +66,29 @@ proc partition*(self: ParticleList, total: int): seq[ParticleList] =
         let particles: seq[PointParticle] = @[]
         for ind in 1 + (i-1)*size .. 1 + i*size:
             self.particles.add(self.particles[ind])
-        list[i] = ParticleList().init(particles)
+        list[i] = ParticleList().initParticleList(particles)
     return list
 
 # -------------------------------------------------------------
-type UniformParticles* = ref object of ParticleList
+type 
+    UniformParticles* = ref object of ParticleList
 
-proc init*(T: typedesc[UniformParticles], p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: int): T =
+proc initUniformParticles*(p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: int): UniformParticles =
     for i in 1 .. N:
         let f = i / N
         let pos = lerp(p0, p1, f)
         let vel = lerp(v0, v1, f)
-        T.particles.add(initPointParticle(pos, vel, [0.0, 0.0]))
+        result.particles.add(PointParticle().initPointParticle(pos, vel, [0.0, 0.0]))
 
 # -------------------------------------------------------------
-type UniformParticles2D* = ref object of ParticleList
+type 
+    UniformParticles2D* = ref object of ParticleList
 
-proc init*(T: typedesc[UniformParticles2D], p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: array[2, int]): T =
+proc initUniformParticles2D*(p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: array[2, int]): UniformParticles2D =
     let Nx = N[0]
     let Ny = N[1]
     let N = Nx * Ny
 
-    let particles: seq[PointParticle] = newSeq[PointParticle]() #@[]
     for i in 1 .. N:
         let j = i - 1
         let fx = (j mod Nx) div Nx
@@ -86,7 +97,7 @@ proc init*(T: typedesc[UniformParticles2D], p0: Vec, p1: Vec, v0: Vec, v1: Vec, 
 
         let pos = vlerp(p0, p1, fv)
         let vel = vlerp(v0, v1, fv)
-        T.particles.add(initPointParticle(pos, vel, [0.0, 0.0]))
+        result.particles.add(PointParticle().initPointParticle(pos, vel, [0.0, 0.0]))
 
 # -------------------------------------------------------------
 type
@@ -94,10 +105,11 @@ type
         damp: float
         obj_index: int
 
-proc init*(T: typedesc[Object], damp: float): T = 
-    T.damp = damp
-    T.obj_index = OBJECT_INDEX
+proc init*(self: Object, damp: float): Object = 
+    self.damp = damp
+    self.obj_index = OBJECT_INDEX
     OBJECT_INDEX = OBJECT_INDEX + 1
+    return self
 
 #proc collide(self: Object, part0: Particle, parti: Particle, part1: Particle): tuple[Segment, Segment] =
     #[
@@ -126,10 +138,11 @@ type
     Segment* = ref object of Object
         p0, p1: Vec
 
-proc init*(self: Segment, p0: Vec = [0.0, 0.0], p1: Vec = [0.0, 0.0], damp: float = 1.0): Segment =
+proc initSegment*(self: Segment, p0: Vec = [0.0, 0.0], p1: Vec = [0.0, 0.0], damp: float = 1.0): Segment =
     self.p0 = p0
     self.p1 = p1 
     self.damp = damp
+    return self
 
 proc intersection*(self: Segment, seg: Segment): float =
     # returns the length along seg1 when the intersection occurs (0, 1)
@@ -197,17 +210,13 @@ type
         coeff: seq[Vec]
         # const name: string = "bezier"
 
-proc init*(T: typedesc[BezierCurve], points: seq[array[2, float]]): T =
-    T.points = points
-    T.coeff = T.coeff()
-
 proc choose(self: BezierCurve, n: int, k: int): int =
     var val: int = 1
     for i in 1 .. k:
         val = val * (n + 1 - i) div i
     return val
 
-proc coeff*(self: BezierCurve): seq[Vec] =
+proc get_coeff*(self: BezierCurve): seq[Vec] =
     #[
       cj = n! / (n-j)! sum_{i=0}^{j} (-1)^{i+j} P_i / (i!(j-i)!)
          = (n j) \sum_{i=0}^j (-1)^{i+j} (j i) P_i
@@ -309,16 +318,21 @@ proc center*(self: BezierCurve): Vec =
         c = c + point
     return c / len(self.points).float
 
+proc initBezierCurve*(self: BezierCurve, points: seq[array[2, float]], damp: float = 1.0): BezierCurve =
+    self.points = points
+    self.damp = damp
+    self.coeff = result.get_coeff()
+    return self
+
 # ---------------------------------------------------------------
 type
     BezierCurveQuadratic* = ref object of BezierCurve
 
-proc init*(T: typedesc[BezierCurveQuadratic], points: seq[Vec], damp: float = 1.0): T =
-    T.points = points
-    T.damp = damp
-    T.coeff = T.coeff()
+proc initBezierCurveQuadratic*(self: BezierCurveQuadratic, points: seq[Vec], damp: float = 1.0): BezierCurveQuadratic =
+    discard self.initBezierCurve(points, damp)
+    return self
 
-proc coeff*(self: BezierCurveQuadratic): seq[Vec] =
+proc get_coeff*(self: BezierCurveQuadratic): seq[Vec] =
     let p0 = self.points[0]
     let p1 = self.points[1]
     let p2 = self.points[2]
@@ -360,11 +374,11 @@ type
         rad: float
         radsq: float
 
-proc init*(T: typedesc[Circle], pos: Vec, rad: float, damp: float = 1.0): T =
-    T.damp = damp
-    T.pos = pos
-    T.rad = rad
-    T.radsq = rad*rad
+proc initCircle*(pos: Vec, rad: float, damp: float = 1.0): Circle =
+    result.damp = damp
+    result.pos = pos
+    result.rad = rad
+    result.radsq = rad*rad
 
 proc circle_line_poly*(self: Circle, seg: Segment): seq[float] =
     let dp = seg.p1 - seg.p0
@@ -415,17 +429,21 @@ proc scale*(self: Circle, s: float): Circle =
 proc rotate*(self: Circle, theta: float): Circle =
     return Circle(pos: self.pos, rad: self.rad, damp: self.damp)
 
+
 # ----------------------------------------------------------------
+type 
+    MaskFunction = proc(theta: float): bool
+
 type
     MaskedCircle* = ref object of Circle
-        mask: proc(theta: float): bool #proc[theta: float]: bool
+        mask: MaskFunction
 
-proc init*(T: typedesc[MaskedCircle], pos: Vec, rad: float, damp: float = 1.0, mask: proc()): T =
-    T.damp = damp
-    T.pos = pos
-    T.rad = rad
-    T.radsq = rad * rad
-    T.mask = mask
+proc initMaskedCircle*(pos: Vec, rad: float, damp: float = 1.0, mask: MaskFunction): MaskedCircle =
+    result.damp = damp
+    result.pos = pos
+    result.rad = rad
+    result.radsq = rad * rad
+    result.mask = mask
 
 proc intersection*(self: MaskedCircle, seg: Segment): float =
     let time = self.intersection(seg)
@@ -440,23 +458,14 @@ proc intersection*(self: MaskedCircle, seg: Segment): float =
         return time
     return -1
 
-#[
-let function circle_nholes(nholes, eps, offset)
-    return function(theta)
-        let r = nholes * (theta - offset) / (2 * math.pi)
-        return math.abs(r - math.floor(r + 0.5)) > eps
-    end
-end
+proc circle_nholes*(nholes: int, eps: float, offset: float): MaskFunction =
+    return proc(theta: float): bool =
+        let r: float = nholes.float * (theta - offset) / (2.0 * PI)
+        return abs(r - floor(r + 0.5)) > eps
 
-let function circle_angle_range(amin, amax)
-    return function(theta)
+proc circle_angle_range*(amin: float, amax: float): MaskFunction =
+    return proc(theta: float): bool =
         return (theta > amin) and (theta < amax)
-    end
-end
-
-let function circle_single_angle(angle, eps)
-end
-]#
 
 # ---------------------------------------------------------------
 type
@@ -464,21 +473,21 @@ type
         ll, lu, uu, ul: Vec
         segments: seq[Segment]
 
-proc init*(T: typedesc[Box], ll: Vec, uu: Vec, damp: float = 1.0): T =
-    T.damp = damp
+proc initBox*(ll: Vec, uu: Vec, damp: float = 1.0): Box =
+    result.damp = damp
     let lu = [ll[0], uu[1]]
     let ul = [uu[0], ll[1]]
 
-    T.ll = ll
-    T.lu = lu
-    T.uu = uu
-    T.ul = ul
+    result.ll = ll
+    result.lu = lu
+    result.uu = uu
+    result.ul = ul
 
-    T.segments = @[
-        Segment(T.ll, T.lu),
-        Segment(T.lu, T.uu),
-        Segment(T.uu, T.ul),
-        Segment(T.ul, T.ll)
+    result.segments = @[
+        Segment().initSegment(result.ll, result.lu),
+        Segment().initSegment(result.lu, result.uu),
+        Segment().initSegment(result.uu, result.ul),
+        Segment().initSegment(result.ul, result.ll)
     ]
 
 proc center*(self: Box): Vec =
@@ -524,21 +533,15 @@ type
         segments: seq[Segment]
         com: Vec
 
-proc init*(T: typedesc[Polygon], points: seq[Vec], damp: float = 1.0): T =
-    T.N = len(points)
-    T.points = T.wrap(points)
-    T.segments = T.segments(T.points, damp=damp)
-    T.com = T.center()
-
 proc wrap*(self: Polygon, pts: seq[Vec]): seq[Vec] =
-    let o: seq[Vec] = @[]
+    var o: seq[Vec] = @[]
     for i, pt in pts[2 .. pts.len]:
         o.add(pt)
-    o.add(pt[0])
+    o.add(pts[0])
     return o
 
-proc segments*(self: Polygon, pts: seq[Vec], damp: float): seq[Segment] =
-    let segs: seq[Segment] = @[]
+proc get_segments*(self: Polygon, pts: seq[Vec], damp: float): seq[Segment] =
+    var segs: seq[Segment] = @[]
     for i, pt in pts:
         let seg = Segment(p0: pts[i], p1: pts[i+1], damp: damp)
         segs.add(seg)
@@ -552,6 +555,12 @@ proc center*(self: Polygon): Vec =
         a = a + c / 2
         com = com + (p0 + p1) * (c/6)
     return com / a
+
+proc initPolygon*(self: Polygon, points: seq[Vec], damp: float = 1.0): Polygon =
+    self.N = len(points)
+    self.points = result.wrap(points)
+    self.segments = self.get_segments(self.points, damp)
+    self.com = result.center()
 
 proc intersection*(self: Polygon, seg: Segment): float =
     var min_time = 1e100
@@ -588,53 +597,48 @@ proc rotate*(self: Polygon, theta: float): Polygon =
     #     points.add(rotate(pt-c, theta)+c)
     return Polygon() #points, self.cargs)
 
-#[
-function Polygon:scale(s)
-    let c = self.com
-    let f = 1 - s/2
+proc scale*(self: Polygon, s: float): Polygon = 
+    let c: Vec = self.center()
+    let f: float = 1.0 - s/2.0
 
-    let points = {}
-    for i = 1, #self.points-1 do
-        points[i] = vector.lerp(self.points[i], c, f)
-    end
-    return Polygon(points, self.cargs)
-end
+    var points: seq[Vec] = @[]
+    for i, pt in self.points:
+        points.add(vector.lerp(self.points[i], c, f))
+    return Polygon().initPolygon(points, self.damp)
 
-function Polygon:coordinate_bounding_box()
-    let x0, y0 = 1e100, 1e100
-    let x1, y1 = -1e100, -1e100
+proc coordinate_bounding_box*(self: Polygon): Box =
+    var (x0, y0) = (1e100, 1e100)
+    var (x1, y1) = (-1e100, -1e100)
 
     for i, pt in  self.points:
         let pt = self.points[i]
-        x0 = math.min(pt[1], x0)
-        y0 = math.min(pt[2], y0)
-        x1 = math.max(pt[1], x1)
-        y1 = math.max(pt[2], y1)
+        x0 = min(pt[1], x0)
+        y0 = min(pt[2], y0)
+        x1 = max(pt[1], x1)
+        y1 = max(pt[2], y1)
 
-    return {{x0, y0}, {x1, y1}}
-end
+    return initBox([x0, y0], [x1, y1])
+
 
 # -------------------------------------------------------------
-let Rectangle = util.class(Polygon)
-function Rectangle:init(ll, uu, cargs)
-    let points = {
-        {ll[1], ll[2]},
-        {ll[1], uu[2]},
-        {uu[1], uu[2]},
-        {uu[1], ll[2]}
-    }
-    Polygon.init(self, points, cargs)
-end
+type 
+    Rectangle = ref object of Polygon
 
--- -------------------------------------------------------------
-let RegularPolygon = util.class(Polygon)
-function RegularPolygon:init(N, pos, size, cargs)
-    let points = {}
+proc initRectange*(self: Rectangle, ll: Vec, uu: Vec, damp: float): Rectangle =
+    let box: Box = initBox(ll, uu)
+    let points: seq[Vec] = @[box.uu, box.ul, box.ll, box.lu]
+    discard self.initPolygon(points, damp)
+    return self
 
-    for i = 0, N-1 do
-        let t = i * 2 * math.pi / N
-        points[#points + 1] = vector.vaddv(pos, {size*math.cos(t), size*math.sin(t)})
-    end
-    Polygon.init(self, points, cargs)
-end
-]#
+# -------------------------------------------------------------
+type 
+    RegularPolygon = ref object of Polygon
+
+proc initRegularPolygon*(self: RegularPolygon, N: int, pos: Vec, size: float, damp: float): RegularPolygon =
+    var points: seq[Vec] = @[]
+    for i in 0 .. N-1:
+        let t: float = i.float * 2.0 * PI / N.float
+        let v: Vec = [cos(t), sin(t)]
+        points.add(pos + size * v)
+    discard self.initPolygon(points, damp)
+    return self
