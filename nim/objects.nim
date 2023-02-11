@@ -1,5 +1,4 @@
 import std/math
-import std/tables
 
 import roots
 import vector
@@ -9,9 +8,9 @@ var OBJECT_INDEX: int = 0
 # -------------------------------------------------------------
 type
     PointParticle* = ref object of RootObj
-        pos, vel, acc: Vec
-        active: bool
-        index: int
+        pos*, vel*, acc*: Vec
+        active*: bool
+        index*: int
 
 proc initPointParticle*(
         self: PointParticle,
@@ -101,7 +100,7 @@ proc initUniformParticles2D*(p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: array[2, int
 
 # -------------------------------------------------------------
 type
-    Object = ref object of RootObj
+    Object* = ref object of RootObj
         damp: float
         obj_index: int
 
@@ -205,7 +204,7 @@ proc scale*(self: Segment, s: float): Segment =
 
 # ---------------------------------------------------------------
 type
-    BezierCurve = ref object of Object
+    BezierCurve* = ref object of Object
         points: seq[Vec]
         coeff: seq[Vec]
         # const name: string = "bezier"
@@ -432,7 +431,7 @@ proc rotate*(self: Circle, theta: float): Circle =
 
 # ----------------------------------------------------------------
 type 
-    MaskFunction = proc(theta: float): bool
+    MaskFunction* = proc(theta: float): bool
 
 type
     MaskedCircle* = ref object of Circle
@@ -622,7 +621,7 @@ proc coordinate_bounding_box*(self: Polygon): Box =
 
 # -------------------------------------------------------------
 type 
-    Rectangle = ref object of Polygon
+    Rectangle* = ref object of Polygon
 
 proc initRectange*(self: Rectangle, ll: Vec, uu: Vec, damp: float): Rectangle =
     let box: Box = initBox(ll, uu)
@@ -632,7 +631,7 @@ proc initRectange*(self: Rectangle, ll: Vec, uu: Vec, damp: float): Rectangle =
 
 # -------------------------------------------------------------
 type 
-    RegularPolygon = ref object of Polygon
+    RegularPolygon* = ref object of Polygon
 
 proc initRegularPolygon*(self: RegularPolygon, N: int, pos: Vec, size: float, damp: float): RegularPolygon =
     var points: seq[Vec] = @[]
