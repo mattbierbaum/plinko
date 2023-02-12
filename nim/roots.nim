@@ -5,10 +5,10 @@ proc sign(x: float): float =
 
 let sort_networks: seq[seq[array[2, int]]] = @[
     @[[0,0]],
-    @[[1,2]],
-    @[[2,3], [1,3], [1,2]],
-    @[[1,2], [3,4], [1,3], [2,4], [2,3]],
-    @[[1,2], [4,5], [3,5], [3,4], [2,5], [1,4], [1,3], [2,4], [2,3]],
+    @[[0,1]],
+    @[[1,2], [0,2], [0,1]],
+    @[[0,1], [2,3], [0,2], [1,3], [1,2]],
+    @[[0,1], [3,4], [2,4], [2,3], [1,4], [0,3], [0,2], [1,3], [1,2]],
 ]
 
 proc cswap(arr: var seq[float], i0: int, i1: int) =
@@ -19,7 +19,7 @@ proc cswap(arr: var seq[float], i0: int, i1: int) =
 
 proc sort(arr: var seq[float]): seq[float] =
     if len(arr) <= len(sort_networks):
-        let network = sort_networks[len(arr)]
+        let network = sort_networks[len(arr)-1]
         for i, inds in network:
             cswap(arr, inds[0], inds[1])
         return arr
