@@ -23,7 +23,7 @@ suite "objects tests":
         check(s1.length() =~ 0.75)
 
         check(s0.center() =~ [0.5, 0.0])
-        check(s0.normal(s1) =~ [0.0, -1.0])
+        check(s0.normal(s1) =~ [0.0, 1.0])
 
         check(s1.intersection(s0)[1] == 0.5)
         check(s0.intersection(s1)[1] == 2.0/3.0)
@@ -39,8 +39,11 @@ suite "objects tests":
         check(c0.intersection(s1)[1] =~ 0.5)
         check(c0.intersection(s2)[1] =~ -1)
         check(c0.crosses(s0))
-        check(c0.normal(s0) =~ [-sqrt(2.0)/2.0, -sqrt(2.0)/2.0])
-        # check(c0.normal(-s0) =~ [sqrt(2.0)/2.0, sqrt(2.0)/2.0]) # TODO: wrong
+
+        let p: Vec = [sqrt(2.0)/2.0, sqrt(2.0)/2.0]
+        let collision = Segment().initSegment(s0.p1, p)
+        check(c0.normal(collision) =~ [sqrt(2.0)/2.0, sqrt(2.0)/2.0])
+        check(c0.normal(-collision) =~ [-sqrt(2.0)/2.0, -sqrt(2.0)/2.0])
 
     test "rectangles":
         let r = Rectangle().initRectangle([0.0, 0.0], [1.0, 1.0])
@@ -52,5 +55,8 @@ suite "objects tests":
         check(r.intersection(s1)[1] =~ 0.25)
         check(r.intersection(s2)[1] == -1)
         check(r.center() =~ [0.5, 0.5])
-        check(r.normal(s0) =~ [-1.0, 0.0])
-        check(r.normal(-s0) =~ [-1.0, 0.0]) # TODO: wrong
+
+        let c0 = Segment().initSegment([1.5, 0.5], [1.0, 0.5])
+        check(r.normal(c0) =~ [1.0, 0.0])
+        let c1 = Segment().initSegment(s0.p0, [1.0, 0.5])
+        check(r.normal(c1) =~ [-1.0, 0.0])

@@ -21,17 +21,9 @@ proc `/`*(v: Vec, s: float): Vec {.inline.} = v * (1/s)
 proc `dot`*(v: Vec, u: Vec): float {.inline.} = v[0] * u[0] + v[1] * u[1]
 proc length*(v: Vec): float {.inline.} = math.sqrt(v.dot(v))
 proc lengthsq*(v: Vec): float {.inline.} = v.dot(v)
-
 proc cross*(v: Vec, u: Vec): float {.inline.} = v[0] * u[1] - v[1] * u[0]
-
-proc norm*(v: Vec): Vec {.inline.} =
-    var len = v.length
-    return v / len
-
-proc reflect*(v: Vec, normal: Vec): Vec {.inline.} =
-    let ddot = v.dot(normal)
-    return v - (2.0 * ddot * normal)
-
+proc norm*(v: Vec): Vec {.inline.} = v / v.length
+proc reflect*(v: Vec, normal: Vec): Vec {.inline.} = v - (2.0 * v.dot(normal) * normal)
 proc lerp*(v0: Vec, v1: Vec, t: float): Vec {.inline.} = (1 - t)*v0 + t*v1
 proc vlerp*(v0: Vec, v1: Vec, t: Vec): Vec {.inline.} = (1 - t)*v0 + t*v1
 

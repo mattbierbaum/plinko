@@ -1,4 +1,5 @@
 import std/math
+import std/strformat
 
 import roots
 import vector
@@ -146,6 +147,7 @@ proc initSegment*(self: Segment, p0: Vec = [0.0, 0.0], p1: Vec = [0.0, 0.0], dam
     return self
 
 proc `-`*(self: Segment): Segment = Segment().initSegment(self.p1, self.p0)
+proc `$`*(self: Segment): string = fmt"{self.p0} -> {self.p1}"
 
 proc intersection*(self: Segment, seg: Segment): (Segment, float) =
     # returns the length along seg1 when the intersection occurs (0, 1)
@@ -177,10 +179,10 @@ proc normal*(self: Segment, seg: Segment): Vec =
     let newp1 = c + rot90(self.p1 - c)
     let o = norm(newp1 - newp0)
 
-    if (self.p1 - self.p0).dot(o) > 0:
-        return o
-    else:
+    if (seg.p1 - seg.p0).dot(o) > 0:
         return -o
+    else:
+        return o
 
 proc length*(self: Segment): float =
     return length(self.p1 - self.p0)
@@ -511,8 +513,8 @@ proc intersection*(self: Box, seg: Segment): (Segment, float) =
     return (nil, -1.0)
 
 proc normal*(self: Box, seg: Segment): Vec =
-    let (seg, _) = self.intersection(seg)
-    return seg.normal(seg)
+    let (line, _) = self.intersection(seg)
+    return line.normal(seg)
 
 proc crosses*(self: Box, seg: Segment): bool =
     let (bx0, bx1) = (self.ll[0], self.uu[0])
@@ -588,8 +590,8 @@ proc intersection*(self: Polygon, seg: Segment): (Segment, float) =
     return (nil, -1.0)
 
 proc normal*(self: Polygon, seg: Segment): Vec =
-    let (seg, _) = self.intersection(seg)
-    return seg.normal(seg)
+    let (line, _) = self.intersection(seg)
+    return line.normal(seg)
 
 proc crosses*(self: Polygon, seg: Segment): bool =
     return self.intersection(seg)[1] >= 0
