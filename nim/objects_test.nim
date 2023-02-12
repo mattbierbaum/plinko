@@ -37,3 +37,12 @@ suite "objects tests":
         check(c0.intersection(s0) =~ sqrt(2.0)/2.0)
         check(c0.intersection(s1) =~ 0.5)
         check(c0.crosses(s0))
+
+    test "rectangles":
+        let r = Rectangle().initRectangle([0.0, 0.0], [1.0, 1.0])
+        let s0 = Segment().initSegment([0.5, 0.5], [1.5, 0.5])
+        let s1 = Segment().initSegment([0.5, 0.5], [-1.5, 0.5])
+
+        check(r.intersection(s0) =~ 0.5)
+        check(r.intersection(s1) =~ 0.25)
+        check(r.center() =~ [0.5, 0.5])

@@ -33,7 +33,7 @@ proc reflect*(v: Vec, normal: Vec): Vec {.inline.} =
     return v - (2.0 * ddot * normal)
 
 proc lerp*(v0: Vec, v1: Vec, t: float): Vec {.inline.} = (1 - t)*v0 + t*v1
-proc vlerp*(v0: Vec, v1: Vec, t: Vec): Vec {.inline.} = (1 - t) * v0 + t * v1
+proc vlerp*(v0: Vec, v1: Vec, t: Vec): Vec {.inline.} = (1 - t)*v0 + t*v1
 
 proc ilerp*(v0: Vec, v1: Vec, t: Vec): float {.inline.} =
     let d = v0 - v1
