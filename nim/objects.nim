@@ -135,7 +135,7 @@ proc set_object_index*(self: Object, i: int) =
 # ----------------------------------------------------------------
 type 
     Segment* = ref object of Object
-        p0, p1: Vec
+        p0*, p1*: Vec
 
 proc initSegment*(self: Segment, p0: Vec = [0.0, 0.0], p1: Vec = [0.0, 0.0], damp: float = 1.0): Segment =
     self.p0 = p0
@@ -469,7 +469,7 @@ proc circle_angle_range*(amin: float, amax: float): MaskFunction =
 # ---------------------------------------------------------------
 type
     Box* = ref object of Object
-        ll, lu, uu, ul: Vec
+        ll*, lu*, uu*, ul*: Vec
         segments: seq[Segment]
 
 proc initBox*(ll: Vec, uu: Vec, damp: float = 1.0): Box =
