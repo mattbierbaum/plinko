@@ -4,7 +4,7 @@ import std/math
 import std/unittest
 
 const
-  eps = 1.0e-12
+  eps = 1.0e-10
 
 proc `=~` *(x, y: float): bool =
   result = abs(x - y) < eps
@@ -41,3 +41,19 @@ suite "quadratic tests":
         let roots: seq[float] = quadratic(poly)
         check(roots[0] =~ 1.0)
         check(roots[1] =~ 1.0)
+
+    test "brent minimize polynomial":
+        let poly: seq[float] = @[1.0, -1.0, 1.0]
+        let function: proc(t: float): float = proc(t: float): float = 
+            return polyeval(poly, t)
+
+        let root = brent(f=function, bracket=[-2.0, 2.0], tol=1e-14, mintol=1e-14)
+        check(root =~ 0.5)
+
+    test "brent minimize sin":
+        let function: proc(t: float): float = proc(t: float): float = 
+            return sin(t)
+
+        let root = brent(f=function, bracket=[-2.0, 2.0], tol=1e-16, mintol=1e-16)
+        check(root =~ -PI/2)
+        

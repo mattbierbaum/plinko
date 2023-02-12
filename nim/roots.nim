@@ -26,6 +26,12 @@ proc sort(arr: var seq[float]): seq[float] =
     else:
         return arr.sort()
 
+proc polyeval*(poly: seq[float], x: float): float =
+    var v: float = poly[0]
+    for i in 1 .. len(poly) - 1:
+        v = v * x + poly[i]
+    return v
+
 proc linear*(poly: seq[float]): seq[float] =
     return @[-poly[1] / poly[0]]
 
@@ -131,9 +137,9 @@ proc cubic2*(poly: seq[float]): seq[float] =
 proc brent*(f: proc(t: float):float, 
            bracket: array[2, float], 
            tol: float = 1.48e-8, 
+           mintol: float = 1.0e-11,
            maxiter: int = 500, 
-           disp: int): float =
-    let mintol = 1.0e-11
+           disp: int = 0): float =
     let cg = 0.3819660
     var xmin: float = 0
     var fval: float = 0
