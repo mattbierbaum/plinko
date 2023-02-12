@@ -250,14 +250,14 @@ proc bezier_line_poly*(self: BezierCurve, s0: Vec, s1: Vec): seq[float] =
 proc f*(self: BezierCurve, t: float): Vec =
     let c = self.coeff
     var o: Vec = [0.0, 0.0]
-    for i in len(c) .. 1: # -1 TODO
+    for i in countdown(len(c)-1, 1):
         o = t * o + c[i]
     return o
 
 proc dfdt*(self: BezierCurve, t: float): Vec =
     let c = self.coeff
     var o: Vec = [0.0, 0.0]
-    for i in len(c) .. 2: # -1 TODO
+    for i in countdown(len(c)-1, 2):
         o = t * o + (i-1).float * c[i]
     return o
 
@@ -369,15 +369,16 @@ proc coeff*(self: BezierCurveCubic): seq[Vec] =
 # ---------------------------------------------------------------
 type
     Circle* = ref object of Object
-        pos: Vec
-        rad: float
-        radsq: float
+        pos*: Vec
+        rad*: float
+        radsq*: float
 
-proc initCircle*(pos: Vec, rad: float, damp: float = 1.0): Circle =
-    result.damp = damp
-    result.pos = pos
-    result.rad = rad
-    result.radsq = rad*rad
+proc initCircle*(self: Circle, pos: Vec, rad: float, damp: float = 1.0): Circle =
+    self.damp = damp
+    self.pos = pos
+    self.rad = rad
+    self.radsq = rad*rad
+    return self
 
 proc circle_line_poly*(self: Circle, seg: Segment): seq[float] =
     let dp = seg.p1 - seg.p0

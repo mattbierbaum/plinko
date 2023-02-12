@@ -9,7 +9,7 @@ const
 proc `=~` *(x, y: float): bool =
   result = abs(x - y) < eps
 
-suite "quadratic tests":
+suite "roots tests":
     test "constant":
         let poly: seq[float] = @[1.0, 0.0, 0.0]
         let roots = quadratic(poly)
