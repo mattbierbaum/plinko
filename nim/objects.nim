@@ -132,8 +132,9 @@ proc initObject*(self: Object, damp: float): Object =
     return stotal, vseg
     ]#
 
-proc set_object_index*(self: Object, i: int) =
-    self.obj_index = i
+proc center*(self: Object): Vec = [0.0, 0.0]
+proc intersection*(self: Object, seg: Object): (Object, float) = (nil, -1.0)
+proc set_object_index*(self: Object, i: int) = self.obj_index = i
 
 # ----------------------------------------------------------------
 type 
@@ -474,7 +475,7 @@ proc circle_angle_range*(amin: float, amax: float): MaskFunction =
 type
     Box* = ref object of Object
         ll*, lu*, uu*, ul*: Vec
-        segments: seq[Segment]
+        segments*: seq[Segment]
 
 proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0): Box =
     self.damp = damp
