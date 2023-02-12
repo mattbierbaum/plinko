@@ -142,10 +142,12 @@ type
 proc initSegment*(self: Segment, p0: Vec = [0.0, 0.0], p1: Vec = [0.0, 0.0], damp: float = 1.0): Segment =
     self.p0 = p0
     self.p1 = p1 
-    self.damp = damp
+    discard self.initObject(damp=damp)
     return self
 
-proc intersection*(self: Segment, seg: Segment): float =
+proc `-`*(self: Segment): Segment = Segment().initSegment(self.p1, self.p0)
+
+proc intersection*(self: Segment, seg: Segment): (Segment, float) =
     # returns the length along seg1 when the intersection occurs (0, 1)
     let s0 = self.p0
     let e0 = self.p1
@@ -160,14 +162,14 @@ proc intersection*(self: Segment, seg: Segment): float =
     let p = -(s0-s1).cross(d1) / fcross
 
     if 0 <= t and t <= 1 and 0 <= p and p <= 1:
-        return t
-    return -1
+        return (self, t)
+    return (nil, -1.0)
 
 proc center*(self: Segment): Vec =
     return lerp(self.p0, self.p1, 0.5)
 
 proc crosses*(self: Segment, seg: Segment): bool =
-    return self.intersection(seg) >= 0
+    return self.intersection(seg)[1] >= 0
 
 proc normal*(self: Segment, seg: Segment): Vec =
     let c = self.center()
@@ -297,11 +299,11 @@ proc intersection_bt_st*(self: BezierCurve, seg: Segment): (float, float) =
     else:
         return (o[0], o[1])
 
-proc intersection*(self: BezierCurve, seg: Segment): float =
+proc intersection*(self: BezierCurve, seg: Segment): (BezierCurve, float) =
     let (_, st) = self.intersection_bt_st(seg)
     if st >= 0:
-        return st
-    return -1.0
+        return (self, st)
+    return (nil, -1.0)
 
 proc normal*(self: BezierCurve, seg: Segment): Vec =
     let (bt, _) = self.intersection_bt_st(seg)
@@ -321,8 +323,8 @@ proc center*(self: BezierCurve): Vec =
 
 proc initBezierCurve*(self: BezierCurve, points: seq[array[2, float]], damp: float = 1.0): BezierCurve =
     self.points = points
-    self.damp = damp
-    self.coeff = result.get_coeff()
+    self.coeff = self.get_coeff()
+    discard self.initObject(damp=damp)
     return self
 
 # ---------------------------------------------------------------
@@ -349,12 +351,11 @@ proc get_coeff*(self: BezierCurveQuadratic): seq[Vec] =
 type
     BezierCurveCubic* = ref object of BezierCurve
 
-proc init*(T: typedesc[BezierCurveCubic], points: seq[Vec], damp: float = 1.0): T =
-    T.points = points
-    T.damp = damp
-    T.coeff = T.coeff()
+proc initBezierCurveCubic*(self: BezierCurveCubic, points: seq[Vec], damp: float = 1.0): BezierCurveCubic =
+    discard self.initBezierCurve(points, damp)
+    return self
 
-proc coeff*(self: BezierCurveCubic): seq[Vec] =
+proc get_coeff*(self: BezierCurveCubic): seq[Vec] =
     let p0 = self.points[0]
     let p1 = self.points[1]
     let p2 = self.points[2]
@@ -376,10 +377,10 @@ type
         radsq*: float
 
 proc initCircle*(self: Circle, pos: Vec, rad: float, damp: float = 1.0): Circle =
-    self.damp = damp
     self.pos = pos
     self.rad = rad
     self.radsq = rad*rad
+    discard self.initObject(damp=damp)
     return self
 
 proc circle_line_poly*(self: Circle, seg: Segment): seq[float] =
@@ -391,18 +392,18 @@ proc circle_line_poly*(self: Circle, seg: Segment): seq[float] =
     let c = lengthsq(dc) - self.radsq
     return @[c, b, a]
 
-proc intersection*(self: Circle, seg: Segment): float =
+proc intersection*(self: Circle, seg: Segment): (Circle, float) =
     let poly = self.circle_line_poly(seg)
     let root = roots.quadratic(poly)
 
     if len(root) == 0:
-        return -1
+        return (nil, -1.0)
 
     if root[0] < 0 or root[0] > 1:
         if root[1] < 0 or root[1] > 1:
-            return -1
-        return root[1]
-    return root[0]
+            return (nil, -1.0)
+        return (self, root[1])
+    return (self, root[0])
 
 proc crosses*(self: Circle, seg: Segment): bool =
     let p0 = seg.p0
@@ -441,25 +442,22 @@ type
         mask: MaskFunction
 
 proc initMaskedCircle*(self: MaskedCircle, pos: Vec, rad: float, damp: float = 1.0, mask: MaskFunction): MaskedCircle =
-    self.damp = damp
-    self.pos = pos
-    self.rad = rad
-    self.radsq = rad * rad
     self.mask = mask
+    discard self.initCircle(pos=pos, rad=rad, damp=damp)
     return self
 
-proc intersection*(self: MaskedCircle, seg: Segment): float =
-    let time = self.intersection(seg)
+proc intersection*(self: MaskedCircle, seg: Segment): (MaskedCircle, float) =
+    let time = self.intersection(seg)[1]
     if time < 0:
-        return -1
+        return (nil, -1.0)
 
     let x = lerp(seg.p0, seg.p1, time)
     let c = self.pos
     let theta = math.arctan2(c[1] - x[1], c[0] - x[0]) + PI
 
     if self.mask(theta):
-        return time
-    return -1
+        return (self, time)
+    return (nil, -1.0)
 
 proc circle_nholes*(nholes: int, eps: float, offset: float): MaskFunction =
     return proc(theta: float): bool =
@@ -492,41 +490,48 @@ proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0): Box =
         Segment().initSegment(self.uu, self.ul),
         Segment().initSegment(self.ul, self.ll)
     ]
+    discard self.initObject(damp=damp)
     return self
 
 proc center*(self: Box): Vec =
     return (self.ll + self.uu)/2.0
 
-proc intersection*(self: Box, seg: Segment): float =
+proc intersection*(self: Box, seg: Segment): (Segment, float) =
     var min_time = 1e100
+    var min_obj: Segment
 
     for line in self.segments:
-        let t = line.intersection(seg)
-        if t >= 0 and t < min_time and t >= 0:
+        let (_, t) = line.intersection(seg)
+        if t >= 0 and (t < min_time or min_time > 1e10):
             min_time = t
+            min_obj = line
 
-    if min_time >= 0:
-        return min_time
-    return -1
+    if min_time >= 0 and min_time < 1e10:
+        return (min_obj, min_time)
+    return (nil, -1.0)
+
+proc normal*(self: Box, seg: Segment): Vec =
+    let (seg, _) = self.intersection(seg)
+    return seg.normal(seg)
 
 proc crosses*(self: Box, seg: Segment): bool =
-    let (bx0, bx1) = (self.ll[1], self.uu[1])
-    let (by0, by1) = (self.ll[2], self.uu[2])
+    let (bx0, bx1) = (self.ll[0], self.uu[0])
+    let (by0, by1) = (self.ll[1], self.uu[1])
     let (p0, p1) = (seg.p0, seg.p1)
 
-    let inx0 = (p0[1] > bx0 and p0[1] < bx1)
-    let inx1 = (p1[1] > bx0 and p1[1] < bx1)
-    let iny0 = (p0[2] > by0 and p0[2] < by1)
-    let iny1 = (p1[2] > by0 and p1[2] < by1)
+    let inx0 = (p0[0] > bx0 and p0[0] < bx1)
+    let inx1 = (p1[0] > bx0 and p1[0] < bx1)
+    let iny0 = (p0[1] > by0 and p0[1] < by1)
+    let iny1 = (p1[1] > by0 and p1[1] < by1)
 
     return (inx0 and iny0) xor (inx1 and iny1)
 
 proc contains*(self: Box, pt: Vec): bool =
-    let (bx0, bx1) = (self.ll[1], self.uu[1])
-    let (by0, by1) = (self.ll[2], self.uu[2])
+    let (bx0, bx1) = (self.ll[0], self.uu[0])
+    let (by0, by1) = (self.ll[1], self.uu[1])
 
-    let inx = (pt[1] > bx0 and pt[1] < bx1)
-    let iny = (pt[2] > by0 and pt[2] < by1)
+    let inx = (pt[0] > bx0 and pt[0] < bx1)
+    let iny = (pt[1] > by0 and pt[1] < by1)
     return inx and iny
 
 # ---------------------------------------------------------------
@@ -565,23 +570,29 @@ proc initPolygon*(self: Polygon, points: seq[Vec], damp: float = 1.0): Polygon =
     self.points = self.wrap(points)
     self.segments = self.get_segments(self.points, damp)
     self.com = self.center()
+    discard self.initObject(damp=damp)
     return self
 
-proc intersection*(self: Polygon, seg: Segment): float =
+proc intersection*(self: Polygon, seg: Segment): (Segment, float) =
     var min_time = 1e100
+    var min_obj: Segment
 
     for line in self.segments:
-        let t = line.intersection(seg)
-        if t >= 0 and t < min_time and t >= 0:
+        let (_, t) = line.intersection(seg)
+        if t >= 0 and (t < min_time or min_time > 1e10):
             min_time = t
+            min_obj = line
 
-    if min_time >= 0:
-        return min_time
-    return -1.0
+    if min_time >= 0 and min_time < 1e10:
+        return (min_obj, min_time)
+    return (nil, -1.0)
+
+proc normal*(self: Polygon, seg: Segment): Vec =
+    let (seg, _) = self.intersection(seg)
+    return seg.normal(seg)
 
 proc crosses*(self: Polygon, seg: Segment): bool =
-    let time = self.intersection(seg)
-    return time >= 0
+    return self.intersection(seg)[1] >= 0
 
 proc contains*(self: Polygon, pt: Vec): bool =
     #- FIXME this is wrong
@@ -616,10 +627,10 @@ proc coordinate_bounding_box*(self: Polygon): Box =
 
     for i, pt in  self.points:
         let pt = self.points[i]
-        x0 = min(pt[1], x0)
-        y0 = min(pt[2], y0)
-        x1 = max(pt[1], x1)
-        y1 = max(pt[2], y1)
+        x0 = min(pt[0], x0)
+        y0 = min(pt[1], y0)
+        x1 = max(pt[0], x1)
+        y1 = max(pt[1], y1)
 
     return Box().initBox([x0, y0], [x1, y1])
 
