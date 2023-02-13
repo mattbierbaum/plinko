@@ -24,7 +24,7 @@ proc inc(x: var float; y: float = 1.0) =
 
 # ========================================================
 type
-    DensityPlot = ref object of RootOBj
+    DensityPlot* = ref object of RootOBj
         box: Box
         dpi: float
         N: array[2, int]
@@ -130,15 +130,17 @@ proc draw_point*(self: DensityPlot, p: Vec): void {.discardable.} =
     let y = (self.dpi * (p[2] - self.box.ll[2]))
     self.plot(x, y, 1.0)
 
+proc get_array*(self: DensityPlot): seq[float] = return self.grid
+
 proc show*(self: DensityPlot): void {.discardable.} =
     for j in countdown(self.N[2]-1, 0):
         for i in countup(0, self.N[1]-1):
             let c: int = self.grid[(i + j*self.N[1]).int].int
             if c == 0:
-                echo ' '
+                stdout.write(" ")
             else:
-                echo '*'
-        echo '\n'
+                stdout.write("*")
+        stdout.writeLine("")
 
 # ========================================================
 type

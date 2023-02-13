@@ -7,7 +7,15 @@
   https://en.wikipedia.org/wiki/Bl_modes
   https://en.wikipedia.org/wiki/Alpha_compositing
 ]#
+
+import array
+
+import std/lenientops
 import std/math
+
+type BlendFunction* = proc(a: float, b: float): float
+type NormFunction* = proc(data: seq[float]): seq[float]
+type CmapFunction* = proc(data: seq[float]): seq[uint8]
 
 proc clip*(x: float): float = return max(0.0, min(x, 1.0))
 
@@ -55,96 +63,72 @@ proc blendmodes_w3c*(a: float, b: float): float =
     else:
         return b + (2*a - 1)*(gw3c(b) - b)
 
-#[
-proc blendmode_apply*(func, ca: float, cb: float)
-    out = {0, 0, 0}
-    for i = 1, 3 do
-        out[i] = clip(func(ca[i], cb[i]))
-    
-    return out
+proc hist*(arr: seq[float], nbins: int, docut: bool = true): seq[float] =
+    let (min, max) = arr.minmax_cut()
+    var bins: seq[float] = newSeq[float](nbins)
+    let norm = 1.0 / (max - min)
 
-proc hist*(arr: seq[float], nbins: int, docut: bool): seq[float] =
-    local docut = docut ~= nil and docut or true
-
-    local min, max = array:minmax_nozero()
-    local bins = alloc.create_array(nbins, 'int')
-    local norm = 1.0 / (max - min)
-
-    for i = 0, array.size-1 do
-        local v = array.arr[i]
-        if docut and v > min then
-            local n = math.floor(math.max(math.min(nbins*(v - min)*norm, nbins-1), 0))
-            bins.arr[n] = bins.arr[n] + 1
-        
-    
-
+    for i, v in arr:
+        if docut and v > min:
+            let g: int = floor(nbins*(v - min)*norm).int
+            let n: int = bins.clamp_index(g)
+            bins[n] = bins[n] + 1.0
     return bins
 
-local function cdf(data)
-    local out = alloc.create_array(data.shape, 'float')
-    local total = 0.0
-    local tsum = data:sum()
+proc cdf*(data: seq[float]): seq[float] =
+    var arr: seq[float] = newSeq[float](data.len)
+    var total = 0.0
+    var tsum = data.sum()
 
-    for i = 0, data.size-1 do
-        local v = data.arr[i]
+    for i, v in data:
         total = total + v
-        out.arr[i] = total / tsum
-    
+        arr[i] = total / tsum
+    return arr
 
-    return out
+proc eq_hist*(data: seq[float], nbins: int=256*256): seq[float] =
+    let (min, max) = data.minmax_cut()
 
-function norms.eq_hist(data: float, nbins)
-    local nbins = nbins ~= nil and nbins or 256*256
-    local min, max = data:minmax_nozero()
+    let df = cdf(hist(data, nbins))
+    let dx = (max - min) / nbins
 
-    local df = cdf(hist(data: float, nbins))
-    local dx = (max - min) / nbins
-
-    function bincenter(i)
+    proc bincenter(i: int): float =
         return min + dx/2 + i*dx
     
+    let b0 = bincenter(0)
+    let b1 = bincenter(nbins)
 
-    local b0 = bincenter(0)
-    local b1 = bincenter(nbins)
+    var arr = newSeq[float](data.len)
+    for i, v in data:
+        if v <= b0: arr[i] = 0.0 
+        if v >= b1: arr[i] = 1.0 
+        if v > b0 and v < b1:
+            let bin = math.floor((v - b0)/dx).int
+            let x1 = bincenter(bin)
+            let x2 = bincenter(bin+1)
+            let y1 = df[bin]
+            let y2 = df[bin+1]
+            arr[i] = y1 + (y2 - y1)/(x2 - x1) * (v - x1)
+    return arr
 
-    local out = alloc.create_array(data.shape, 'float')
-    for i = 0, data.size-1 do
-        local v = data.arr[i]
-        if v <= b0 then out.arr[i] = 0.0 
-        if v >= b1 then out.arr[i] = 1.0 
-        if v > b0 and v < b1 then
-            local bin = math.floor((v - b0)/dx)
-            local x1 = bincenter(bin)
-            local x2 = bincenter(bin+1)
-            local y1 = df.arr[bin]
-            local y2 = df.arr[bin+1]
-            out.arr[i] = y1 + (y2 - y1)/(x2 - x1) * (v - x1)
+proc clip*(data: seq[float], vmin: float=1.0, vmax: float=1.0): seq[float] =
+    var arr = newSeq[float](data.len)
+    var (min, max) = data.minmax()
 
-    return out
+    min = vmin * min
+    max = vmax * max
 
-function norms.clip(data: float, vmin, vmax)
-    local out = alloc.create_array(data.shape, 'float')
-    local min, max = data:minmax()
+    for i, v in data:
+        arr[i] = clip((v - min) / (max - min))
+    return arr
 
-    min = vmin ~= nil and vmin * min or min
-    max = vmax ~= nil and vmax * max or max
+proc gray*(data: seq[float]): seq[uint8] =
+    var arr = newSeq[uint8](data.len)
+    for i, v in data:
+        arr[i] = math.floor(255 * v).uint8
+    return arr
 
-    for i = 0, data.size-1 do
-        out.arr[i] = clip((data.arr[i] - min) / (max - min))
-    
-    return out
-
-function cmaps.gray(data)
-    local out = alloc.create_array(data.shape, 'ubyte')
-    for i = 0, data.size-1 do
-        out.arr[i] = math.floor(255 * data.arr[i])
-    
-    return out
-
-function cmaps.gray_r(data)
-    local out = alloc.create_array(data.shape, 'ubyte')
-    for i = 0, data.size-1 do
-        out.arr[i] = 255 - math.floor(255 * data.arr[i])
-    
-    return out
-]#
+proc gray_r*(data: seq[float]): seq[uint8] =
+    var arr = newSeq[uint8](data.len)
+    for i, v in data:
+        arr[i] = 255 - math.floor(255 * v).uint8
+    return arr
