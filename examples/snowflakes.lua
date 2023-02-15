@@ -2,7 +2,7 @@ local P = require('plinko')
 
 local argparse = require('lib.argparse')
 local opt = argparse(){
-    name='curtains',
+    name='snowflakes',
     epilog=[[
 Suggestions:
 
@@ -46,8 +46,8 @@ local vx, vy = arg.v[1], arg.v[2]
 
 print(vx*w, vy*h)
 local conf = {
-    dt = 1e-2,
-    eps = 1e-4,
+    dt = 3e-4,
+    eps = 1e-8,
     nbl = P.neighborlist.CellNeighborlist(box, {200, 200}, 1e-1),
     forces = {P.forces.force_gravity},
     particles = {P.objects.SingleParticle({fx*w, fy*h}, {vx, vy}, {0, 0})},
