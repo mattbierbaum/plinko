@@ -11,7 +11,7 @@ function concentric_circles(N, minr, eps)
     for i = 1, N do
         local r = 0.5 - dr * i
         objs[#objs + 1] = P.objects.MaskedCircle(p, r,
-            P.objects.circle_nholes(4, eps, math.pi/4 * (i % 2))
+            P.objects.circle_masks.circle_nholes(4, eps, math.pi/4 * (i % 2))
         )
     end
 
@@ -25,7 +25,7 @@ local conf = {
         P.objects.Box({0, 0}, {1, 1}), {100, 100}, 1e-1
     ),
     forces = {P.forces.force_gravity},
-    particles = {P.objects.PointParticle({0.500, 0.986}, {0.1, 0}, {0, 0})},
+    particles = {P.objects.SingleParticle({0.500, 0.986}, {0.1, 0}, {0, 0})},
     objects = concentric_circles(16, 0.36, 1e-3),
     observers = {
         --observers.StateFileRecorder('./test.csv'),
