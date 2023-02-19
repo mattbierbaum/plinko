@@ -8,7 +8,7 @@
   https://en.wikipedia.org/wiki/Alpha_compositing
 ]#
 
-import array
+import array2d
 
 import std/lenientops
 import std/math

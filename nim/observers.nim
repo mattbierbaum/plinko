@@ -1,3 +1,4 @@
+import array2d
 import image
 import objects
 import plotting
@@ -93,12 +94,19 @@ proc update_particle*(self: ImageRecorder, particle: PointParticle): void =
 
 proc update_collision*(self: ImageRecorder, particle: PointParticle, obj: Object, time: float): void = return
 proc reset*(self: ImageRecorder): void = self.lastposition = initTable[int, Vec]()
-proc tone*(self: ImageRecorder): seq[uint8] = return self.cmap(self.norm(self.plotter.get_array()))
-# proc save_csv*(self: ImageRecorder): void =  self.plotter.get_array().save_csv(self.filename)
-# proc save_bin*(self: ImageRecorder): void = self.plotter.get_array().save_bin(self.filename)
-# proc save_pgm2*(self: ImageRecorder): void = self.tone().save_pgm2(self.filename)
-# proc save_pgm5*(self: ImageRecorder): void = self.tone().save_pgm5(self.filename)
-# proc save_ppm*(self: ImageRecorder): void = self.tone().save_ppm(self.filename)
+
+proc tone*(self: ImageRecorder): Array2D[uint8] = 
+    let data = self.cmap(self.norm(self.plotter.grid.data))
+    var arr = Array2D[uint8]()
+    arr.initArray2D(shape=self.plotter.grid.shape)
+    arr.data = data
+    return arr
+
+proc save_csv*(self: ImageRecorder): void = self.plotter.grid.save_csv(self.filename)
+proc save_bin*(self: ImageRecorder): void = self.plotter.grid.save_bin(self.filename)
+#proc save_pgm2*(self: ImageRecorder): void = self.tone().save_pgm2(self.filename)
+#proc save_pgm5*(self: ImageRecorder): void = self.tone().save_pgm5(self.filename)
+#proc save_ppm*(self: ImageRecorder): void = self.tone().save_ppm(self.filename)
 
 proc close*(self: ImageRecorder): void =
     return

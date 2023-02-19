@@ -1,3 +1,4 @@
+import array2d
 import objects
 import vector
 
@@ -27,36 +28,33 @@ type
     DensityPlot* = ref object of RootOBj
         box: Box
         dpi: float
-        N: array[2, int]
-        length: int
         blendmode: BlendFunction
-        grid: seq[float]
-
+        grid*: Array2D[float]
 
 proc initDensityPlot*(self: DensityPlot, box: Box, dpi: float, blendmode: BlendFunction): DensityPlot =
     self.box = box
     self.dpi = dpi
     let size: Vec = self.box.uu - self.box.ll
-    self.N = [
+    let N: array[2, int] = [
         floor(self.dpi * size[0]).int,
         floor(self.dpi * size[1]).int
     ]
-    self.length = self.N[0] * self.N[1]
-    self.grid = newSeq[float](self.N[0] * self.N[1])
+    self.grid = Array2D[float]()
+    self.grid.initArray2D(N)
     self.blendmode = blendmode
     return self
 
 proc reflect*(self: DensityPlot, y: float): float =
-    return self.N[1].float - y - 1.0
+    return self.grid.shape[1].float - y - 1.0
 
 proc plot*(self: DensityPlot, x: float, y: float, c: float): void {.discardable.} =
-    if x < 0 or x >= self.N[0].float or y < 0 or y >= self.N[1].float:
+    if x < 0 or x >= self.grid.shape[0].float or y < 0 or y >= self.grid.shape[1].float:
         return
 
     let xi: int = floor(x).int
     let yi: int = floor(self.reflect(y)).int
-    let ind = xi + yi*self.N[0]
-    self.grid[ind] = self.blendmode(c, self.grid[ind])
+    let ind = xi + yi*self.grid.shape[0]
+    self.grid.data[ind] = self.blendmode(c, self.grid.data[ind])
 
 proc plot_line*(self: DensityPlot, ix0: float, iy0: float, ix1: float, iy1: float): void {.discardable.} =
     var x0: float = ix0
@@ -119,10 +117,10 @@ proc draw_segment*(self: DensityPlot, seg: Segment): void {.discardable.} =
     let ll = self.box.ll
     let uu = self.box.uu
 
-    let x0 = (self.N[1].float * (seg.p0[0] - ll[0]) / (uu[0] - ll[0]))
-    let y0 = (self.N[2].float * (seg.p0[1] - ll[1]) / (uu[1] - ll[1]))
-    let x1 = (self.N[1].float * (seg.p1[0] - ll[0]) / (uu[0] - ll[0]))
-    let y1 = (self.N[2].float * (seg.p1[1] - ll[1]) / (uu[1] - ll[1]))
+    let x0 = (self.grid.shape[0].float * (seg.p0[0] - ll[0]) / (uu[0] - ll[0]))
+    let y0 = (self.grid.shape[1].float * (seg.p0[1] - ll[1]) / (uu[1] - ll[1]))
+    let x1 = (self.grid.shape[0].float * (seg.p1[0] - ll[0]) / (uu[0] - ll[0]))
+    let y1 = (self.grid.shape[1].float * (seg.p1[1] - ll[1]) / (uu[1] - ll[1]))
     self.plot_line(x0, y0, x1, y1)
 
 proc draw_point*(self: DensityPlot, p: Vec): void {.discardable.} =
@@ -130,35 +128,14 @@ proc draw_point*(self: DensityPlot, p: Vec): void {.discardable.} =
     let y = (self.dpi * (p[2] - self.box.ll[2]))
     self.plot(x, y, 1.0)
 
-proc get_array*(self: DensityPlot): seq[float] = return self.grid
+proc get_array*(self: DensityPlot): Array2D[float] = return self.grid
 
 proc show*(self: DensityPlot): void {.discardable.} =
-    for j in countdown(self.N[2]-1, 0):
-        for i in countup(0, self.N[1]-1):
-            let c: int = self.grid[(i + j*self.N[1]).int].int
+    for j in countdown(self.grid.shape[2]-1, 0):
+        for i in countup(0, self.grid.shape[1]-1):
+            let c: int = self.grid.data[(i + j*self.grid.shape[1]).int].int
             if c == 0:
                 stdout.write(" ")
             else:
                 stdout.write("*")
         stdout.writeLine("")
-
-# ========================================================
-type
-    DensityPlotRGB = ref object of DensityPlot
-        alpha: float
-
-proc initDensityPlotRGB*(self: DensityPlotRGB, box: Box, dpi: float, alpha: float, blendmode: BlendFunction): DensityPlotRGB =
-    discard self.initDensityPlot(box, dpi, blendmode)
-    self.grid = newSeq[float](3*(self.N[0]*self.N[1]).int)
-    self.alpha = alpha
-
-proc plot*(self: DensityPlotRGB, x: float, y: float, c: float): void {.discardable.} =
-    if x < 0 or x >= self.N[0].float or y < 0 or y >= self.N[1].float:
-        return
-
-    let xi: int = floor(x).int
-    let yi: int = floor(self.reflect(y)).int
-    let ind = 3*(xi + yi*self.N[0])
-    self.grid[ind+0] = self.grid[ind+0] - c*self.alpha
-    self.grid[ind+1] = self.grid[ind+1] - c*self.alpha
-    self.grid[ind+2] = self.grid[ind+2] - c*self.alpha
