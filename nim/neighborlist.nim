@@ -11,20 +11,19 @@ proc swap*(a: int, b: int): (int, int) = return (b, a)
 
 # ==============================================
 type
-    NaiveNeighborlist = ref object of RootObj
+    Neighborlist* = ref object of RootObj
         objects*: seq[Object]
 
-proc append*(self: NaiveNeighborlist, obj: Object): void {.discardable.} = self.objects.add(obj)
-proc calculate*(self: NaiveNeighborlist): void {.discardable.} = return
-proc near*(self: NaiveNeighborlist, seg: Segment): seq[Object] = self.objects
+proc append*(self: Neighborlist, obj: Object): void {.discardable.} = self.objects.add(obj)
+proc calculate*(self: Neighborlist): void {.discardable.} = return
+proc near*(self: Neighborlist, seg: Segment): seq[Object] = self.objects
 
 # ==============================================
 type
-    CellNeighborlist = ref object of RootObj
+    CellNeighborlist* = ref object of Neighborlist
         buffer*: float
         cell*: Vec
         ncells*: array[2, int]
-        objects*: seq[Object]
         cells*: Table[int, seq[Object]]
         seen*: Table[int, Table[int, bool]]
         box*: Box

@@ -107,40 +107,36 @@ type
         damp: float
         obj_index: int
 
+type 
+    Segment* = ref object of Object
+        p0*, p1*: Vec
+
 proc initObject*(self: Object, damp: float): Object = 
     self.damp = damp
     self.obj_index = OBJECT_INDEX
     OBJECT_INDEX = OBJECT_INDEX + 1
     return self
 
-#proc collide(self: Object, part0: Particle, parti: Particle, part1: Particle): tuple[Segment, Segment] =
-    #[
-      stotal is the total timestep of the particle from t0 to t1
-      scoll is the segment from t0 to t_collision
-      vel is the velocity at t0
-    ]#
-    #[
-    let norm = self:normal(scoll)
-    let dir = vector.reflect(vector.vsubv(stotal.p1, scoll.p1), norm)
+proc normal*(self: Object, seg: Segment): Vec = [0.0, 0.0]
+
+proc collide*(self: Object, part0: PointParticle, parti: PointParticle, part1: PointParticle): (Segment, Segment) =
+    let scoll = Segment(p0: part0.pos, p1: parti.pos)
+    let stotal = Segment(p0: part0.pos, p1: part1.pos)
+    let norm = self.normal(scoll)
+    let dir = reflect(stotal.p1 - scoll.p1, norm)
 
     stotal.p0 = scoll.p1
-    stotal.p1 = vector.vaddv(scoll.p1, dir)
-    vseg.p0 = vector.reflect(vseg.p0, norm)
-    vseg.p1 = vector.reflect(vseg.p1, norm)
-    vseg.p0 = vector.vmuls(vseg.p0, self.damp)
-    vseg.p1 = vector.vmuls(vseg.p1, self.damp)
-    return stotal, vseg
-    ]#
+    stotal.p1 = scoll.p1 + dir
+    let vseg = Segment(p0: part0.vel, p1: part1.vel)
+    vseg.p0 = reflect(vseg.p0, norm) * self.damp
+    vseg.p1 = reflect(vseg.p1, norm) * self.damp
+    return (stotal, vseg)
 
 proc center*(self: Object): Vec = [0.0, 0.0]
 proc intersection*(self: Object, seg: Object): (Object, float) = (nil, -1.0)
 proc set_object_index*(self: Object, i: int) = self.obj_index = i
 
 # ----------------------------------------------------------------
-type 
-    Segment* = ref object of Object
-        p0*, p1*: Vec
-
 proc initSegment*(self: Segment, p0: Vec = [0.0, 0.0], p1: Vec = [0.0, 0.0], damp: float = 1.0): Segment =
     self.p0 = p0
     self.p1 = p1 

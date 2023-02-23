@@ -2,6 +2,7 @@ import objects
 import vector
 
 type IndependentForce* = proc(particle: PointParticle): Vec
+type Integrator* = proc(particle: PointParticle, dt: float): PointParticle
 
 proc generate_force_gravity*(g: float = -1.0): IndependentForce =
     let f: IndependentForce = proc(particle: PointParticle): Vec =

@@ -9,7 +9,7 @@ import std/strutils
 import std/tables
 
 type
-    Observer = ref object of RootObj
+    Observer* = ref object of RootObj
 
 proc init*(self: Observer): void {.discardable.} = return
 proc begin*(self: Observer): void {.discardable.} = return
