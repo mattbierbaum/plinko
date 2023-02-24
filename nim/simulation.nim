@@ -89,7 +89,7 @@ proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointPa
     var project = objects.PointParticle()
 
     proc f(dt: float): float =
-        self.integrator(part0, project, dt)
+        project = self.integrator(part0, dt)
         s = Segment(p0: part0.pos, p1: project.pos)
         var (o, t) = obj.intersection(s)
         if t < 0 or t > 1:
@@ -101,17 +101,9 @@ proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointPa
 
 
 proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, Object, float) =
-    var mint: float = 2.0
-    var mino: Object = nil
     var parti = PointParticle()
-
     var pseg = Segment(p0: part0.pos, p1: part1.pos)
-    var objs = self.nbl.near(pseg)
-    for obj in objs:
-        let (o, t) = obj.intersection(pseg)
-        if t < mint and t <= 1 and t >= 0:
-            mint = t
-            mino = o
+    var (mint, mino) = self.intersection(pseg)
 
     if mint < 0 or mint > 1:
         return (part0, nil, -1.0)
@@ -126,18 +118,17 @@ proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle)
         parti.vel = lerp(part0.vel, part1.vel, mint)
     return (parti, mino, mint)
 
-#[
 proc linear_project*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, bool) =
     var (parti, mino, mint) = self.intersection(part0, part1)
     self.observer_group.update_collision(parti, mino, mint)
-    pseg, vseg = mino.collide(part0, parti, part1)
+    let (pseg, vseg) = mino.collide(part0, parti, part1)
 
     if not self.equal_time:
         part0.pos = pseg.p0
         part0.vel = vseg.p0
         self.observer_group.update_particle(part0)
 
-    return (parti, running)
+    return (parti, true)
 
 proc step_particle*(self: Simulation, part0: PointParticle): void =
     self.observer_group.set_particle(part0)
@@ -151,9 +142,7 @@ proc step_particle*(self: Simulation, part0: PointParticle): void =
     self.observer_group.update_particle(part0)
 
     part0.active = (
-        part0.active
-        and is_running
-        and not self.observer_group.is_triggered_particle(part0)
+        part0.active and 
+        is_running and 
+        not self.observer_group.is_triggered_particle(part0)
     )
-    in_part.copy(part0)
-]#

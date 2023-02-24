@@ -25,6 +25,13 @@ proc initPointParticle*(
     OBJECT_INDEX = OBJECT_INDEX + 1
     return self
 
+proc copy*(self: PointParticle, other: PointParticle): void =
+    self.pos = other.pos
+    self.vel = other.vel
+    self.acc = other.acc
+    self.index = other.index
+    self.active = other.active
+
 # -------------------------------------------------------------
 type
     ParticleGroup* = ref object of RootObj
