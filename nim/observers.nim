@@ -24,7 +24,7 @@ proc close*(self: Observer): void {.discardable.} = return
 
 # =================================================================
 type
-    StateFileRecorder = ref object of Observer
+    StateFileRecorder* = ref object of Observer
         filename*: string
         file*: File
 
@@ -48,7 +48,7 @@ proc close*(self: StateFileRecorder): void =
 
 # =================================================================
 type
-    ImageRecorder = ref object of Observer
+    ImageRecorder* = ref object of Observer
         format*: string
         filename*: string
         plotter*: DensityPlot
@@ -119,7 +119,7 @@ proc close*(self: ImageRecorder): void =
 
 # =================================================================
 type
-    PointImageRecorder = ref object of ImageRecorder
+    PointImageRecorder* = ref object of ImageRecorder
 
 proc initPointImageRecorder*(self: PointImageRecorder, filename: string, plotter: DensityPlot): PointImageRecorder =
     #discard self.initImageRecorder(filename, plotter)
@@ -129,7 +129,7 @@ proc update_particle*(self: PointImageRecorder, particle: PointParticle): void =
 
 # ========================================================
 type
-    SVGLinePlot = ref object of Observer
+    SVGLinePlot* = ref object of Observer
         filename: string
         file: File
         box: Box
@@ -227,7 +227,7 @@ proc close*(self: SVGLinePlot): void =
 
 # =================================================================
 type
-    InitialStateRecorder = ref object of Observer
+    InitialStateRecorder* = ref object of Observer
         filename*: string
         particles*: Table[int, PointParticle]
 
@@ -251,7 +251,7 @@ proc close*(self: InitialStateRecorder): void =
 
 # =================================================================
 type
-    LastStateRecorder = ref object of Observer
+    LastStateRecorder* = ref object of Observer
         filename*: string
         particles*: Table[int, PointParticle]
 
@@ -326,7 +326,7 @@ end
 
 # =================================================================
 type
-    TimePrinter = ref object of Observer
+    TimePrinter* = ref object of Observer
         interval: int
         step: int
 
@@ -341,7 +341,7 @@ proc update_time*(self: TimePrinter, t: float): void =
     if self.step mod self.interval == 0:
         stdout.writeLine($self.step)
 
-    self.step = self.step + 1
+    self.step = self.step + t.int
 
 # =================================================================
 type

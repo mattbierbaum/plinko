@@ -13,6 +13,8 @@ type
         active*: bool
         index*: int
 
+type ParticleIterator* = iterator(): PointParticle
+
 proc initPointParticle*(
         self: PointParticle,
         pos: Vec = [0.0, 0.0], 
@@ -32,17 +34,22 @@ proc copy*(self: PointParticle, other: PointParticle): void =
     self.index = other.index
     self.active = other.active
 
+proc `$`*(self: PointParticle): string = fmt"<pos={$self.pos} vel={$self.vel}>"
+
 # -------------------------------------------------------------
 type
     ParticleGroup* = ref object of RootObj
 
 method index*(self: ParticleGroup, index: int): PointParticle {.base.} = result
 method count*(self: ParticleGroup): int {.base.} = result
+method items*(range: ParticleGroup): ParticleIterator {.base.} =
+    return iterator(): PointParticle =
+        yield PointParticle()
 
 # -------------------------------------------------------------
 type
     SingleParticle* = ref object of ParticleGroup
-        particle: PointParticle
+        particle*: PointParticle
 
 proc initSingleParticle*(self: SingleParticle, particle: PointParticle): SingleParticle = 
     self.particle = particle
@@ -53,11 +60,14 @@ method index*(self: SingleParticle, index: int): PointParticle =
         return self.particle
 
 method count*(self: SingleParticle): int = 1
+method items*(range: SingleParticle): ParticleIterator =
+    return iterator(): PointParticle =
+        yield range.particle
 
 # -------------------------------------------------------------
 type
     ParticleList* = ref object of ParticleGroup
-        particles: seq[PointParticle]
+        particles*: seq[PointParticle]
 
 proc initParticleList*(self: ParticleList, particles: seq[PointParticle]): ParticleList = 
     self.particles = particles
@@ -65,6 +75,10 @@ proc initParticleList*(self: ParticleList, particles: seq[PointParticle]): Parti
 
 method index*(self: ParticleList, index: int): PointParticle = result = self.particles[index]
 method count*(self: ParticleList): int = len(self.particles)
+method items*(range: ParticleList): ParticleIterator =
+    return iterator(): PointParticle =
+        for particle in range.particles:
+            yield particle
 
 proc partition*(self: ParticleList, total: int): seq[ParticleList] =
     let size = (self.count() div total)

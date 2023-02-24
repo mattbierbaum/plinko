@@ -3,12 +3,9 @@ import objects
 import forces
 import neighborlist
 import observers
-import roots
-
-let MAX_BOUNCE: int = 10000
 
 type
-    Simulation = ref object of RootObj
+    Simulation* = ref object of RootObj
         t, dt, eps: float
         equal_time: bool
         accuracy_mode: bool
@@ -31,13 +28,17 @@ proc initSimulation*(self: Simulation, dt: float = 1e-12, eps: float = 1e-6): Si
     self.force_func = @[]
     self.observers = @[]
     self.integrator = integrate_velocity_verlet
+    return self
 
-proc add_object*(self: Simulation, obj: Object): void {.discardable.} =
+proc add_object*(self: Simulation, obj: Object): void =
     let index = self.objects.len
     obj.set_object_index(index)
     self.objects.add(obj)
 
 proc add_particle*(self: Simulation, particle_group: ParticleGroup): void {.discardable.} =
+    # echo "add"
+    # for p in particle_group:
+    #     echo $p
     self.particle_groups.add(particle_group)
 
 proc add_force*(self: Simulation, force: IndependentForce): void {.discardable.} =
@@ -138,7 +139,7 @@ proc step_particle*(self: Simulation, part0: PointParticle): void =
 
     let part1 = self.integrator(part0, self.dt)
     let (parti, is_running) = self.linear_project(part0, part1)
-    part0.copy(part1)
+    part0.copy(parti)
     self.observer_group.update_particle(part0)
 
     part0.active = (
@@ -146,3 +147,24 @@ proc step_particle*(self: Simulation, part0: PointParticle): void =
         is_running and 
         not self.observer_group.is_triggered_particle(part0)
     )
+
+proc step*(self: Simulation, steps: int = 1): void =
+    for step in 0 .. steps:
+        for particles in self.particle_groups:
+            for particle in particles:
+                particle.acc = self.force_func[0](particle)
+
+            for particle in particles:
+                self.step_particle(particle)
+                echo ($particle)
+
+        self.t = self.t + self.dt
+        self.observer_group.update_time(step.float)
+
+        if self.observer_group.is_triggered():
+            break
+
+    self.observer_group.close()
+
+proc run*(self: Simulation): void =
+    self.step(int(1e10))

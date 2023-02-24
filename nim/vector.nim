@@ -1,4 +1,5 @@
 import std/math
+import std/strformat
 
 type Vec* = array[2, float]
 
@@ -40,3 +41,5 @@ proc rotate*(v: Vec, theta: float): Vec {.inline.} =
     let c = cos(theta)
     let s = sin(theta)
     return [v[0]*c - v[1]*s, v[0]*s + v[1]*c]
+
+proc `$`*(v: Vec): string = fmt"[{v[0]}, {v[1]}]"
