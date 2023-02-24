@@ -24,7 +24,7 @@ proc inc(x: var float; y: float = 1.0) =
 
 # ========================================================
 type
-    DensityPlot* = ref object of RootOBj
+    DensityPlot* = ref object of RootObj
         box: Box
         dpi: float
         blendmode: BlendFunction

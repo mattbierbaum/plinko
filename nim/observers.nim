@@ -11,18 +11,19 @@ import std/tables
 type
     Observer* = ref object of RootObj
 
-proc init*(self: Observer): void {.discardable.} = return
-proc begin*(self: Observer): void {.discardable.} = return
-proc set_particle*(self: Observer, particle: PointParticle): void {.discardable.} = return
-proc update_particle*(self: Observer, particle: PointParticle): void {.discardable.} = return
-proc update_time*(self: Observer, time: float): void {.discardable.} = return
-proc update_collision*(self: Observer, particle: PointParticle, obj: Object, time: float): void {.discardable.} = return
-proc is_triggered*(self: Observer): bool {.discardable.} = false
-proc is_triggered_particle*(self: Observer, particle: PointParticle): bool {.discardable.} = false
-proc reset*(self: Observer): void {.discardable.} = return
-proc close*(self: Observer): void {.discardable.} = return
+method init*(self: Observer): void {.base.} = return
+method begin*(self: Observer): void {.base.} = return
+method set_particle*(self: Observer, particle: PointParticle): void {.base.} = return
+method update_particle*(self: Observer, particle: PointParticle): void {.base.} = return
+method update_time*(self: Observer, time: float): void {.base.} = return
+method update_collision*(self: Observer, particle: PointParticle, obj: Object, time: float): void {.base.} = return
+method is_triggered*(self: Observer): bool {.base.} = false
+method is_triggered_particle*(self: Observer, particle: PointParticle): bool {.base.} = false
+method reset*(self: Observer): void {.base.} = return
+method close*(self: Observer): void {.base.} = return
 
 # =================================================================
+#[
 type
     StateFileRecorder* = ref object of Observer
         filename*: string
@@ -32,10 +33,10 @@ proc initStateFileRecorder*(self: StateFileRecorder, filename: string): StateFil
     self.filename = filename
     return self
 
-proc being*(self: StateFileRecorder): void =
+method begin*(self: StateFileRecorder): void =
     self.file = open(self.filename, fmWrite)
 
-proc update_particle*(self: StateFileRecorder, particle: PointParticle): void =
+method update_particle*(self: StateFileRecorder, particle: PointParticle): void =
     let pos = particle.pos
     let vel = particle.vel
     let acc = particle.acc
@@ -43,7 +44,7 @@ proc update_particle*(self: StateFileRecorder, particle: PointParticle): void =
         fmt"{pos[0]} {pos[1]} {vel[0]} {vel[1]} {acc[0]} {acc[1]}\n"
     )
 
-proc close*(self: StateFileRecorder): void =
+method close*(self: StateFileRecorder): void =
     self.file.close()
 
 # =================================================================
@@ -55,7 +56,6 @@ type
         lastposition*: Table[int, Vec]
         cmap*: CmapFunction
         norm*: NormFunction
-
 
 proc initImageRecorder*(
         self: ImageRecorder, 
@@ -74,14 +74,9 @@ proc initImageRecorder*(
     self.norm = norm
     return self
 
-    #if toner ~= nil then
-    #    self.cmap = toner.cmap ~= nil and toner.cmap or self.cmap
-    #    self.norm = toner.norm ~= nil and toner.norm or self.norm
-    #end
+method begin*(self: ImageRecorder): void = return
 
-proc begin*(self: ImageRecorder): void = return
-
-proc update_particle*(self: ImageRecorder, particle: PointParticle): void =
+method update_particle*(self: ImageRecorder, particle: PointParticle): void =
     let ind = particle.index
 
     if not self.lastposition.hasKey(ind):
@@ -92,8 +87,8 @@ proc update_particle*(self: ImageRecorder, particle: PointParticle): void =
     else:
         self.lastposition[ind] = particle.pos
 
-proc update_collision*(self: ImageRecorder, particle: PointParticle, obj: Object, time: float): void = return
-proc reset*(self: ImageRecorder): void = self.lastposition = initTable[int, Vec]()
+method update_collision*(self: ImageRecorder, particle: PointParticle, obj: Object, time: float): void = return
+method reset*(self: ImageRecorder): void = self.lastposition = initTable[int, Vec]()
 
 proc tone*(self: ImageRecorder): Array2D[uint8] = 
     let data = self.cmap(self.norm(self.plotter.grid.data))
@@ -108,7 +103,7 @@ proc save_bin*(self: ImageRecorder): void = self.plotter.grid.save_bin(self.file
 #proc save_pgm5*(self: ImageRecorder): void = self.tone().save_pgm5(self.filename)
 #proc save_ppm*(self: ImageRecorder): void = self.tone().save_ppm(self.filename)
 
-proc close*(self: ImageRecorder): void =
+method close*(self: ImageRecorder): void =
     return
     # if self.format == "csv":
     #     self.save_csv()
@@ -126,6 +121,7 @@ proc initPointImageRecorder*(self: PointImageRecorder, filename: string, plotter
     return self
 
 proc update_particle*(self: PointImageRecorder, particle: PointParticle): void = self.plotter.draw_point(particle.pos)
+]#
 
 # ========================================================
 type
@@ -176,13 +172,13 @@ proc initSVGLinePlot*(self: SVGLinePlot, filename: string, box: Box, lw: float, 
     self.footer = SVG_FOOTER
     return self
 
-proc begin*(self: SVGLinePlot): void =
+method begin*(self: SVGLinePlot): void =
     self.count = 0
     self.file = open(self.filename, fmWrite)
     self.file.write(
         self.header % [
+        $(self.box.uu[0] - self.box.ll[0]),
         $(self.box.uu[1] - self.box.ll[1]),
-        $(self.box.uu[2] - self.box.ll[2]),
             $self.box.ll[0], $self.box.ll[1],
             $self.box.uu[0], $self.box.uu[1]]
     )
@@ -190,7 +186,7 @@ proc begin*(self: SVGLinePlot): void =
 proc reflect*(self: SVGLinePlot, p: Vec): Vec =
     return [p[0], (self.y1 - p[1]) + self.y0]
 
-proc update_particle*(self: SVGLinePlot, particle: PointParticle): void =
+method update_particle*(self: SVGLinePlot, particle: PointParticle): void =
     let ind = particle.index
     let pos = self.reflect(particle.pos)
 
@@ -220,11 +216,11 @@ proc update_particle*(self: SVGLinePlot, particle: PointParticle): void =
         self.file.write(self.path_end)
         self.count = 0
 
-proc close*(self: SVGLinePlot): void =
+method close*(self: SVGLinePlot): void =
     self.file.write(self.path_end)
     self.file.write(self.footer)
     self.file.close()
-
+#[
 # =================================================================
 type
     InitialStateRecorder* = ref object of Observer
@@ -236,12 +232,12 @@ proc initInitialStateRecorder*(self: InitialStateRecorder, filename: string): In
     self.particles = initTable[int, PointParticle]()
     return self
 
-proc update_particle*(self: InitialStateRecorder, particle: PointParticle): void =
+method update_particle*(self: InitialStateRecorder, particle: PointParticle): void =
     let i = particle.index
     if not self.particles.hasKey(i):
         self.particles[i] = particle
 
-proc close*(self: InitialStateRecorder): void =
+method close*(self: InitialStateRecorder): void =
     var file = open(self.filename, fmWrite)
 
     for i, p in self.particles:
@@ -260,11 +256,11 @@ proc initLastStateRecorder*(self: LastStateRecorder, filename: string): LastStat
     self.particles = initTable[int, PointParticle]()
     return self
 
-proc update_particle*(self: LastStateRecorder, particle: PointParticle): void =
+method update_particle*(self: LastStateRecorder, particle: PointParticle): void =
     let i = particle.index
     self.particles[i] = particle
 
-proc close*(self: LastStateRecorder): void =
+method close*(self: LastStateRecorder): void =
     let file = open(self.filename, fmWrite)
 
     for i, p in self.particles:
@@ -334,14 +330,15 @@ proc initTimePrinter*(self: TimePrinter, interval: int = 100000): TimePrinter =
     self.interval = interval
     return self
 
-proc begin*(self: TimePrinter): void =
+method begin*(self: TimePrinter): void =
     self.step = 0
 
-proc update_time*(self: TimePrinter, t: float): void =
+method update_time*(self: TimePrinter, t: float): void =
     if self.step mod self.interval == 0:
         stdout.writeLine($self.step)
 
     self.step = self.step + t.int
+]#
 
 # =================================================================
 type
@@ -352,38 +349,38 @@ proc initObserverGroup*(self: ObserverGroup, observers: seq[Observer]): Observer
     self.observers = observers
     return self
 
-proc begin*(self: ObserverGroup): void =
+method begin*(self: ObserverGroup): void =
     for obs in self.observers:
         obs.begin()
 
-proc update_particle*(self: ObserverGroup, particle: PointParticle): void =
+method update_particle*(self: ObserverGroup, particle: PointParticle): void =
     for obs in self.observers:
         obs.update_particle(particle)
 
-proc update_time*(self: ObserverGroup, time: float): void =
+method update_time*(self: ObserverGroup, time: float): void =
     for obs in self.observers:
         obs.update_time(time)
 
-proc update_collision*(self: ObserverGroup, particle: PointParticle, obj: Object, time: float): void =
+method update_collision*(self: ObserverGroup, particle: PointParticle, obj: Object, time: float): void =
     for obs in self.observers:
         obs.update_collision(particle, obj, time)
 
-proc is_triggered*(self: ObserverGroup): bool =
+method is_triggered*(self: ObserverGroup): bool =
     for obs in self.observers:
         if obs.is_triggered():
             return true
     return false
 
-proc is_triggered_particle*(self: ObserverGroup, particle: PointParticle): bool =
+method is_triggered_particle*(self: ObserverGroup, particle: PointParticle): bool =
     for obs in self.observers:
         if obs.is_triggered_particle(particle):
             return true
     return false
 
-proc reset*(self: ObserverGroup): void =
+method reset*(self: ObserverGroup): void =
     for obs in self.observers:
         obs.reset()
 
-proc close*(self: ObserverGroup): void =
+method close*(self: ObserverGroup): void =
     for obs in self.observers:
         obs.close()
