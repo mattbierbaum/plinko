@@ -1,3 +1,4 @@
+# import nimprof
 import objects
 import forces
 import neighborlist
@@ -11,16 +12,16 @@ var particle = PointParticle().initPointParticle(
     vel=[0.2111, 1.0],
     acc=[0.0, 0.0])
 var particle_group = SingleParticle().initSingleParticle(particle)
-var box = Box().initBox(ll=[0.0, 0.0], uu=[1.0, 1.0], damp=1.0)
+var box = Box().initBox(ll=[0.0, 0.0], uu=[1.0, 1.0], damp=0.9999)
 var circle = Circle().initCircle(pos=[0.5, 0.5], rad=0.2)
+var nbl = CellNeighborlist().initCellNeighborlist(box=box, ncells=[40,40], buffer=0.2)
+# var nbl = Neighborlist()
 
 sim.add_particle(particle_group)
 sim.add_object(box)
 sim.add_object(circle)
 sim.add_force(generate_force_gravity(-1))
-#sim.add_observer(TimePrinter())
-#sim.add_observer(MaxSteps(max: 10.0))
-sim.set_neighborlist(Neighborlist())
+sim.set_neighborlist(nbl)
 
 #[
 var plot = DensityPlot().initDensityPlot(box=box, dpi=100, blendmode=blendmode_additive)
@@ -33,8 +34,8 @@ var imgobs = ImageRecorder().initImageRecorder(
 sim.add_observer(imgobs)
 ]#
 
-var svg = SVGLinePlot().initSVGLinePlot(filename="test.svg", box=box, lw=0.00001)
+var svg = SVGLinePlot().initSVGLinePlot(filename="test.svg", box=box, lw=0.000001)
 sim.add_observer(svg)
 
 sim.initialize()
-sim.step(10000)
+sim.step(100000)

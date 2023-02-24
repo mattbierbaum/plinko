@@ -57,6 +57,7 @@ proc set_neighborlist*(self: Simulation, nbl: Neighborlist): void =
     for obj in self.objects:
         self.nbl.append(obj)
     self.nbl.calculate()
+    self.nbl.show()
 
 proc intersection_bruteforce*(self: Simulation, seg: Segment): (float, Object) =
     var mint = 2.0

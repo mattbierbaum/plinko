@@ -2,6 +2,7 @@ import objects
 import vector
 
 import std/math
+import std/strformat
 import std/tables
 import std/lenientops
 
@@ -14,9 +15,10 @@ type
     Neighborlist* = ref object of RootObj
         objects*: seq[Object]
 
-proc append*(self: Neighborlist, obj: Object): void {.discardable.} = self.objects.add(obj)
-proc calculate*(self: Neighborlist): void {.discardable.} = return
-proc near*(self: Neighborlist, seg: Segment): seq[Object] = self.objects
+method append*(self: Neighborlist, obj: Object): void {.base.} = self.objects.add(obj)
+method calculate*(self: Neighborlist): void {.base.} = return
+method near*(self: Neighborlist, seg: Segment): seq[Object] {.base.} = self.objects
+method show*(self: Neighborlist): void {.base.} = return
 
 # ==============================================
 type
@@ -34,10 +36,10 @@ proc initCellNeighborlist*(self: CellNeighborlist, box: Box, ncells: array[2, in
     self.buffer = self.buffer * sidelength
 
     self.ncells = ncells
-    self.box = Box().initBox(box.ll - self.buffer, box.uu - self.buffer)
+    self.box = Box().initBox(box.ll - self.buffer, box.uu + self.buffer)
     self.cell = [
-        (self.box.uu[1] - self.box.ll[1]) / self.ncells[0].float,
-        (self.box.uu[2] - self.box.ll[2]) / self.ncells[1].float
+        (self.box.uu[0] - self.box.ll[0]) / self.ncells[0].float,
+        (self.box.uu[1] - self.box.ll[1]) / self.ncells[1].float
     ]
 
     self.objects = @[]
@@ -46,6 +48,7 @@ proc initCellNeighborlist*(self: CellNeighborlist, box: Box, ncells: array[2, in
     for i in 0 .. (self.ncells[0]+1)*(self.ncells[1]+1):
         self.seen[i] = initTable[int, bool]()
         self.cells[i] = @[]
+    return self
 
 proc cell_ind*(self: CellNeighborlist, i: int, j: int): int =
     return i + j*self.ncells[0]
@@ -66,18 +69,16 @@ proc point_to_index*(self: CellNeighborlist, p: Vec): array[2, int] =
         floor((p[1] - self.box.ll[1]) / self.cell[1]).int
     ]
 
-proc append*(self: CellNeighborlist, obj: Object): void {.discardable.} = self.objects.add(obj)
+method append*(self: CellNeighborlist, obj: Object): void = 
+    self.objects.add(obj)
 
 proc add_to_cell*(self: CellNeighborlist, ci: int, cj: int, l: int, obj: Object): void =
     let ind = self.cell_ind(ci, cj)
-    var s = self.seen[ind]
-    var t = self.cells[ind]
+    if not self.seen[ind].hasKey(l):
+        self.seen[ind][l] = true
+        self.cells[ind].add(obj)
 
-    if not s.hasKey(l):
-        s[l] = true
-        t.add(obj)
-
-proc calculate*(self: CellNeighborlist): void {.discardable.} = 
+method calculate*(self: CellNeighborlist): void =
     for l, obj in self.objects:
         let obj = self.objects[l]
         let ind = self.point_to_index(obj.center())
@@ -92,17 +93,16 @@ proc calculate*(self: CellNeighborlist): void {.discardable.} =
                 for l, obj in self.objects:
                     let obj = self.objects[l]
                     let t = obj.intersection(seg)[1]
-                    if t > 0:
+                    if t >= 0 and t <= 1:
                         self.add_to_cell(i, j, l, obj)
 
-proc addcell*(self: CellNeighborlist, i: int, j: int, objs: var seq[Object]): void {.discardable.} =
+proc addcell*(self: CellNeighborlist, i: int, j: int, objs: var seq[Object]): void =
     assert(i >= 0 or i <= self.ncells[0] or j >= 0 or j <= self.ncells[1])
     let ind = self.cell_ind(i, j)
-    let cell = self.cells[ind]
-    for c in 0 .. cell.len:
-        objs.add(cell[c])
+    for obj in self.cells[ind]:
+        objs.add(obj)
 
-proc near*(self: CellNeighborlist, seg: Segment, verbose: bool = false): seq[Object] =
+method near*(self: CellNeighborlist, seg: Segment): seq[Object] =
     let box = self.box
     let cell = self.cell
     var x0 = (seg.p0[0] - box.ll[0]) / cell[0]
@@ -154,44 +154,35 @@ proc near*(self: CellNeighborlist, seg: Segment, verbose: bool = false): seq[Obj
                 self.addcell(x, iy1, objs)
     return objs
 
-#[
-proc show*(self: CellNeighborlist): void {.discardable.} =
-    echo '|'
-    for i = 1, self.ncells[1] do
-        io.write('-')
-    end
-    io.write('|')
-    io.write('\n')
+method show*(self: CellNeighborlist): void =
+    stdout.write('|')
+    for i in 0 .. self.ncells[0]:
+        stdout.write('-')
+    stdout.write('|')
+    stdout.write('\n')
 
-    for j = self.ncells[2], 0, -1 do
-        io.write('|')
-        for i = 0, self.ncells[1] do
-            if #self.cells[self:cell_ind(i, j)] > 0 then
-                io.write('*')
-            else
-                io.write(' ')
-            end
+    for j in 0 .. self.ncells[1]:
+        stdout.write('|')
+        for i in 0 .. self.ncells[0]:
+            if len(self.cells[self.cell_ind(i, j)]) > 0:
+                stdout.write('*')
+            else:
+                stdout.write(' ')
+        stdout.write('|')
+        stdout.write('\n')
 
-        end
-        io.write('|')
-        io.write('\n')
-    end
-
-    io.write('|')
-    for i = 1, self.ncells[1] do
-        io.write('-')
-    end
-    io.write('|')
-    io.write('\n')
-end
-]#
+    stdout.write('|')
+    for i in 0 .. self.ncells[0]:
+        stdout.write('-')
+    stdout.write('|')
+    stdout.write('\n')
 
 #[
 #  psuedo code for neighborlisting arbitrary objects:
-#    - each object has a parametric representation (x(t), y(y))
+#    - each object has a parametric representatstdoutn (x(t), y(y))
 #    - step along the curve and find edges that intersect, adding the object to the nodes
-#       * initial condition t0 = (x0, y0)
-#       * find segments surrounding and find earliest intersection (store t_cross_obj, t_cross_seg) (add object to node)
-#       * try all 6 neighboring edges and find next intersection (later than t_cross_obj)
+#       * initial conditstdoutn t0 = (x0, y0)
+#       * find segments surrounding and find earliest intersectstdoutn (store t_cross_obj, t_cross_seg) (add object to node)
+#       * try all 6 neighboring edges and find next intersectstdoutn (later than t_cross_obj)
 #       * continue until no more crossings
 ]#

@@ -23,7 +23,6 @@ method reset*(self: Observer): void {.base.} = return
 method close*(self: Observer): void {.base.} = return
 
 # =================================================================
-#[
 type
     StateFileRecorder* = ref object of Observer
         filename*: string
@@ -63,8 +62,7 @@ proc initImageRecorder*(
         plotter: DensityPlot,
         format: string = "pgm5", 
         cmap: CmapFunction,
-        norm: NormFunction,
-        ): ImageRecorder =
+        norm: NormFunction): ImageRecorder =
     self.format = format
     self.filename = filename
     self.plotter = plotter
@@ -74,37 +72,36 @@ proc initImageRecorder*(
     self.norm = norm
     return self
 
-method begin*(self: ImageRecorder): void = return
+# method begin*(self: ImageRecorder): void = return
 
-method update_particle*(self: ImageRecorder, particle: PointParticle): void =
-    let ind = particle.index
+# method update_particle*(self: ImageRecorder, particle: PointParticle): void =
+#    let ind = particle.index
+#    if not self.lastposition.hasKey(ind):
+#        var lastposition = self.lastposition[ind]
+#        var segment = Segment().initSegment(lastposition, particle.pos)
+#        self.plotter.draw_segment(segment)
+#        self.lastposition[ind] = particle.pos
+#    else:
+#        self.lastposition[ind] = particle.pos
 
-    if not self.lastposition.hasKey(ind):
-        var lastposition = self.lastposition[ind]
-        var segment = Segment().initSegment(lastposition, particle.pos)
-        self.plotter.draw_segment(segment)
-        self.lastposition[ind] = particle.pos
-    else:
-        self.lastposition[ind] = particle.pos
+# method update_collision*(self: ImageRecorder, particle: PointParticle, obj: Object, time: float): void = return
+# method reset*(self: ImageRecorder): void = self.lastposition = initTable[int, Vec]()
 
-method update_collision*(self: ImageRecorder, particle: PointParticle, obj: Object, time: float): void = return
-method reset*(self: ImageRecorder): void = self.lastposition = initTable[int, Vec]()
+# proc tone*(self: ImageRecorder): Array2D[uint8] = 
+#    let data = self.cmap(self.norm(self.plotter.grid.data))
+#    var arr = Array2D[uint8]()
+#    arr.initArray2D(shape=self.plotter.grid.shape)
+#    arr.data = data
+#    return arr
 
-proc tone*(self: ImageRecorder): Array2D[uint8] = 
-    let data = self.cmap(self.norm(self.plotter.grid.data))
-    var arr = Array2D[uint8]()
-    arr.initArray2D(shape=self.plotter.grid.shape)
-    arr.data = data
-    return arr
-
-proc save_csv*(self: ImageRecorder): void = self.plotter.grid.save_csv(self.filename)
-proc save_bin*(self: ImageRecorder): void = self.plotter.grid.save_bin(self.filename)
+# proc save_csv*(self: ImageRecorder): void = self.plotter.grid.save_csv(self.filename)
+# proc save_bin*(self: ImageRecorder): void = self.plotter.grid.save_bin(self.filename)
 #proc save_pgm2*(self: ImageRecorder): void = self.tone().save_pgm2(self.filename)
 #proc save_pgm5*(self: ImageRecorder): void = self.tone().save_pgm5(self.filename)
 #proc save_ppm*(self: ImageRecorder): void = self.tone().save_ppm(self.filename)
 
-method close*(self: ImageRecorder): void =
-    return
+# method close*(self: ImageRecorder): void =
+#     return
     # if self.format == "csv":
     #     self.save_csv()
     # if self.format == "bin":
@@ -113,14 +110,15 @@ method close*(self: ImageRecorder): void =
     #     self.save_pgm5()
 
 # =================================================================
+#[
 type
     PointImageRecorder* = ref object of ImageRecorder
 
 proc initPointImageRecorder*(self: PointImageRecorder, filename: string, plotter: DensityPlot): PointImageRecorder =
-    #discard self.initImageRecorder(filename, plotter)
+    # discard self.initImageRecorder(filename, plotter)
     return self
 
-proc update_particle*(self: PointImageRecorder, particle: PointParticle): void = self.plotter.draw_point(particle.pos)
+method update_particle*(self: PointImageRecorder, particle: PointParticle): void = self.plotter.draw_point(particle.pos)
 ]#
 
 # ========================================================
@@ -220,7 +218,6 @@ method close*(self: SVGLinePlot): void =
     self.file.write(self.path_end)
     self.file.write(self.footer)
     self.file.close()
-#[
 # =================================================================
 type
     InitialStateRecorder* = ref object of Observer
@@ -338,7 +335,6 @@ method update_time*(self: TimePrinter, t: float): void =
         stdout.writeLine($self.step)
 
     self.step = self.step + t.int
-]#
 
 # =================================================================
 type

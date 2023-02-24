@@ -135,7 +135,7 @@ proc initObject*(self: Object, damp: float): Object =
 method `$`*(self: Object): string {.base.} = "Object"
 method normal*(self: Object, seg: Segment): Vec {.base.} = [0.0, 0.0]
 method center*(self: Object): Vec {.base.} = [0.0, 0.0]
-method intersection*(self: Object, seg: Segment): (Object, float) {.base} = (nil, -1.0)
+method intersection*(self: Object, seg: Segment): (Object, float) {.base.} = (nil, -1.0)
 proc set_object_index*(self: Object, i: int) = self.obj_index = i
 
 # ----------------------------------------------------------------
@@ -387,6 +387,8 @@ proc initCircle*(self: Circle, pos: Vec, rad: float, damp: float = 1.0): Circle 
     self.radsq = rad*rad
     discard self.initObject(damp=damp)
     return self
+
+method `$`*(self: Circle): string = fmt"Circle: {self.pos}, {self.rad}"
 
 proc circle_line_poly*(self: Circle, seg: Segment): seq[float] =
     let dp = seg.p1 - seg.p0

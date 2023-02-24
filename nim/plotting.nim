@@ -123,8 +123,8 @@ proc draw_segment*(self: DensityPlot, seg: Segment): void {.discardable.} =
     self.plot_line(x0, y0, x1, y1)
 
 proc draw_point*(self: DensityPlot, p: Vec): void {.discardable.} =
-    let x = (self.dpi * (p[1] - self.box.ll[1]))
-    let y = (self.dpi * (p[2] - self.box.ll[2]))
+    let x = (self.dpi * (p[0] - self.box.ll[0]))
+    let y = (self.dpi * (p[1] - self.box.ll[1]))
     self.plot(x, y, 1.0)
 
 proc get_array*(self: DensityPlot): Array2D[float] = return self.grid
