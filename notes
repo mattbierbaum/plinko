@@ -1,0 +1,2 @@
+nim c -d:release --gc:markAndSweep --passC:-flto --passL:-s --passL:-static -r nim/main.nim
+nim c --profiler:on --stacktrace:on -r nim/main.nim

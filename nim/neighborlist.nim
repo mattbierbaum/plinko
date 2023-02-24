@@ -2,7 +2,6 @@ import objects
 import vector
 
 import std/math
-import std/strformat
 import std/tables
 import std/lenientops
 

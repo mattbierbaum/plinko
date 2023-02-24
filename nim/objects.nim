@@ -1,3 +1,4 @@
+{.warning[LockLevel]:off.}
 import std/math
 import std/strformat
 

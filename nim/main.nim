@@ -3,8 +3,10 @@ import objects
 import forces
 import neighborlist
 import observers
-import interrupts
 import simulation
+
+import std/strformat
+import std/times
 
 var sim: Simulation = Simulation().initSimulation()
 var particle = PointParticle().initPointParticle(
@@ -13,15 +15,18 @@ var particle = PointParticle().initPointParticle(
     acc=[0.0, 0.0])
 var particle_group = SingleParticle().initSingleParticle(particle)
 var box = Box().initBox(ll=[0.0, 0.0], uu=[1.0, 1.0], damp=0.9999)
+var rot = Box().initBox(ll=[0.1, 0.1], uu=[0.2, 0.2], damp=0.9999)
 var circle = Circle().initCircle(pos=[0.5, 0.5], rad=0.2)
-var nbl = CellNeighborlist().initCellNeighborlist(box=box, ncells=[40,40], buffer=0.2)
-# var nbl = Neighborlist()
+var nbl = CellNeighborlist().initCellNeighborlist(box=box, ncells=[50,50], buffer=0.2)
+var svg = SVGLinePlot().initSVGLinePlot(filename="test.svg", box=box, lw=0.000001)
 
 sim.add_particle(particle_group)
 sim.add_object(box)
+sim.add_object(rot)
 sim.add_object(circle)
 sim.add_force(generate_force_gravity(-1))
 sim.set_neighborlist(nbl)
+sim.add_observer(svg)
 
 #[
 var plot = DensityPlot().initDensityPlot(box=box, dpi=100, blendmode=blendmode_additive)
@@ -34,8 +39,10 @@ var imgobs = ImageRecorder().initImageRecorder(
 sim.add_observer(imgobs)
 ]#
 
-var svg = SVGLinePlot().initSVGLinePlot(filename="test.svg", box=box, lw=0.000001)
-sim.add_observer(svg)
-
 sim.initialize()
-sim.step(100000)
+
+let steps = 100000
+let time_start = times.cpuTime()
+sim.step(steps)
+let time_end = times.cpuTime()
+echo fmt"Steps per second: {steps.float/(time_end-time_start)}"
