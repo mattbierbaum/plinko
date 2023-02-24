@@ -1,4 +1,5 @@
 import array2d
+import image
 import objects
 import vector
 
@@ -11,8 +12,6 @@ proc rfpart*(x: float): float {.inline.} = return 1 - fpart(x)
 
 proc swap*(a: float, b: float): (float, float) = return (b, a)
 proc swap*(a: int, b: int): (int, int) = return (b, a)
-
-type BlendFunction = proc(a: float, b: float): float
 
 iterator `..`*(a: float, b: float, c: float): float =
   var res: float = a

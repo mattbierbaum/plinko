@@ -17,7 +17,7 @@ type
         integrator: Integrator
         nbl: Neighborlist
 
-proc initSimulation*(self: Simulation, dt: float = 1e-12, eps: float = 1e-6): Simulation = 
+proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6): Simulation = 
     self.t = 0
     self.dt = dt
     self.eps = eps
@@ -36,9 +36,6 @@ proc add_object*(self: Simulation, obj: Object): void =
     self.objects.add(obj)
 
 proc add_particle*(self: Simulation, particle_group: ParticleGroup): void {.discardable.} =
-    # echo "add"
-    # for p in particle_group:
-    #     echo $p
     self.particle_groups.add(particle_group)
 
 proc add_force*(self: Simulation, force: IndependentForce): void {.discardable.} =
@@ -100,7 +97,6 @@ proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointPa
 
     return f(0.0) # brent(f=f, bracket=[0, dt], tol=1e-12, maxiter=20)
 
-
 proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, Object, float) =
     var parti = PointParticle()
     var pseg = Segment(p0: part0.pos, p1: part1.pos)
@@ -121,15 +117,26 @@ proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle)
 
 proc linear_project*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, bool) =
     var (parti, mino, mint) = self.intersection(part0, part1)
+
+    if mino == nil:
+        return (part1, true)
+
     self.observer_group.update_collision(parti, mino, mint)
     let (pseg, vseg) = mino.collide(part0, parti, part1)
+    # echo "====================="
+    # echo $part0
+    # echo $parti
+    # echo $part1
+    # echo $pseg
+    # echo $vseg
+    # echo "====================="
 
     if not self.equal_time:
         part0.pos = pseg.p0
         part0.vel = vseg.p0
         self.observer_group.update_particle(part0)
 
-    return (parti, true)
+    return (part0, true)
 
 proc step_particle*(self: Simulation, part0: PointParticle): void =
     self.observer_group.set_particle(part0)
@@ -137,16 +144,19 @@ proc step_particle*(self: Simulation, part0: PointParticle): void =
     if not part0.active:
         return
 
+    # echo $part0
     let part1 = self.integrator(part0, self.dt)
     let (parti, is_running) = self.linear_project(part0, part1)
-    part0.copy(parti)
-    self.observer_group.update_particle(part0)
-
-    part0.active = (
+    let active = (
         part0.active and 
         is_running and 
         not self.observer_group.is_triggered_particle(part0)
     )
+
+    part0.copy(parti)
+    part0.active = active
+    self.observer_group.update_particle(part0)
+
 
 proc step*(self: Simulation, steps: int = 1): void =
     for step in 0 .. steps:
@@ -156,7 +166,6 @@ proc step*(self: Simulation, steps: int = 1): void =
 
             for particle in particles.items():
                 self.step_particle(particle)
-                echo ($particle)
 
         self.t = self.t + self.dt
         self.observer_group.update_time(step.float)

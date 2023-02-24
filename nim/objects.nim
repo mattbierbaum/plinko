@@ -23,6 +23,7 @@ proc initPointParticle*(
     self.pos = pos
     self.vel = vel
     self.acc = acc
+    self.active = true
     self.index = OBJECT_INDEX
     OBJECT_INDEX = OBJECT_INDEX + 1
     return self
@@ -118,8 +119,8 @@ proc initUniformParticles2D*(self: UniformParticles2D, p0: Vec, p1: Vec, v0: Vec
 # -------------------------------------------------------------
 type
     Object* = ref object of RootObj
-        damp: float
-        obj_index: int
+        damp*: float
+        obj_index*: int
 
 type 
     Segment* = ref object of Object
@@ -131,23 +132,10 @@ proc initObject*(self: Object, damp: float): Object =
     OBJECT_INDEX = OBJECT_INDEX + 1
     return self
 
-proc normal*(self: Object, seg: Segment): Vec = [0.0, 0.0]
-
-proc collide*(self: Object, part0: PointParticle, parti: PointParticle, part1: PointParticle): (Segment, Segment) =
-    let scoll = Segment(p0: part0.pos, p1: parti.pos)
-    let stotal = Segment(p0: part0.pos, p1: part1.pos)
-    let norm = self.normal(scoll)
-    let dir = reflect(stotal.p1 - scoll.p1, norm)
-
-    stotal.p0 = scoll.p1
-    stotal.p1 = scoll.p1 + dir
-    let vseg = Segment(p0: part0.vel, p1: part1.vel)
-    vseg.p0 = reflect(vseg.p0, norm) * self.damp
-    vseg.p1 = reflect(vseg.p1, norm) * self.damp
-    return (stotal, vseg)
-
-proc center*(self: Object): Vec = [0.0, 0.0]
-proc intersection*(self: Object, seg: Object): (Object, float) = (nil, -1.0)
+method `$`*(self: Object): string {.base.} = "Object"
+method normal*(self: Object, seg: Segment): Vec {.base.} = [0.0, 0.0]
+method center*(self: Object): Vec {.base.} = [0.0, 0.0]
+method intersection*(self: Object, seg: Segment): (Object, float) {.base} = (nil, -1.0)
 proc set_object_index*(self: Object, i: int) = self.obj_index = i
 
 # ----------------------------------------------------------------
@@ -158,9 +146,9 @@ proc initSegment*(self: Segment, p0: Vec = [0.0, 0.0], p1: Vec = [0.0, 0.0], dam
     return self
 
 proc `-`*(self: Segment): Segment = Segment().initSegment(self.p1, self.p0)
-proc `$`*(self: Segment): string = fmt"{self.p0} -> {self.p1}"
+method `$`*(self: Segment): string = fmt"Segment: {self.p0} -> {self.p1}"
 
-proc intersection*(self: Segment, seg: Segment): (Segment, float) =
+method intersection*(self: Segment, seg: Segment): (Object, float) =
     # returns the length along seg1 when the intersection occurs (0, 1)
     let s0 = self.p0
     let e0 = self.p1
@@ -178,13 +166,13 @@ proc intersection*(self: Segment, seg: Segment): (Segment, float) =
         return (self, t)
     return (nil, -1.0)
 
-proc center*(self: Segment): Vec =
+method center*(self: Segment): Vec =
     return lerp(self.p0, self.p1, 0.5)
 
 proc crosses*(self: Segment, seg: Segment): bool =
     return self.intersection(seg)[1] >= 0
 
-proc normal*(self: Segment, seg: Segment): Vec =
+method normal*(self: Segment, seg: Segment): Vec =
     let c = self.center()
     let newp0 = c + rot90(self.p0 - c)
     let newp1 = c + rot90(self.p1 - c)
@@ -212,7 +200,6 @@ proc rotate*(self: Segment, theta: float, center: Vec): Segment =
 proc rotate*(self: Segment, theta: float): Segment = self.rotate(theta, self.center())
 
 proc scale*(self: Segment, s: float): Segment = 
-    # assert(s > 0 and s < 1)
     return Segment(
         p0: lerp(self.p0, self.p1, 0.5 - s/2),
         p1: lerp(self.p0, self.p1, 0.5 + s/2),
@@ -224,7 +211,8 @@ type
     BezierCurve* = ref object of Object
         points: seq[Vec]
         coeff: seq[Vec]
-        # const name: string = "bezier"
+
+method `$`*(self: BezierCurve): string = fmt"BezierCurve: {self.points.len}"
 
 proc choose(self: BezierCurve, n: int, k: int): int =
     var val: int = 1
@@ -312,13 +300,13 @@ proc intersection_bt_st*(self: BezierCurve, seg: Segment): (float, float) =
     else:
         return (o[0], o[1])
 
-proc intersection*(self: BezierCurve, seg: Segment): (BezierCurve, float) =
+method intersection*(self: BezierCurve, seg: Segment): (Object, float) =
     let (_, st) = self.intersection_bt_st(seg)
     if st >= 0:
         return (self, st)
     return (nil, -1.0)
 
-proc normal*(self: BezierCurve, seg: Segment): Vec =
+method normal*(self: BezierCurve, seg: Segment): Vec =
     let (bt, _) = self.intersection_bt_st(seg)
 
     let tangent = norm(self.dfdt(bt))
@@ -328,7 +316,7 @@ proc normal*(self: BezierCurve, seg: Segment): Vec =
         return -o
     return o
 
-proc center*(self: BezierCurve): Vec =
+method center*(self: BezierCurve): Vec =
     var c = [0.0, 0.0]
     for i, point in self.points:
         c = c + point
@@ -347,6 +335,8 @@ type
 proc initBezierCurveQuadratic*(self: BezierCurveQuadratic, points: seq[Vec], damp: float = 1.0): BezierCurveQuadratic =
     discard self.initBezierCurve(points, damp)
     return self
+
+method `$`*(self: BezierCurveQuadratic): string = fmt"BezierCurveQuadratic {self.points.len}"
 
 proc get_coeff*(self: BezierCurveQuadratic): seq[Vec] =
     let p0 = self.points[0]
@@ -367,6 +357,8 @@ type
 proc initBezierCurveCubic*(self: BezierCurveCubic, points: seq[Vec], damp: float = 1.0): BezierCurveCubic =
     discard self.initBezierCurve(points, damp)
     return self
+
+method `$`*(self: BezierCurveCubic): string = fmt"BezierCurveCubic {self.points.len}"
 
 proc get_coeff*(self: BezierCurveCubic): seq[Vec] =
     let p0 = self.points[0]
@@ -405,7 +397,7 @@ proc circle_line_poly*(self: Circle, seg: Segment): seq[float] =
     let c = lengthsq(dc) - self.radsq
     return @[c, b, a]
 
-proc intersection*(self: Circle, seg: Segment): (Circle, float) =
+method intersection*(self: Circle, seg: Segment): (Object, float) =
     let poly = self.circle_line_poly(seg)
     let root = roots.quadratic(poly)
 
@@ -425,7 +417,7 @@ proc crosses*(self: Circle, seg: Segment): bool =
     let dr1 = lengthsq(p1 - self.pos)
     return (dr0 < self.radsq and dr1 > self.radsq) or (dr0 > self.radsq and dr1 < self.radsq)
 
-proc normal*(self:Circle, seg: Segment): Vec =
+method normal*(self:Circle, seg: Segment): Vec =
     let dr0 = seg.p0 - self.pos
     let dr1 = seg.p1 - self.pos
     let norm = norm(dr1)
@@ -434,7 +426,7 @@ proc normal*(self:Circle, seg: Segment): Vec =
         return -norm
     return norm
 
-proc center*(self: Circle): Vec = self.pos
+method center*(self: Circle): Vec = self.pos
 
 proc translate*(self: Circle, vec: Vec): Circle =
     return Circle(pos: self.pos + vec, rad: self.rad, damp: self.damp)
@@ -459,7 +451,7 @@ proc initMaskedCircle*(self: MaskedCircle, pos: Vec, rad: float, damp: float = 1
     discard self.initCircle(pos=pos, rad=rad, damp=damp)
     return self
 
-proc intersection*(self: MaskedCircle, seg: Segment): (MaskedCircle, float) =
+method intersection*(self: MaskedCircle, seg: Segment): (Object, float) =
     let time = self.intersection(seg)[1]
     if time < 0:
         return (nil, -1.0)
@@ -488,7 +480,6 @@ type
         segments*: seq[Segment]
 
 proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0): Box =
-    self.damp = damp
     let lu = [ll[0], uu[1]]
     let ul = [uu[0], ll[1]]
 
@@ -498,32 +489,34 @@ proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0): Box =
     self.ul = ul
 
     self.segments = @[
-        Segment().initSegment(self.ll, self.lu),
-        Segment().initSegment(self.lu, self.uu),
-        Segment().initSegment(self.uu, self.ul),
-        Segment().initSegment(self.ul, self.ll)
+        Segment().initSegment(self.ll, self.lu, damp=damp),
+        Segment().initSegment(self.lu, self.uu, damp=damp),
+        Segment().initSegment(self.uu, self.ul, damp=damp),
+        Segment().initSegment(self.ul, self.ll, damp=damp)
     ]
     discard self.initObject(damp=damp)
     return self
 
-proc center*(self: Box): Vec =
+method `$`*(self: Box): string = fmt"Box: {$self.ll} -> {$self.uu}"
+
+method center*(self: Box): Vec =
     return (self.ll + self.uu)/2.0
 
-proc intersection*(self: Box, seg: Segment): (Segment, float) =
+method intersection*(self: Box, seg: Segment): (Object, float) =
     var min_time = 1e100
     var min_obj: Segment
 
     for line in self.segments:
         let (_, t) = line.intersection(seg)
-        if t >= 0 and (t < min_time or min_time > 1e10):
+        if t >= 0 and t <= 1 and (t < min_time or min_time > 1e10):
             min_time = t
             min_obj = line
 
-    if min_time >= 0 and min_time < 1e10:
+    if min_time >= 0 and min_time < 1:
         return (min_obj, min_time)
     return (nil, -1.0)
 
-proc normal*(self: Box, seg: Segment): Vec =
+method normal*(self: Box, seg: Segment): Vec =
     let (line, _) = self.intersection(seg)
     return line.normal(seg)
 
@@ -569,7 +562,7 @@ proc get_segments*(self: Polygon, pts: seq[Vec], damp: float): seq[Segment] =
         segs.add(seg)
     return segs
 
-proc center*(self: Polygon): Vec =
+method center*(self: Polygon): Vec =
     var (a, com) = (0.0, [0.0, 0.0])
     for i, pt in self.points[0 .. self.points.len - 2]:
         let (p0, p1) = (self.points[i], self.points[i+1])
@@ -586,7 +579,7 @@ proc initPolygon*(self: Polygon, points: seq[Vec], damp: float = 1.0): Polygon =
     discard self.initObject(damp=damp)
     return self
 
-proc intersection*(self: Polygon, seg: Segment): (Segment, float) =
+method intersection*(self: Polygon, seg: Segment): (Object, float) =
     var min_time = 1e100
     var min_obj: Segment
 
@@ -600,7 +593,7 @@ proc intersection*(self: Polygon, seg: Segment): (Segment, float) =
         return (min_obj, min_time)
     return (nil, -1.0)
 
-proc normal*(self: Polygon, seg: Segment): Vec =
+method normal*(self: Polygon, seg: Segment): Vec =
     let (line, _) = self.intersection(seg)
     return line.normal(seg)
 
@@ -669,3 +662,17 @@ proc initRegularPolygon*(self: RegularPolygon, N: int, pos: Vec, size: float, da
         points.add(pos + size * v)
     discard self.initPolygon(points, damp)
     return self
+
+# -------------------------------------------------------------
+method collide*(self: Object, part0: PointParticle, parti: PointParticle, part1: PointParticle): (Segment, Segment) {.base.} =
+    let scoll = Segment(p0: part0.pos, p1: parti.pos)
+    let stotal = Segment(p0: part0.pos, p1: part1.pos)
+    let norm = self.normal(scoll)
+    let dir = reflect(stotal.p1 - scoll.p1, norm)
+
+    stotal.p0 = scoll.p1
+    stotal.p1 = scoll.p1 + dir
+    let vseg = Segment(p0:parti.vel, p1:part1.vel)
+    vseg.p0 = reflect(vseg.p0, norm) * self.damp
+    vseg.p1 = reflect(vseg.p1, norm) * self.damp
+    return (stotal, vseg)
