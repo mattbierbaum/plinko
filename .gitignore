@@ -20,3 +20,4 @@ libc/plinko-nbounces
 *.bin
 *.svg
 data/
+nim/main

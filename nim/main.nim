@@ -1,10 +1,10 @@
-import vector
 import objects
 import forces
 import neighborlist
 import observers
 import interrupts
 import simulation
+
 
 var sim: Simulation = Simulation().initSimulation()
 var particle = PointParticle(

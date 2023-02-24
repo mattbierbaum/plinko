@@ -42,9 +42,7 @@ type
 
 method index*(self: ParticleGroup, index: int): PointParticle {.base.} = result
 method count*(self: ParticleGroup): int {.base.} = result
-method items*(range: ParticleGroup): ParticleIterator {.base.} =
-    return iterator(): PointParticle =
-        yield PointParticle()
+method items*(self: ParticleGroup): seq[PointParticle] {.base.} = @[PointParticle()]
 
 # -------------------------------------------------------------
 type
@@ -60,9 +58,7 @@ method index*(self: SingleParticle, index: int): PointParticle =
         return self.particle
 
 method count*(self: SingleParticle): int = 1
-method items*(range: SingleParticle): ParticleIterator =
-    return iterator(): PointParticle =
-        yield range.particle
+method items*(self: SingleParticle): seq[PointParticle] = @[self.particle]
 
 # -------------------------------------------------------------
 type
@@ -75,10 +71,7 @@ proc initParticleList*(self: ParticleList, particles: seq[PointParticle]): Parti
 
 method index*(self: ParticleList, index: int): PointParticle = result = self.particles[index]
 method count*(self: ParticleList): int = len(self.particles)
-method items*(range: ParticleList): ParticleIterator =
-    return iterator(): PointParticle =
-        for particle in range.particles:
-            yield particle
+method items*(self: ParticleList): seq[PointParticle] = self.particles
 
 proc partition*(self: ParticleList, total: int): seq[ParticleList] =
     let size = (self.count() div total)

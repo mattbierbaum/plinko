@@ -151,10 +151,10 @@ proc step_particle*(self: Simulation, part0: PointParticle): void =
 proc step*(self: Simulation, steps: int = 1): void =
     for step in 0 .. steps:
         for particles in self.particle_groups:
-            for particle in particles:
+            for particle in particles.items():
                 particle.acc = self.force_func[0](particle)
 
-            for particle in particles:
+            for particle in particles.items():
                 self.step_particle(particle)
                 echo ($particle)
 
