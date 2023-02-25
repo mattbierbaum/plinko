@@ -210,13 +210,13 @@ method update_particle*(self: SVGLinePlot, particle: PointParticle): void =
 
     if self.count == 0:
         self.buffer.write(self.path_start % [$self.lw, $self.opacity])
-        self.buffer.write(fmt"M{pt[0]},{pt[1]} ")
+        self.buffer.write(fmt"M{pt[0]},{pt[1]} "&"\n")
     else:
         if self.crosspath or (lind == ind):
-            self.buffer.write(fmt"L{pos[0]},{pos[1]} ")
+            self.buffer.write(fmt"L{pos[0]},{pos[1]} "&"\n")
         else:
-            self.buffer.write(fmt"M{pt[0]},{pt[1]} ")
-            self.buffer.write(fmt"L{pos[0]},{pos[1]} ")
+            self.buffer.write(fmt"M{pt[0]},{pt[1]} "&"\n")
+            self.buffer.write(fmt"L{pos[0]},{pos[1]} "&"\n")
 
     self.lastpt[ind] = pos
     self.lastind = ind
