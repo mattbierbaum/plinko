@@ -77,7 +77,7 @@ proc save_bin*[T](self: Array2D[T], filename: string, mode: string = "w"): void 
 
     for j in 0 .. self.shape[1]-1:
         for i in 0 .. self.shape[0]-1:
-            file.write(self.data[i+j*self.shape[1]])
+            file.write(self.data[i+j*self.shape[0]])
     file.close()
 
 proc save_pgm2*(self: Array2D[uint8], filename: string): void =

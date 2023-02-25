@@ -44,7 +44,11 @@ proc initDensityPlot*(self: DensityPlot, box: Box, dpi: float, blendmode: BlendF
     return self
 
 proc `$`*(self: DensityPlot): string = 
-    return fmt"DensityPlot: {self.box} {self.dpi} {self.grid.shape}"
+    var o = "DensityPlot:\n"
+    o &= fmt"  box={self.box}" & "\n"
+    o &= fmt"  dpi={self.dpi}" & "\n"
+    o &= fmt"  shape={self.grid.shape}"
+    return o
 
 proc reflect*(self: DensityPlot, y: float): float =
     return self.grid.shape[1].float - y - 1.0

@@ -175,7 +175,11 @@ proc initSVGLinePlot*(self: SVGLinePlot, filename: string, box: Box, lw: float, 
     return self
 
 method `$`*(self: SVGLinePlot): string = 
-    return fmt"SVGLinePlot: {$self.filename} {$self.box} {$self.lw}"
+    var o = "SVGLinePlot:\n"
+    o &= fmt"  box={$self.box}" & "\n"
+    o &= fmt"  filename={$self.filename}" & "\n"
+    o &= fmt"  lw={$self.lw}"
+    return o
 
 method begin*(self: SVGLinePlot): void =
     self.count = 0

@@ -20,8 +20,17 @@
 ],
 "observers": [
     { 
-        "type": "svg", "filename": "test.svg", "lw": 0.00001,
-        "box": { "type": "ref", "name": "boundary"}
+        "type": "svg", "filename": "test.svg", 
+        "box": { "type": "ref", "name": "boundary"},
+        "resolution": 8000
+    },
+    {
+        "type": "pgm", 
+        "filename": "test.pgm", 
+        "format": "pgm5",
+        "blend": "add",
+        "box": { "type": "ref", "name": "boundary"},
+        "resolution": 4000
     }
 ],
 "neighborlist": {

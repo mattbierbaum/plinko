@@ -27,6 +27,7 @@ proc gw3c*(a: float): float =
 
 proc blendmode_normal*(a: float, b: float): float =        return a 
 proc blendmode_max*(a: float, b: float): float =           return max(a, b)
+proc blendmode_min*(a: float, b: float): float =           return min(a, b)
 proc blendmode_additive*(a: float, b: float): float =      return a + b 
 proc blendmode_subtractive*(a: float, b: float): float =   return a + b - 1.0
 proc blendmode_stamp*(a: float, b: float): float =         return b + 2.0*a - 1.0

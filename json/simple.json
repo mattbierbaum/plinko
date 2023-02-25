@@ -18,8 +18,9 @@
 ],
 "observers": [
     { 
-        "type": "svg", "filename": "test.svg", "lw": 0.000001,
-        "box": { "type": "ref", "name": "boundary"}
+        "type": "svg", "filename": "test.svg", 
+        "box": { "type": "ref", "name": "boundary"},
+        "resolution": 2000
     },
     {
         "type": "pgm", "filename": "test.pgm", "format": "pgm5",

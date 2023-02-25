@@ -109,8 +109,9 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
     if node{"type"}.getStr() == "svg":
         let filename = node{"filename"}.getStr()
         let box = cast[Box](json_to_object(node{"box"}, sim)[0])
-        let lw = node{"lw"}.getFloat()
-        return SVGLinePlot().initSVGLinePlot(filename=filename, box=box, lw=lw)
+        let resolution = node{"resolution"}.getInt()
+        let dpi = max(box.uu[0] - box.ll[0], box.uu[1] - box.ll[1]) / resolution.float / 100.0
+        return SVGLinePlot().initSVGLinePlot(filename=filename, box=box, lw=dpi)
 
     if node{"type"}.getStr() == "pgm":
         let eqhist: NormFunction = proc(data: seq[float]): seq[float] =
@@ -118,7 +119,12 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
 
         let cmap_table = {"gray": gray, "gray_r": gray_r}.toTable()
         let norm_table = {"eq_hist": eqhist}.toTable()
-        let blend_table = {"add": blendmode_additive}.toTable()
+        let blend_table = {
+            "add": blendmode_additive,
+            "min": blendmode_min,
+            "max": blendmode_max,
+            "avg": blendmode_average,
+        }.toTable()
 
         let filename: string = node{"filename"}.getStr()
         let format: string = node{"format"}.getStr("pgm2")
