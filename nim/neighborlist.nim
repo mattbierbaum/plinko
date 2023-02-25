@@ -18,6 +18,7 @@ method append*(self: Neighborlist, obj: Object): void {.base.} = self.objects.ad
 method calculate*(self: Neighborlist): void {.base.} = return
 method near*(self: Neighborlist, seg: Segment): seq[Object] {.base.} = self.objects
 method show*(self: Neighborlist): void {.base.} = return
+method `$`*(self: Neighborlist): string {.base.} = ""
 
 # ==============================================
 type
@@ -153,28 +154,32 @@ method near*(self: CellNeighborlist, seg: Segment): seq[Object] =
                 self.addcell(x, iy1, objs)
     return objs
 
-method show*(self: CellNeighborlist): void =
-    stdout.write('|')
+method `$`*(self: CellNeighborlist): string =
+    var o = ""
+    o &= "|"
     for i in 0 .. self.ncells[0]:
-        stdout.write('-')
-    stdout.write('|')
-    stdout.write('\n')
+        o &= "-"
+    o &= "|\n" 
 
     for j in 0 .. self.ncells[1]:
-        stdout.write('|')
+        o &= "|"
         for i in 0 .. self.ncells[0]:
             if len(self.cells[self.cell_ind(i, j)]) > 0:
-                stdout.write('*')
+                o &= "*"
             else:
-                stdout.write(' ')
-        stdout.write('|')
-        stdout.write('\n')
+                o &= " "
+        o &= "|"
+        o &= "\n"
 
-    stdout.write('|')
+    o &= "|"
     for i in 0 .. self.ncells[0]:
-        stdout.write('-')
-    stdout.write('|')
-    stdout.write('\n')
+        o &= "-"
+    o &= "|"
+    o &= "\n"
+    return o
+
+method show*(self: CellNeighborlist): void = 
+    echo $self
 
 #[
 #  psuedo code for neighborlisting arbitrary objects:

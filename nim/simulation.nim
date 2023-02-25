@@ -4,23 +4,27 @@ import forces
 import neighborlist
 import observers
 
+import std/strformat
+
 type
     Simulation* = ref object of RootObj
-        t, dt, eps: float
-        equal_time: bool
-        accuracy_mode: bool
-        objects: seq[Object]
+        t, dt*, eps*: float
+        max_steps*: int
+        equal_time*: bool
+        accuracy_mode*: bool
+        objects*: seq[Object]
         particle_groups: seq[ParticleGroup]
         force_func: seq[IndependentForce]
         observers: seq[Observer]
         observer_group: ObserverGroup
         integrator: Integrator
-        nbl: Neighborlist
+        nbl*: Neighborlist
 
-proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6): Simulation = 
+proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_steps: int = 1e6.int): Simulation = 
     self.t = 0
     self.dt = dt
     self.eps = eps
+    self.max_steps = max_steps
     self.equal_time = false
     self.accuracy_mode = false
     self.objects = @[]
@@ -57,7 +61,6 @@ proc set_neighborlist*(self: Simulation, nbl: Neighborlist): void =
     for obj in self.objects:
         self.nbl.append(obj)
     self.nbl.calculate()
-    self.nbl.show()
 
 proc intersection_bruteforce*(self: Simulation, seg: Segment): (float, Object) =
     var mint = 2.0
@@ -176,5 +179,15 @@ proc step*(self: Simulation, steps: int = 1): void =
 
     self.observer_group.close()
 
+proc `$`*(self: Simulation): string =
+    var o = ""
+    o = o & fmt"Simulation: dt={self.dt} eps={self.eps} steps={self.max_steps}" & "\n"
+    for obj in self.objects:
+        o = o & fmt"  o: {$obj}" & "\n"
+    for obj in self.particle_groups:
+        o = o & fmt"  p: {$obj}" & "\n"
+    o &= $self.nbl
+    return o
+
 proc run*(self: Simulation): void =
-    self.step(int(1e10))
+    self.step(self.max_steps)

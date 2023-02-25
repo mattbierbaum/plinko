@@ -8,7 +8,7 @@ import simulation
 import std/strformat
 import std/times
 
-var sim: Simulation = Simulation().initSimulation()
+let steps = 100000
 var particle = PointParticle().initPointParticle(
     pos=[0.5, 0.9],
     vel=[0.2111, 1.0],
@@ -20,9 +20,10 @@ var circle = Circle().initCircle(pos=[0.5, 0.5], rad=0.2)
 var nbl = CellNeighborlist().initCellNeighborlist(box=box, ncells=[50,50], buffer=0.2)
 var svg = SVGLinePlot().initSVGLinePlot(filename="test.svg", box=box, lw=0.000001)
 
+var sim: Simulation = Simulation().initSimulation(max_steps=steps)
 sim.add_particle(particle_group)
 sim.add_object(box)
-sim.add_object(rot)
+# sim.add_object(rot)
 sim.add_object(circle)
 sim.add_force(generate_force_gravity(-1))
 sim.set_neighborlist(nbl)
@@ -41,8 +42,9 @@ sim.add_observer(imgobs)
 
 sim.initialize()
 
-let steps = 100000
+echo $sim
+
 let time_start = times.cpuTime()
-sim.step(steps)
+sim.run()
 let time_end = times.cpuTime()
-echo fmt"Steps per second: {steps.float/(time_end-time_start)}"
+echo fmt"Rates (Mstep/sec): {steps.float/(time_end-time_start)/1e6}"

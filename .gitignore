@@ -21,3 +21,4 @@ libc/plinko-nbounces
 *.svg
 data/
 nim/main
+nim/plinko

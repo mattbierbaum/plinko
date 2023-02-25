@@ -45,6 +45,7 @@ type
 method index*(self: ParticleGroup, index: int): PointParticle {.base.} = result
 method count*(self: ParticleGroup): int {.base.} = result
 method items*(self: ParticleGroup): seq[PointParticle] {.base.} = @[PointParticle()]
+method `$`*(self: ParticleGroup): string {.base.} = ""
 
 # -------------------------------------------------------------
 type
@@ -61,6 +62,7 @@ method index*(self: SingleParticle, index: int): PointParticle =
 
 method count*(self: SingleParticle): int = 1
 method items*(self: SingleParticle): seq[PointParticle] = @[self.particle]
+method `$`*(self: SingleParticle): string = $self.particle
 
 # -------------------------------------------------------------
 type
@@ -389,7 +391,7 @@ proc initCircle*(self: Circle, pos: Vec, rad: float, damp: float = 1.0): Circle 
     discard self.initObject(damp=damp)
     return self
 
-method `$`*(self: Circle): string = fmt"Circle: {self.pos}, {self.rad}"
+method `$`*(self: Circle): string = fmt"Circle: {self.pos}, {self.rad}, {self.damp}"
 
 proc circle_line_poly*(self: Circle, seg: Segment): seq[float] =
     let dp = seg.p1 - seg.p0
@@ -500,7 +502,7 @@ proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0): Box =
     discard self.initObject(damp=damp)
     return self
 
-method `$`*(self: Box): string = fmt"Box: {$self.ll} -> {$self.uu}"
+method `$`*(self: Box): string = fmt"Box: {$self.ll} -> {$self.uu}, {self.damp}"
 
 method center*(self: Box): Vec =
     return (self.ll + self.uu)/2.0
