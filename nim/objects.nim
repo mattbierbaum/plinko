@@ -138,6 +138,7 @@ proc initObject*(self: Object, damp: float): Object =
 method `$`*(self: Object): string {.base.} = "Object"
 method normal*(self: Object, seg: Segment): Vec {.base.} = [0.0, 0.0]
 method center*(self: Object): Vec {.base.} = [0.0, 0.0]
+method translate*(self: Object, v: Vec): Object {.base.} = Object()
 method intersection*(self: Object, seg: Segment): (Object, float) {.base.} = (nil, -1.0)
 proc set_object_index*(self: Object, i: int) = self.obj_index = i
 
@@ -544,6 +545,9 @@ proc contains*(self: Box, pt: Vec): bool =
     let inx = (pt[0] > bx0 and pt[0] < bx1)
     let iny = (pt[1] > by0 and pt[1] < by1)
     return inx and iny
+
+proc translate*(self: Box, x: Vec): Box =
+    return Box().initBox(ll=self.ll+x, uu=self.uu+x, damp=self.damp)
 
 # ---------------------------------------------------------------
 type

@@ -23,7 +23,7 @@ var svg = SVGLinePlot().initSVGLinePlot(filename="test.svg", box=box, lw=0.00000
 var sim: Simulation = Simulation().initSimulation(max_steps=steps)
 sim.add_particle(particle_group)
 sim.add_object(box)
-# sim.add_object(rot)
+sim.add_object(rot)
 sim.add_object(circle)
 sim.add_force(generate_force_gravity(-1))
 sim.set_neighborlist(nbl)

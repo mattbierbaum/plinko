@@ -61,16 +61,31 @@ proc json_to_circle(node: JsonNode, sim: Simulation): Circle =
     let damp = node{"damp"}.getFloat()
     return Circle().initCircle(pos=pos, rad=rad, damp=damp)
 
-proc json_to_object(node: JsonNode, sim: Simulation): Object =
+proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
+    var objs: seq[Object] = @[]
     if node{"type"}.getStr() == "circle":
-        return json_to_circle(node, sim)
+        objs.add(json_to_circle(node, sim))
 
     if node{"type"}.getStr() == "box":
-        return json_to_box(node, sim)
+        objs.add(json_to_box(node, sim))
 
     if node{"type"}.getStr() == "ref":
         let index = node{"index"}.getInt()
-        return sim.objects[index]
+        objs.add(sim.objects[index])
+
+    if node{"type"}.getStr() == "tri-lattice":
+        proc generate_object(pos: Vec): Object =
+            var o: Object = json_to_object(node{"object"}, sim)[0]
+            o = o.translate(-o.center())
+            o = o.translate(pos)
+            return o
+        let rows = node{"rows"}.getInt(0)
+        let cols = node{"columns"}.getInt(0)
+        let (obj, _) = hex_grid_object(rows=rows, cols=cols, f=generate_object)
+        for o in obj:
+            objs.add(o)
+
+    return objs
 
 proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
     if node{"type"}.getStr() == "single":
@@ -82,7 +97,7 @@ proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
 proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
     if node{"type"}.getStr() == "svg":
         let filename = node{"filename"}.getStr()
-        let box = cast[Box](json_to_object(node{"box"}, sim))
+        let box = json_to_box(node{"box"}, sim)
         let lw = node{"lw"}.getFloat()
         return SVGLinePlot().initSVGLinePlot(filename=filename, box=box, lw=lw)
 
@@ -113,7 +128,8 @@ proc json_to_simulation*(json: string): Simulation =
 
     if cfg{"objects"} != nil:
         for node in cfg{"objects"}:
-            sim.add_object(json_to_object(node, sim))
+            for obj in json_to_object(node, sim):
+                sim.add_object(obj)
 
     if cfg{"particles"} != nil:
         for node in cfg{"particles"}:
