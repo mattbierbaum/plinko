@@ -20,6 +20,11 @@
     { 
         "type": "svg", "filename": "test.svg", "lw": 0.000001,
         "box": { "type": "ref", "name": "boundary"}
+    },
+    {
+        "type": "pgm", "filename": "test.pgm", "format": "pgm5",
+        "box": { "type": "ref", "name": "boundary"},
+        "resolution": 2000
     }
 ],
 "neighborlist": {

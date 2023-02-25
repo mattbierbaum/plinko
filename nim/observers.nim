@@ -1,3 +1,5 @@
+{.warning[LockLevel]:off.}
+import array2d
 import image
 import objects
 import plotting
@@ -21,6 +23,7 @@ method is_triggered*(self: Observer): bool {.base.} = false
 method is_triggered_particle*(self: Observer, particle: PointParticle): bool {.base.} = false
 method reset*(self: Observer): void {.base.} = return
 method close*(self: Observer): void {.base.} = return
+method `$`*(self: Observer): string {.base.} = "Observer"
 
 # =================================================================
 type
@@ -72,10 +75,9 @@ proc initImageRecorder*(
     self.norm = norm
     return self
 
-#[
 method update_particle*(self: ImageRecorder, particle: PointParticle): void =
    let ind = particle.index
-   if not self.lastposition.hasKey(ind):
+   if self.lastposition.hasKey(ind):
        var lastposition = self.lastposition[ind]
        var segment = Segment().initSegment(lastposition, particle.pos)
        self.plotter.draw_segment(segment)
@@ -89,31 +91,38 @@ method reset*(self: ImageRecorder): void = self.lastposition = initTable[int, Ve
 proc tone*(self: ImageRecorder): Array2D[uint8] = 
    let data = self.cmap(self.norm(self.plotter.grid.data))
    var arr = Array2D[uint8]()
-   arr.initArray2D(shape=self.plotter.grid.shape)
+   arr = arr.initArray2D(shape=self.plotter.grid.shape)
    arr.data = data
    return arr
 
 proc save_csv*(self: ImageRecorder): void = self.plotter.grid.save_csv(self.filename)
 proc save_bin*(self: ImageRecorder): void = self.plotter.grid.save_bin(self.filename)
-#proc save_pgm2*(self: ImageRecorder): void = self.tone().save_pgm2(self.filename)
-#proc save_pgm5*(self: ImageRecorder): void = self.tone().save_pgm5(self.filename)
-#proc save_ppm*(self: ImageRecorder): void = self.tone().save_ppm(self.filename)
+proc save_pgm2*(self: ImageRecorder): void = self.tone().save_pgm2(self.filename)
+proc save_pgm5*(self: ImageRecorder): void = self.tone().save_pgm5(self.filename)
 
 method close*(self: ImageRecorder): void =
-    return
-]#
+    if self.format == "bin":
+        self.save_bin()
+    if self.format == "csv":
+        self.save_csv()
+    if self.format == "pgm2":
+        self.save_pgm2()
+    if self.format == "pgm5":
+        self.save_pgm5()
+
+method `$`*(self: ImageRecorder): string = 
+    var o = "ImageRecorder: \n"
+    o &= fmt"  filename='{self.filename}'" & "\n"
+    o &= fmt"  format='{self.format}'" & "\n"
+    o &= $self.plotter
+    return o
 
 # =================================================================
-#[
 type
     PointImageRecorder* = ref object of ImageRecorder
 
-proc initPointImageRecorder*(self: PointImageRecorder, filename: string, plotter: DensityPlot): PointImageRecorder =
-    # discard self.initImageRecorder(filename, plotter)
-    return self
-
-method update_particle*(self: PointImageRecorder, particle: PointParticle): void = self.plotter.draw_point(particle.pos)
-]#
+method update_particle*(self: PointImageRecorder, particle: PointParticle): void = 
+    self.plotter.draw_point(particle.pos)
 
 # ========================================================
 type
@@ -164,6 +173,9 @@ proc initSVGLinePlot*(self: SVGLinePlot, filename: string, box: Box, lw: float, 
     self.header = SVG_HEADER
     self.footer = SVG_FOOTER
     return self
+
+method `$`*(self: SVGLinePlot): string = 
+    return fmt"SVGLinePlot: {$self.filename} {$self.box} {$self.lw}"
 
 method begin*(self: SVGLinePlot): void =
     self.count = 0

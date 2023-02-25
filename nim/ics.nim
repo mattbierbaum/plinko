@@ -4,9 +4,12 @@ import forces
 import observers
 import neighborlist
 import simulation
+import image
+import plotting
 
 import std/json
 import std/math
+import std/tables
 
 type ObjectGenerator = proc(pos: Vec): Circle
 
@@ -108,6 +111,30 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
         let box = cast[Box](json_to_object(node{"box"}, sim)[0])
         let lw = node{"lw"}.getFloat()
         return SVGLinePlot().initSVGLinePlot(filename=filename, box=box, lw=lw)
+
+    if node{"type"}.getStr() == "pgm":
+        let eqhist: NormFunction = proc(data: seq[float]): seq[float] =
+            return image.eq_hist(data, nbins=256*256)
+
+        let cmap_table = {"gray": gray, "gray_r": gray_r}.toTable()
+        let norm_table = {"eq_hist": eqhist}.toTable()
+        let blend_table = {"add": blendmode_additive}.toTable()
+
+        let filename: string = node{"filename"}.getStr()
+        let format: string = node{"format"}.getStr("pgm2")
+        let cmap = cmap_table[node{"cmap"}.getStr("gray_r")]
+        let norm = norm_table[node{"norm"}.getStr("eq_hist")]
+        let blend = blend_table[node{"blend"}.getStr("add")]
+
+        let box = cast[Box](json_to_object(node{"box"}, sim)[0])
+        let resolution = node{"resolution"}.getInt()
+        let dpi = resolution.float / max(box.uu[0] - box.ll[0], box.uu[1] - box.ll[1]) 
+
+        let plotter = DensityPlot().initDensityPlot(box=box, dpi=dpi, blendmode=blend)
+        let obs = ImageRecorder().initImageRecorder(
+            filename=filename, plotter=plotter, format=format,
+            cmap=cmap, norm=norm)
+        return obs
 
 proc json_to_neighborlist(node: JsonNode, sim: Simulation): Neighborlist =
     if node{"type"}.getStr() == "naive":

@@ -4,6 +4,7 @@ import objects
 import vector
 
 import std/math
+import std/strformat
 
 proc ipart*(x: float): float {.inline.} = return floor(x)
 proc round*(x: float): float {.inline.} = return ipart(x + 0.5)
@@ -38,15 +39,17 @@ proc initDensityPlot*(self: DensityPlot, box: Box, dpi: float, blendmode: BlendF
         floor(self.dpi * size[0]).int,
         floor(self.dpi * size[1]).int
     ]
-    self.grid = Array2D[float]()
-    self.grid.initArray2D(N)
+    self.grid = Array2D[float]().initArray2D(N)
     self.blendmode = blendmode
     return self
+
+proc `$`*(self: DensityPlot): string = 
+    return fmt"DensityPlot: {self.box} {self.dpi} {self.grid.shape}"
 
 proc reflect*(self: DensityPlot, y: float): float =
     return self.grid.shape[1].float - y - 1.0
 
-proc plot*(self: DensityPlot, x: float, y: float, c: float): void {.discardable.} =
+proc plot*(self: DensityPlot, x: float, y: float, c: float): void =
     if x < 0 or x >= self.grid.shape[0].float or y < 0 or y >= self.grid.shape[1].float:
         return
 
@@ -55,7 +58,7 @@ proc plot*(self: DensityPlot, x: float, y: float, c: float): void {.discardable.
     let ind = xi + yi*self.grid.shape[0]
     self.grid.data[ind] = self.blendmode(c, self.grid.data[ind])
 
-proc plot_line*(self: DensityPlot, ix0: float, iy0: float, ix1: float, iy1: float): void {.discardable.} =
+proc plot_line*(self: DensityPlot, ix0: float, iy0: float, ix1: float, iy1: float): void =
     var x0: float = ix0
     var y0: float = iy0
     var x1: float = ix1
@@ -112,7 +115,7 @@ proc plot_line*(self: DensityPlot, ix0: float, iy0: float, ix1: float, iy1: floa
            self.plot(x, ipart(intery)+1, fpart(intery))
            intery = intery + gradient
 
-proc draw_segment*(self: DensityPlot, seg: Segment): void {.discardable.} =
+proc draw_segment*(self: DensityPlot, seg: Segment): void =
     let ll = self.box.ll
     let uu = self.box.uu
 
@@ -122,14 +125,14 @@ proc draw_segment*(self: DensityPlot, seg: Segment): void {.discardable.} =
     let y1 = (self.grid.shape[1].float * (seg.p1[1] - ll[1]) / (uu[1] - ll[1]))
     self.plot_line(x0, y0, x1, y1)
 
-proc draw_point*(self: DensityPlot, p: Vec): void {.discardable.} =
+proc draw_point*(self: DensityPlot, p: Vec): void =
     let x = (self.dpi * (p[0] - self.box.ll[0]))
     let y = (self.dpi * (p[1] - self.box.ll[1]))
     self.plot(x, y, 1.0)
 
 proc get_array*(self: DensityPlot): Array2D[float] = return self.grid
 
-proc show*(self: DensityPlot): void {.discardable.} =
+proc show*(self: DensityPlot): void =
     for j in countdown(self.grid.shape[2]-1, 0):
         for i in countup(0, self.grid.shape[1]-1):
             let c: int = self.grid.data[(i + j*self.grid.shape[1]).int].int

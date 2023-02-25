@@ -191,6 +191,8 @@ proc `$`*(self: Simulation): string =
         o = o & fmt"  o: {$obj}" & "\n"
     for obj in self.particle_groups:
         o = o & fmt"  p: {$obj}" & "\n"
+    for obs in self.observers:
+        o = o & fmt"{$obs}" & "\n"
     o &= $self.nbl
     return o
 

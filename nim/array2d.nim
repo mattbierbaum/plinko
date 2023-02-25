@@ -1,3 +1,5 @@
+import std/os
+import std/streams
 import std/strformat
 import std/strutils
 
@@ -6,13 +8,11 @@ type
         data*: seq[T]
         shape*: array[2, int]
         size*: int
-        dtype*: typedesc[T]
 
-proc initArray2D*[T](self: Array2D[T], shape: array[2, int]): 
-        Array2D[T] {.discardable.} =
+proc initArray2D*[T](self: Array2D[T], shape: array[2, int]): Array2D[T] =
     self.shape = shape
     self.size = shape[0] * shape[1]
-    self.data = newSeq[self.dtype]()
+    self.data = newSeq[T](self.size)
     return self
 
 proc clamp_index*(self: Array2D, index: int): int =
@@ -66,14 +66,14 @@ proc save_csv*[T](self: Array2D[T], filename: string,
         file.write("\n")
     file.close()
 
-proc save_bin*[T](self: Array2D[T], filename: string,
-        mode: string = "w"): void =
-    var file: File
+proc save_bin*[T](self: Array2D[T], filename: string, mode: string = "w"): void =
+    let filesize:int = getFileSize(filename).int
+    var file: FileStream
     if mode == "a":
-        file = open(filename, fmAppend)
-        file.setFilePos(0, fspEnd)
+        file = newFileStream(filename, fmAppend)
+        file.setPosition(filesize)
     else:
-        file = open(filename, fmWrite)
+        file = newFileStream(filename, fmWrite)
 
     for j in 0 .. self.shape[1]-1:
         for i in 0 .. self.shape[0]-1:
@@ -82,14 +82,14 @@ proc save_bin*[T](self: Array2D[T], filename: string,
 
 proc save_pgm2*(self: Array2D[uint8], filename: string): void =
     let file = open(filename, fmWrite)
-    file.write(fmt"P2 {self.shape[1]} {self.shape[0]} 255\n")
+    file.write(fmt"P2 {self.shape[1]} {self.shape[0]} 255" & "\n")
     file.close()
 
     self.save_csv(filename, "a")
 
 proc save_pgm5*(self: Array2D[uint8], filename: string): void =
     let file = open(filename, fmWrite)
-    file.write(fmt"P5 {self.shape[0]} {self.shape[1]} 255\n")
+    file.write(fmt"P5 {self.shape[0]} {self.shape[1]} 255" & "\n")
     file.close()
 
     self.save_bin(filename, "a")

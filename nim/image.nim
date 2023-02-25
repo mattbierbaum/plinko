@@ -65,7 +65,7 @@ proc blendmodes_w3c*(a: float, b: float): float =
 
 proc hist*(arr: seq[float], nbins: int, docut: bool = true): seq[float] =
     let (min, max) = arr.minmax_cut()
-    var bins: seq[float] = newSeq[float](nbins)
+    var bins: seq[float] = newSeq[float](nbins+1)
     let norm = 1.0 / (max - min)
 
     for i, v in arr:
