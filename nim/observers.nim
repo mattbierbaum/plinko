@@ -3,6 +3,7 @@ import objects
 import plotting
 import vector
 
+import std/streams
 import std/strformat
 import std/strutils
 import std/tables
@@ -119,6 +120,7 @@ type
     SVGLinePlot* = ref object of Observer
         filename: string
         file: File
+        buffer: StringStream
         box: Box
         lw: float
         opacity: float
@@ -166,7 +168,8 @@ proc initSVGLinePlot*(self: SVGLinePlot, filename: string, box: Box, lw: float, 
 method begin*(self: SVGLinePlot): void =
     self.count = 0
     self.file = open(self.filename, fmWrite)
-    self.file.write(
+    self.buffer = newStringStream()
+    self.buffer.write(
         self.header % [
         $(self.box.uu[0] - self.box.ll[0]),
         $(self.box.uu[1] - self.box.ll[1]),
@@ -190,27 +193,28 @@ method update_particle*(self: SVGLinePlot, particle: PointParticle): void =
         pt = pos
 
     if self.count == 0:
-        self.file.write(self.path_start % [$self.lw, $self.opacity])
-        self.file.write(fmt"M{pt[0]},{pt[1]} ")
+        self.buffer.write(self.path_start % [$self.lw, $self.opacity])
+        self.buffer.write(fmt"M{pt[0]},{pt[1]} ")
     else:
         if self.crosspath or (lind == ind):
-            self.file.write(fmt"L{pos[0]},{pos[1]} ")
+            self.buffer.write(fmt"L{pos[0]},{pos[1]} ")
         else:
-            self.file.write(fmt"M{pt[0]},{pt[1]} ")
-            self.file.write(fmt"L{pos[0]},{pos[1]} ")
+            self.buffer.write(fmt"M{pt[0]},{pt[1]} ")
+            self.buffer.write(fmt"L{pos[0]},{pos[1]} ")
 
     self.lastpt[ind] = pos
     self.lastind = ind
     self.count = self.count + 1
 
     if self.count > self.breakpt:
-        self.file.write(self.path_end)
+        self.buffer.write(self.path_end)
         self.count = 0
 
 method close*(self: SVGLinePlot): void =
-    self.file.write(self.path_end)
-    self.file.write(self.footer)
-    self.file.close()
+    self.buffer.write(self.path_end)
+    self.buffer.write(self.footer)
+    self.file.write(self.buffer.data)
+
 # =================================================================
 type
     InitialStateRecorder* = ref object of Observer

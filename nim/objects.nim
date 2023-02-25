@@ -123,16 +123,18 @@ proc initUniformParticles2D*(self: UniformParticles2D, p0: Vec, p1: Vec, v0: Vec
 type
     Object* = ref object of RootObj
         damp*: float
-        obj_index*: int
+        index*: int
+        name*: string
 
 type 
     Segment* = ref object of Object
         p0*, p1*: Vec
 
-proc initObject*(self: Object, damp: float): Object = 
+proc initObject*(self: Object, damp: float, name: string = ""): Object = 
     self.damp = damp
-    self.obj_index = OBJECT_INDEX
-    OBJECT_INDEX = OBJECT_INDEX + 1
+    self.index = 0
+    if name.len > 0:
+        self.name = name
     return self
 
 method `$`*(self: Object): string {.base.} = "Object"
@@ -140,17 +142,21 @@ method normal*(self: Object, seg: Segment): Vec {.base.} = [0.0, 0.0]
 method center*(self: Object): Vec {.base.} = [0.0, 0.0]
 method translate*(self: Object, v: Vec): Object {.base.} = Object()
 method intersection*(self: Object, seg: Segment): (Object, float) {.base.} = (nil, -1.0)
-proc set_object_index*(self: Object, i: int) = self.obj_index = i
+
+proc set_index*(self: Object, i: int) = 
+    self.index = i
+    if self.name.len == 0:
+        self.name = "object-" & $self.index
 
 # ----------------------------------------------------------------
-proc initSegment*(self: Segment, p0: Vec = [0.0, 0.0], p1: Vec = [0.0, 0.0], damp: float = 1.0): Segment =
+proc initSegment*(self: Segment, p0: Vec = [0.0, 0.0], p1: Vec = [0.0, 0.0], damp: float = 1.0, name: string = ""): Segment =
     self.p0 = p0
     self.p1 = p1 
-    discard self.initObject(damp=damp)
+    discard self.initObject(damp=damp, name=name)
     return self
 
 proc `-`*(self: Segment): Segment = Segment().initSegment(self.p1, self.p0)
-method `$`*(self: Segment): string = fmt"Segment: {self.p0} -> {self.p1}"
+method `$`*(self: Segment): string = fmt"Segment: '{self.name}' {self.p0} -> {self.p1}"
 
 method intersection*(self: Segment, seg: Segment): (Object, float) =
     # returns the length along seg1 when the intersection occurs (0, 1)
@@ -216,7 +222,7 @@ type
         points: seq[Vec]
         coeff: seq[Vec]
 
-method `$`*(self: BezierCurve): string = fmt"BezierCurve: {self.points.len}"
+method `$`*(self: BezierCurve): string = fmt"BezierCurve: '{self.name}' {self.points.len}"
 
 proc choose(self: BezierCurve, n: int, k: int): int =
     var val: int = 1
@@ -326,10 +332,10 @@ method center*(self: BezierCurve): Vec =
         c = c + point
     return c / len(self.points).float
 
-proc initBezierCurve*(self: BezierCurve, points: seq[array[2, float]], damp: float = 1.0): BezierCurve =
+proc initBezierCurve*(self: BezierCurve, points: seq[array[2, float]], damp: float = 1.0, name: string = ""): BezierCurve =
     self.points = points
     self.coeff = self.get_coeff()
-    discard self.initObject(damp=damp)
+    discard self.initObject(damp=damp, name=name)
     return self
 
 # ---------------------------------------------------------------
@@ -385,14 +391,14 @@ type
         rad*: float
         radsq*: float
 
-proc initCircle*(self: Circle, pos: Vec, rad: float, damp: float = 1.0): Circle =
+proc initCircle*(self: Circle, pos: Vec, rad: float, damp: float = 1.0, name: string = ""): Circle =
     self.pos = pos
     self.rad = rad
     self.radsq = rad*rad
-    discard self.initObject(damp=damp)
+    discard self.initObject(damp=damp, name=name)
     return self
 
-method `$`*(self: Circle): string = fmt"Circle: {self.pos}, {self.rad}, {self.damp}"
+method `$`*(self: Circle): string = fmt"Circle[{self.index}]: '{self.name}' {self.pos}, rad={self.rad},{self.radsq}, damp={self.damp}"
 
 proc circle_line_poly*(self: Circle, seg: Segment): seq[float] =
     let dp = seg.p1 - seg.p0
@@ -400,8 +406,15 @@ proc circle_line_poly*(self: Circle, seg: Segment): seq[float] =
 
     let a = lengthsq(dp)
     let b = 2.0 * dp.dot(dc)
-    let c = lengthsq(dc) - self.radsq
+    let c = lengthsq(dc) - self.rad * self.rad
     return @[c, b, a]
+
+proc crosses*(self: Circle, seg: Segment): bool =
+    let p0 = seg.p0
+    let p1 = seg.p1
+    let dr0 = lengthsq(p0 - self.pos)
+    let dr1 = lengthsq(p1 - self.pos)
+    return (dr0 < self.radsq and dr1 > self.radsq) or (dr0 > self.radsq and dr1 < self.radsq)
 
 method intersection*(self: Circle, seg: Segment): (Object, float) =
     let poly = self.circle_line_poly(seg)
@@ -415,13 +428,6 @@ method intersection*(self: Circle, seg: Segment): (Object, float) =
             return (nil, -1.0)
         return (self, root[1])
     return (self, root[0])
-
-proc crosses*(self: Circle, seg: Segment): bool =
-    let p0 = seg.p0
-    let p1 = seg.p1
-    let dr0 = lengthsq(p0 - self.pos)
-    let dr1 = lengthsq(p1 - self.pos)
-    return (dr0 < self.radsq and dr1 > self.radsq) or (dr0 > self.radsq and dr1 < self.radsq)
 
 method normal*(self:Circle, seg: Segment): Vec =
     let dr0 = seg.p0 - self.pos
@@ -485,7 +491,7 @@ type
         ll*, lu*, uu*, ul*: Vec
         segments*: seq[Segment]
 
-proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0): Box =
+proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0, name: string = ""): Box =
     let lu = [ll[0], uu[1]]
     let ul = [uu[0], ll[1]]
 
@@ -500,10 +506,10 @@ proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0): Box =
         Segment().initSegment(self.uu, self.ul, damp=damp),
         Segment().initSegment(self.ul, self.ll, damp=damp)
     ]
-    discard self.initObject(damp=damp)
+    discard self.initObject(damp=damp, name=name)
     return self
 
-method `$`*(self: Box): string = fmt"Box: {$self.ll} -> {$self.uu}, {self.damp}"
+method `$`*(self: Box): string = fmt"Box[{self.index}]: '{self.name}' {$self.ll} -> {$self.uu}, damp={self.damp}"
 
 method center*(self: Box): Vec =
     return (self.ll + self.uu)/2.0
@@ -580,12 +586,12 @@ method center*(self: Polygon): Vec =
         com = com + (p0 + p1) * (c/6)
     return com / a
 
-proc initPolygon*(self: Polygon, points: seq[Vec], damp: float = 1.0): Polygon =
+proc initPolygon*(self: Polygon, points: seq[Vec], damp: float = 1.0, name: string = ""): Polygon =
     self.N = len(points)
     self.points = self.wrap(points)
     self.segments = self.get_segments(self.points, damp)
     self.com = self.center()
-    discard self.initObject(damp=damp)
+    discard self.initObject(damp=damp, name=name)
     return self
 
 method intersection*(self: Polygon, seg: Segment): (Object, float) =

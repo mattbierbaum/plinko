@@ -2,6 +2,7 @@ import objects
 import vector
 
 import std/math
+import std/strformat
 import std/tables
 import std/lenientops
 
@@ -80,7 +81,6 @@ proc add_to_cell*(self: CellNeighborlist, ci: int, cj: int, l: int, obj: Object)
 
 method calculate*(self: CellNeighborlist): void =
     for l, obj in self.objects:
-        let obj = self.objects[l]
         let ind = self.point_to_index(obj.center())
         self.add_to_cell(ind[0], ind[1], l, obj)
 
@@ -91,7 +91,6 @@ method calculate*(self: CellNeighborlist): void =
             for k in 0 .. box.segments.len-1:
                 let seg = box.segments[k]
                 for l, obj in self.objects:
-                    let obj = self.objects[l]
                     let t = obj.intersection(seg)[1]
                     if t >= 0 and t <= 1:
                         self.add_to_cell(i, j, l, obj)
@@ -155,13 +154,16 @@ method near*(self: CellNeighborlist, seg: Segment): seq[Object] =
     return objs
 
 method `$`*(self: CellNeighborlist): string =
-    var o = ""
+    var o = "CellNeighborlist: \n"
+    o &= fmt"  {self.box}" & "\n"
+    o &= fmt"  ncells = {self.ncells}" & "\n"
+
     o &= "|"
     for i in 0 .. self.ncells[0]:
         o &= "-"
     o &= "|\n" 
 
-    for j in 0 .. self.ncells[1]:
+    for j in countdown(self.ncells[1], 0):
         o &= "|"
         for i in 0 .. self.ncells[0]:
             if len(self.cells[self.cell_ind(i, j)]) > 0:

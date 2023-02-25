@@ -2,23 +2,23 @@
 "simulation": {
     "eps": 1e-6,
     "dt": 1e-2,
-    "max_steps": 100000,
+    "max_steps": 500000,
     "equal_time": false,
     "accuracy": false
 },
 "objects": [
-    { "type": "box", "name": "boundary", "ll": [0.0, 0.0], "uu": [1.0, 1.0], "damp": 1.0 },
-    { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.2, "damp": 1.0 }
+    { "type": "box", "name": "boundary", "ll": [0.0, 0.0], "uu": [2.0, 6.928203230275509], "damp": 1.0 },
+    { "type": "circle", "pos": [0.5, 0.8660254037844386], "rad": 0.5, "damp": 1.0 }
 ],
 "particles": [
-    { "type": "single", "pos": [0.5, 0.9], "vel": [0.2111, 1.0] }
+    { "type": "single", "pos": [0.5, 5.9], "vel": [0.2111, 1.0] }
 ],
 "forces": [
     { "type": "gravity", "g": -1.0 }
 ],
 "observers": [
     { 
-        "type": "svg", "filename": "test.svg", "lw": 0.000001,
+        "type": "svg", "filename": "test.svg", "lw": 0.00001,
         "box": { "type": "ref", "name": "boundary"}
     }
 ],
@@ -29,3 +29,4 @@
     "box": { "type": "ref", "name": "boundary" }
 }
 }
+

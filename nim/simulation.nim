@@ -34,9 +34,14 @@ proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_
     self.integrator = integrate_velocity_verlet
     return self
 
+proc object_by_name*(self: Simulation, name: string): Object =
+    for obj in self.objects:
+        if obj.name == name:
+            return obj
+
 proc add_object*(self: Simulation, obj: Object): void =
     let index = self.objects.len
-    obj.set_object_index(index)
+    obj.set_index(index)
     self.objects.add(obj)
 
 proc add_particle*(self: Simulation, particle_group: ParticleGroup): void {.discardable.} =

@@ -8,13 +8,13 @@ import simulation
 import std/json
 import std/math
 
-type ObjectGenerator = proc(pos: Vec): Object
+type ObjectGenerator = proc(pos: Vec): Circle
 
-proc hex_grid_object*(rows: int, cols: int, f: ObjectGenerator): (seq[Object], Vec) =
+proc hex_grid_object*(rows: int, cols: int, f: ObjectGenerator): (seq[Circle], Vec) =
     var a = 1.0
     var rt3 = math.sqrt(3.0)
 
-    var objs: seq[Object] = @[]
+    var objs: seq[Circle] = @[]
     for i in 0 .. rows-1:
         for j in 0 .. cols-1:
             if (i.float*a*rt3 >= 1e-10):
@@ -53,13 +53,15 @@ proc json_to_box(node: JsonNode, sim: Simulation): Box =
     let ll = json_to_vec(node{"ll"})
     let uu = json_to_vec(node{"uu"})
     let damp = node{"damp"}.getFloat(1.0)
-    return Box().initBox(ll=ll, uu=uu, damp=damp)
+    let name = node{"name"}.getStr("")
+    return Box().initBox(ll=ll, uu=uu, damp=damp, name=name)
 
 proc json_to_circle(node: JsonNode, sim: Simulation): Circle =
     let pos = json_to_vec(node{"pos"})
     let rad = node{"rad"}.getFloat()
     let damp = node{"damp"}.getFloat()
-    return Circle().initCircle(pos=pos, rad=rad, damp=damp)
+    let name = node{"name"}.getStr("")
+    return Circle().initCircle(pos=pos, rad=rad, damp=damp, name=name)
 
 proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
     var objs: seq[Object] = @[]
@@ -70,19 +72,27 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
         objs.add(json_to_box(node, sim))
 
     if node{"type"}.getStr() == "ref":
-        let index = node{"index"}.getInt()
-        objs.add(sim.objects[index])
+        if node{"index"} != nil:
+            let index = node{"index"}.getInt()
+            objs.add(sim.objects[index])
+        if node{"name"} != nil:
+            let name = node{"name"}.getStr()
+            objs.add(sim.object_by_name(name))
 
     if node{"type"}.getStr() == "tri-lattice":
-        proc generate_object(pos: Vec): Object =
-            var o: Object = json_to_object(node{"object"}, sim)[0]
+        proc generate_object(pos: Vec): Circle =
+            var o: Circle = json_to_circle(node{"object"}, sim)
+            #echo $o
             o = o.translate(-o.center())
             o = o.translate(pos)
             return o
+
         let rows = node{"rows"}.getInt(0)
         let cols = node{"columns"}.getInt(0)
-        let (obj, _) = hex_grid_object(rows=rows, cols=cols, f=generate_object)
+        let (obj, boundary) = hex_grid_object(rows=rows, cols=cols, f=generate_object)
+        objs.add(Box().initBox(ll=[0.0,0.0], uu=boundary, name="boundary"))
         for o in obj:
+            #echo $o
             objs.add(o)
 
     return objs
@@ -97,7 +107,7 @@ proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
 proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
     if node{"type"}.getStr() == "svg":
         let filename = node{"filename"}.getStr()
-        let box = json_to_box(node{"box"}, sim)
+        let box = cast[Box](json_to_object(node{"box"}, sim)[0])
         let lw = node{"lw"}.getFloat()
         return SVGLinePlot().initSVGLinePlot(filename=filename, box=box, lw=lw)
 
@@ -105,7 +115,7 @@ proc json_to_neighborlist(node: JsonNode, sim: Simulation): Neighborlist =
     if node{"type"}.getStr() == "naive":
         return Neighborlist()
     if node{"type"}.getStr() == "cell":
-        let box = json_to_box(node{"box"}, sim)
+        let box = cast[Box](json_to_object(node{"box"}, sim)[0])
         let ncells = json_to_ivec(node{"ncells"})
         let buffer = node{"buffer"}.getFloat()
         return CellNeighborlist().initCellNeighborlist(box=box, ncells=ncells, buffer=buffer)
