@@ -197,7 +197,7 @@ proc length*(self: Segment): float =
     return length(self.p1 - self.p0)
 
 proc translate*(self: Segment, vec: Vec): Segment =
-    return Segment(p0: self.p0 + vec, p1: self.p1 + vec, damp: self.damp)
+    return Segment().initSegment(p0=self.p0 + vec, p1=self.p1 + vec, damp=self.damp)
 
 proc rotate*(self: Segment, theta: float, center: Vec): Segment =
     let c = center
