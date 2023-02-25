@@ -2,7 +2,7 @@
 "simulation": {
     "eps": 1e-6,
     "dt": 1e-2,
-    "max_steps": 100000,
+    "max_steps": 200000,
     "equal_time": false,
     "accuracy": false
 },

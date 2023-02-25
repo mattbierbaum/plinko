@@ -406,7 +406,7 @@ proc circle_line_poly*(self: Circle, seg: Segment): seq[float] =
 
     let a = lengthsq(dp)
     let b = 2.0 * dp.dot(dc)
-    let c = lengthsq(dc) - self.rad * self.rad
+    let c = lengthsq(dc) - self.radsq
     return @[c, b, a]
 
 proc crosses*(self: Circle, seg: Segment): bool =
@@ -441,13 +441,13 @@ method normal*(self:Circle, seg: Segment): Vec =
 method center*(self: Circle): Vec = self.pos
 
 proc translate*(self: Circle, vec: Vec): Circle =
-    return Circle(pos: self.pos + vec, rad: self.rad, damp: self.damp)
+    return Circle().initCircle(pos=self.pos + vec, rad=self.rad, damp=self.damp)
 
 proc scale*(self: Circle, s: float): Circle = 
-    return Circle(pos: self.pos, rad: self.rad * s, damp: self.damp)
+    return Circle().initCircle(pos=self.pos, rad=self.rad * s, damp=self.damp)
 
 proc rotate*(self: Circle, theta: float): Circle =
-    return Circle(pos: self.pos, rad: self.rad, damp: self.damp)
+    return Circle().initCircle(pos=self.pos, rad=self.rad, damp=self.damp)
 
 
 # ----------------------------------------------------------------

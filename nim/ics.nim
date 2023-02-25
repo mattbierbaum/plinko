@@ -82,7 +82,6 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
     if node{"type"}.getStr() == "tri-lattice":
         proc generate_object(pos: Vec): Circle =
             var o: Circle = json_to_circle(node{"object"}, sim)
-            #echo $o
             o = o.translate(-o.center())
             o = o.translate(pos)
             return o
@@ -92,7 +91,6 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
         let (obj, boundary) = hex_grid_object(rows=rows, cols=cols, f=generate_object)
         objs.add(Box().initBox(ll=[0.0,0.0], uu=boundary, name="boundary"))
         for o in obj:
-            #echo $o
             objs.add(o)
 
     return objs
