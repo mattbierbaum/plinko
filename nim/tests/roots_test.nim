@@ -1,4 +1,4 @@
-import roots
+import ../roots
 
 import std/math
 import std/unittest

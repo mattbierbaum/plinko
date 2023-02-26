@@ -1,5 +1,5 @@
-import objects
-import vector
+import ../objects
+import ../vector
 
 import std/math
 import std/unittest

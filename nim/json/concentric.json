@@ -12,27 +12,27 @@
         "scaling_function": {
             "type": "linear",
             "min_scale": 1.0,
-            "max_scale": 2.0,
-            "steps": 50
+            "max_scale": 4.0,
+            "steps": 250
         },
         "object": {
             "type": "masked_circle",
             "pos": [ 0.5, 0.5],
-            "rad": 0.25,
+            "rad": 0.125,
             "damp": 1.0,
             "mask": {
                 "type": "nholes",
                 "n": 4,
-                "gap": 2e-3,
-                "offset": 0.0
+                "gap": 5e-3,
+                "offset": 0.25
             }
         }
     },
-    { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.2501, "damp": 1.0 },
+    { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.12501, "damp": 1.0 },
     { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.4999, "damp": 1.0 }
 ],
 "particles": [
-    { "type": "single", "pos": [0.65, 0.751], "vel": [0.01, 0.3] }
+    { "type": "single", "pos": [0.501, 0.87], "vel": [0.3, 0.0] }
 ],
 "forces": [
     { "type": "gravity", "g": -1.0 }

@@ -1,0 +1,18 @@
+{
+"simulation": {
+    "eps": 1e-6,
+    "dt": 1e-2,
+    "max_steps": 10000000,
+    "equal_time": false,
+    "accuracy": false
+},
+"objects": [{ "type": "box", "name": "boundary", "ll": [0.0, 0.0], "uu": [1.0, 1.0], "damp": 1.0 }],
+"particles": [{ "type": "single", "pos": [0.5, 0.9], "vel": [0.2111, 1.0] }],
+"forces": [{ "type": "gravity", "g": -1.0 }],
+"neighborlist": {
+    "type": "cell",
+    "ncells": [20, 20],
+    "buffer": 0.1,
+    "box": { "type": "ref", "name": "boundary" }
+}
+}

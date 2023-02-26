@@ -244,6 +244,7 @@ method boundary*(self: Segment): Box =
     return Box().initBox(ll=min(self.p0, self.p1), uu=max(self.p0, self.p1))
 
 # ---------------------------------------------------------------
+#[
 type
     BezierCurve* = ref object of Object
         points: seq[Vec]
@@ -410,6 +411,7 @@ proc get_coeff*(self: BezierCurveCubic): seq[Vec] =
     poly[0] = p0
 
     return poly
+]#
 
 # ---------------------------------------------------------------
 type
@@ -427,14 +429,15 @@ proc initCircle*(self: Circle, pos: Vec, rad: float, damp: float = 1.0, name: st
 
 method `$`*(self: Circle): string = fmt"Circle[{self.index}]: '{self.name}' {self.pos}, rad={self.rad},{self.radsq}, damp={self.damp}"
 
-proc circle_line_poly*(self: Circle, seg: Segment): seq[float] =
+proc circle_line_poly*(self: Circle, seg: Segment): array[3, float] =
     let dp = seg.p1 - seg.p0
     let dc = seg.p0 - self.pos
 
-    let a = lengthsq(dp)
-    let b = 2.0 * dp.dot(dc)
-    let c = lengthsq(dc) - self.radsq
-    return @[c, b, a]
+    var poly: array[3, float]
+    poly[2] = lengthsq(dp)
+    poly[1] = 2.0 * dp.dot(dc)
+    poly[0] = lengthsq(dc) - self.radsq
+    return poly
 
 proc crosses*(self: Circle, seg: Segment): bool =
     let p0 = seg.p0
@@ -514,7 +517,7 @@ method scale*(self: MaskedCircle, s: float): Object =
 method `$`*(self: MaskedCircle): string = fmt"MaskedCircle[{self.index}]: '{self.name}' {self.pos}, rad={self.rad},{self.radsq}, damp={self.damp}"
 
 proc circle_nholes*(nholes: int, eps: float, offset: float): MaskFunction =
-    let angle = offset * 2.0 * PI
+    let angle = offset * PI
     return proc(theta: float): bool =
         let r: float = nholes.float * (theta - angle) / (2.0 * PI)
         return abs(r - floor(r + 0.5)) > eps

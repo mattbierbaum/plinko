@@ -108,23 +108,28 @@ proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointPa
 
     return f(0.0) # brent(f=f, bracket=[0, dt], tol=1e-12, maxiter=20)
 
+var gparti = PointParticle()
+var gpseg = Segment()
+
 proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, Object, float) =
-    var parti = PointParticle()
-    var pseg = Segment(p0: part0.pos, p1: part1.pos)
-    var (mint, mino) = self.intersection(pseg)
+    # var parti = PointParticle()
+    # var pseg = Segment(p0: part0.pos, p1: part1.pos)
+    gpseg.p0 = part0.pos
+    gpseg.p1 = part1.pos
+    var (mint, mino) = self.intersection(gpseg)
 
     if mint < 0 or mint > 1:
         return (part0, nil, -1.0)
 
     if self.accuracy_mode:
         mint = self.refine_intersection(part0, part1, mino, self.dt)
-        parti = self.integrator(part0, mint)
+        #parti = self.integrator(part0, mint)
     else:
         mint = (1 - self.eps) * mint
         
-        parti.pos = lerp(part0.pos, part1.pos, mint)
-        parti.vel = lerp(part0.vel, part1.vel, mint)
-    return (parti, mino, mint)
+        gparti.pos = lerp(part0.pos, part1.pos, mint)
+        gparti.vel = lerp(part0.vel, part1.vel, mint)
+    return (gparti, mino, mint)
 
 proc linear_project*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, bool) =
     var (parti, mino, mint) = self.intersection(part0, part1)
