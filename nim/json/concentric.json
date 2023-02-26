@@ -2,7 +2,7 @@
 "simulation": {
     "eps": 1e-6,
     "dt": 1e-2,
-    "max_steps": 1000000,
+    "max_steps": 50000000,
     "equal_time": false,
     "accuracy": false
 },
@@ -13,24 +13,26 @@
             "type": "linear",
             "min_scale": 1.0,
             "max_scale": 2.0,
-            "steps": 10
+            "steps": 50
         },
         "object": {
             "type": "masked_circle",
             "pos": [ 0.5, 0.5],
-            "rad": 0.49,
-            "damp": 0.99999,
+            "rad": 0.25,
+            "damp": 1.0,
             "mask": {
                 "type": "nholes",
                 "n": 4,
-                "gap": 1e-2,
-                "offset": 0.5
+                "gap": 2e-3,
+                "offset": 0.0
             }
         }
-    }
+    },
+    { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.2501, "damp": 1.0 },
+    { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.4999, "damp": 1.0 }
 ],
 "particles": [
-    { "type": "single", "pos": [20, 42.3], "vel": [0.1, 0.0] }
+    { "type": "single", "pos": [0.65, 0.751], "vel": [0.01, 0.3] }
 ],
 "forces": [
     { "type": "gravity", "g": -1.0 }
@@ -40,9 +42,9 @@
         "type": "pgm", 
         "filename": "test.pgm", 
         "format": "pgm5",
-        "blend": "add",
+        "blend": "max",
         "box": { "type": "ref", "name": "boundary"},
-        "resolution": 8000
+        "resolution": 3000
     }
 ],
 "neighborlist": {

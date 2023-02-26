@@ -11,10 +11,10 @@ import std/json
 import std/math
 import std/tables
 
-type ObjectGenerator = proc(pos: Vec): Circle
+type ObjectTranslationGenerator = proc(pos: Vec): Circle
 type ObjectScaleGenerator = proc(scale: float): MaskedCircle
 
-proc hex_grid_object*(rows: int, cols: int, f: ObjectGenerator): (seq[Circle], Vec) =
+proc hex_grid_object*(rows: int, cols: int, f: ObjectTranslationGenerator): (seq[Circle], Vec) =
     var a = 1.0
     var rt3 = math.sqrt(3.0)
 
@@ -33,8 +33,8 @@ proc hex_grid_object*(rows: int, cols: int, f: ObjectGenerator): (seq[Circle], V
 proc concentric*(min_scale: float, max_scale: float, steps: int, f: ObjectScaleGenerator): (seq[MaskedCircle], Box) =
     var objs: seq[MaskedCircle] = @[]
     var boundary: Box
-    for i in 0 .. steps:
-        let s = min_scale + (max_scale - min_scale) / steps.float * i.float
+    for i in 0 .. steps - 1:
+        let s = min_scale + (max_scale - min_scale) / (steps.float-1.0) * i.float
         let obj = f(s)
         let bd = obj.boundary()
 
@@ -46,7 +46,7 @@ proc concentric*(min_scale: float, max_scale: float, steps: int, f: ObjectScaleG
         objs.add(obj)
     return (objs, boundary)
 
-proc square_grid_object*(rows: int, cols: int, f: ObjectGenerator): (seq[Object], Vec) =
+proc square_grid_object*(rows: int, cols: int, f: ObjectTranslationGenerator): (seq[Object], Vec) =
     var a = 1.0
     
     var objs: seq[Object] = @[]
@@ -119,8 +119,8 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
     if node{"type"}.getStr() == "tri-lattice":
         proc generate_object(pos: Vec): Circle =
             var o: Circle = json_to_circle(node{"object"}, sim)
-            o = o.translate(-o.center())
-            o = o.translate(pos)
+            o = o.translate(-o.center()).Circle
+            o = o.translate(pos).Circle
             return o
 
         let rows = node{"rows"}.getInt(0)
@@ -133,7 +133,7 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
     if node{"type"}.getStr() == "concentric":
         proc generate_object(scale: float): MaskedCircle =
             var o: MaskedCircle = json_to_masked_circle(node{"object"}, sim)
-            o = o.scale(scale)
+            o = o.scale(scale).MaskedCircle
             return o
 
         let min_scale = node{"scaling_function"}{"min_scale"}.getFloat(1.0)
@@ -143,7 +143,6 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
         boundary.name = "boundary"
         objs.add(boundary)
         for o in obj:
-            echo $o
             objs.add(o)
 
     return objs

@@ -169,6 +169,7 @@ method `$`*(self: Object): string {.base.} = "Object"
 method normal*(self: Object, seg: Segment): Vec {.base.} = [0.0, 0.0]
 method center*(self: Object): Vec {.base.} = [0.0, 0.0]
 method translate*(self: Object, v: Vec): Object {.base.} = Object()
+method scale*(self: Object, s: float): Object {.base.} = Object()
 method intersection*(self: Object, seg: Segment): (Object, float) {.base.} = (nil, -1.0)
 method boundary*(self: Object): Box {.base.} = Box()
 
@@ -219,7 +220,7 @@ method normal*(self: Segment, seg: Segment): Vec =
 proc length*(self: Segment): float =
     return length(self.p1 - self.p0)
 
-proc translate*(self: Segment, vec: Vec): Segment =
+method translate*(self: Segment, vec: Vec): Object =
     return Segment().initSegment(p0=self.p0 + vec, p1=self.p1 + vec, damp=self.damp)
 
 proc rotate*(self: Segment, theta: float, center: Vec): Segment =
@@ -232,7 +233,7 @@ proc rotate*(self: Segment, theta: float, center: Vec): Segment =
 
 proc rotate*(self: Segment, theta: float): Segment = self.rotate(theta, self.center())
 
-proc scale*(self: Segment, s: float): Segment = 
+method scale*(self: Segment, s: float): Object = 
     return Segment(
         p0: lerp(self.p0, self.p1, 0.5 - s/2),
         p1: lerp(self.p0, self.p1, 0.5 + s/2),
@@ -466,10 +467,10 @@ method normal*(self:Circle, seg: Segment): Vec =
 
 method center*(self: Circle): Vec = self.pos
 
-proc translate*(self: Circle, vec: Vec): Circle =
+method translate*(self: Circle, vec: Vec): Object =
     return Circle().initCircle(pos=self.pos + vec, rad=self.rad, damp=self.damp)
 
-proc scale*(self: Circle, s: float): Circle = 
+method scale*(self: Circle, s: float): Object = 
     return Circle().initCircle(pos=self.pos, rad=self.rad * s, damp=self.damp)
 
 proc rotate*(self: Circle, theta: float): Circle =
@@ -492,7 +493,7 @@ proc initMaskedCircle*(self: MaskedCircle, pos: Vec, rad: float, mask: MaskFunct
     return self
 
 method intersection*(self: MaskedCircle, seg: Segment): (Object, float) =
-    let time = self.Circle.intersection(seg)[1]
+    let (_, time) = procCall intersection(self.Circle, seg)
     if time < 0:
         return (nil, -1.0)
 
@@ -504,10 +505,10 @@ method intersection*(self: MaskedCircle, seg: Segment): (Object, float) =
         return (self, time)
     return (nil, -1.0)
 
-proc translate*(self: MaskedCircle, vec: Vec): MaskedCircle =
+method translate*(self: MaskedCircle, vec: Vec): Object =
     return MaskedCircle().initMaskedCircle(pos=self.pos + vec, rad=self.rad, damp=self.damp, mask=self.mask)
 
-proc scale*(self: MaskedCircle, s: float): MaskedCircle = 
+method scale*(self: MaskedCircle, s: float): Object = 
     return MaskedCircle().initMaskedCircle(pos=self.pos, rad=self.rad * s, damp=self.damp, mask=self.mask)
 
 method `$`*(self: MaskedCircle): string = fmt"MaskedCircle[{self.index}]: '{self.name}' {self.pos}, rad={self.rad},{self.radsq}, damp={self.damp}"
