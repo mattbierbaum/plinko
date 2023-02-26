@@ -12,6 +12,7 @@ import std/math
 import std/tables
 
 type ObjectGenerator = proc(pos: Vec): Circle
+type ObjectScaleGenerator = proc(scale: float): MaskedCircle
 
 proc hex_grid_object*(rows: int, cols: int, f: ObjectGenerator): (seq[Circle], Vec) =
     var a = 1.0
@@ -27,6 +28,22 @@ proc hex_grid_object*(rows: int, cols: int, f: ObjectGenerator): (seq[Circle], V
                 objs.add(f([(j.float+0.5)*a, (i.float+0.5)*a*rt3]))
 
     let boundary = [(cols.float-1.0)*a, (rows.float+1)*rt3*a]
+    return (objs, boundary)
+
+proc concentric*(min_scale: float, max_scale: float, steps: int, f: ObjectScaleGenerator): (seq[MaskedCircle], Box) =
+    var objs: seq[MaskedCircle] = @[]
+    var boundary: Box
+    for i in 0 .. steps:
+        let s = min_scale + (max_scale - min_scale) / steps.float * i.float
+        let obj = f(s)
+        let bd = obj.boundary()
+
+        if boundary == nil:
+            boundary = bd
+        else:
+            boundary = Box().initBox(ll=min(boundary.ll, bd.ll), uu=max(boundary.uu, bd.uu))
+
+        objs.add(obj)
     return (objs, boundary)
 
 proc square_grid_object*(rows: int, cols: int, f: ObjectGenerator): (seq[Object], Vec) =
@@ -66,10 +83,27 @@ proc json_to_circle(node: JsonNode, sim: Simulation): Circle =
     let name = node{"name"}.getStr("")
     return Circle().initCircle(pos=pos, rad=rad, damp=damp, name=name)
 
+proc json_to_masked_circle(node: JsonNode, sim: Simulation): MaskedCircle =
+    let pos = json_to_vec(node{"pos"})
+    let rad = node{"rad"}.getFloat()
+    let damp = node{"damp"}.getFloat()
+    let name = node{"name"}.getStr("")
+
+    let f = node{"mask"}
+    let n = f{"n"}.getInt(0)
+    let gap = f{"gap"}.getFloat(0.0)
+    let offset = f{"offset"}.getFloat(0.0)
+    let mask = circle_nholes(nholes=n, eps=gap, offset=offset)
+
+    return MaskedCircle().initMaskedCircle(pos=pos, rad=rad, damp=damp, name=name, mask=mask)
+
 proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
     var objs: seq[Object] = @[]
     if node{"type"}.getStr() == "circle":
         objs.add(json_to_circle(node, sim))
+
+    if node{"type"}.getStr() == "masked_circle":
+        objs.add(json_to_masked_circle(node, sim))
 
     if node{"type"}.getStr() == "box":
         objs.add(json_to_box(node, sim))
@@ -94,6 +128,22 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
         let (obj, boundary) = hex_grid_object(rows=rows, cols=cols, f=generate_object)
         objs.add(Box().initBox(ll=[0.0,0.0], uu=boundary, name="boundary"))
         for o in obj:
+            objs.add(o)
+
+    if node{"type"}.getStr() == "concentric":
+        proc generate_object(scale: float): MaskedCircle =
+            var o: MaskedCircle = json_to_masked_circle(node{"object"}, sim)
+            o = o.scale(scale)
+            return o
+
+        let min_scale = node{"scaling_function"}{"min_scale"}.getFloat(1.0)
+        let max_scale = node{"scaling_function"}{"max_scale"}.getFloat(1.0)
+        let steps = node{"scaling_function"}{"steps"}.getInt(1)
+        let (obj, boundary) = concentric(min_scale=min_scale, max_scale=max_scale, steps=steps, f=generate_object)
+        boundary.name = "boundary"
+        objs.add(boundary)
+        for o in obj:
+            echo $o
             objs.add(o)
 
     return objs

@@ -1,9 +1,9 @@
-libc/plinko
-libc/plinko-single
-libc/plinko-density
-libc/plinko-directdraw
-libc/plinko-twotone
-libc/plinko-nbounces
+c/plinko
+c/plinko-single
+c/plinko-density
+c/plinko-directdraw
+c/plinko-twotone
+c/plinko-nbounces
 *.so
 *.a
 *.lua.c

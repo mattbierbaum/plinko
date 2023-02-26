@@ -43,3 +43,9 @@ proc rotate*(v: Vec, theta: float): Vec {.inline.} =
     return [v[0]*c - v[1]*s, v[0]*s + v[1]*c]
 
 proc `$`*(v: Vec): string = fmt"[{v[0]}, {v[1]}]"
+
+proc min*(v0: Vec, v1: Vec): Vec {.inline.} =
+    return [min(v0[0], v1[0]), min(v0[1], v1[1])]
+
+proc max*(v0: Vec, v1: Vec): Vec {.inline.} =
+    return [max(v0[0], v1[0]), max(v0[1], v1[1])]

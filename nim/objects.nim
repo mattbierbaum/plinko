@@ -129,6 +129,11 @@ type
     Segment* = ref object of Object
         p0*, p1*: Vec
 
+type
+    Box* = ref object of Object
+        ll*, lu*, uu*, ul*: Vec
+        segments*: seq[Segment]
+
 proc initObject*(self: Object, damp: float, name: string = ""): Object = 
     self.damp = damp
     self.index = 0
@@ -136,11 +141,36 @@ proc initObject*(self: Object, damp: float, name: string = ""): Object =
         self.name = name
     return self
 
+proc initSegment*(self: Segment, p0: Vec = [0.0, 0.0], p1: Vec = [0.0, 0.0], damp: float = 1.0, name: string = ""): Segment =
+    self.p0 = p0
+    self.p1 = p1 
+    discard self.initObject(damp=damp, name=name)
+    return self
+
+proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0, name: string = ""): Box =
+    let lu = [ll[0], uu[1]]
+    let ul = [uu[0], ll[1]]
+
+    self.ll = ll
+    self.lu = lu
+    self.uu = uu
+    self.ul = ul
+
+    self.segments = @[
+        Segment().initSegment(self.ll, self.lu, damp=damp),
+        Segment().initSegment(self.lu, self.uu, damp=damp),
+        Segment().initSegment(self.uu, self.ul, damp=damp),
+        Segment().initSegment(self.ul, self.ll, damp=damp)
+    ]
+    discard self.initObject(damp=damp, name=name)
+    return self
+
 method `$`*(self: Object): string {.base.} = "Object"
 method normal*(self: Object, seg: Segment): Vec {.base.} = [0.0, 0.0]
 method center*(self: Object): Vec {.base.} = [0.0, 0.0]
 method translate*(self: Object, v: Vec): Object {.base.} = Object()
 method intersection*(self: Object, seg: Segment): (Object, float) {.base.} = (nil, -1.0)
+method boundary*(self: Object): Box {.base.} = Box()
 
 proc set_index*(self: Object, i: int) = 
     self.index = i
@@ -148,12 +178,6 @@ proc set_index*(self: Object, i: int) =
         self.name = "object-" & $self.index
 
 # ----------------------------------------------------------------
-proc initSegment*(self: Segment, p0: Vec = [0.0, 0.0], p1: Vec = [0.0, 0.0], damp: float = 1.0, name: string = ""): Segment =
-    self.p0 = p0
-    self.p1 = p1 
-    discard self.initObject(damp=damp, name=name)
-    return self
-
 proc `-`*(self: Segment): Segment = Segment().initSegment(self.p1, self.p0)
 method `$`*(self: Segment): string = fmt"Segment: '{self.name}' {self.p0} -> {self.p1}"
 
@@ -214,6 +238,9 @@ proc scale*(self: Segment, s: float): Segment =
         p1: lerp(self.p0, self.p1, 0.5 + s/2),
         damp: self.damp
     )
+
+method boundary*(self: Segment): Box =
+    return Box().initBox(ll=min(self.p0, self.p1), uu=max(self.p0, self.p1))
 
 # ---------------------------------------------------------------
 type
@@ -448,6 +475,8 @@ proc scale*(self: Circle, s: float): Circle =
 proc rotate*(self: Circle, theta: float): Circle =
     return Circle().initCircle(pos=self.pos, rad=self.rad, damp=self.damp)
 
+method boundary*(self: Circle): Box =
+    return Box().initBox(ll=self.pos-[self.rad, self.rad], uu=self.pos+[self.rad, self.rad])
 
 # ----------------------------------------------------------------
 type 
@@ -457,13 +486,13 @@ type
     MaskedCircle* = ref object of Circle
         mask: MaskFunction
 
-proc initMaskedCircle*(self: MaskedCircle, pos: Vec, rad: float, damp: float = 1.0, mask: MaskFunction): MaskedCircle =
+proc initMaskedCircle*(self: MaskedCircle, pos: Vec, rad: float, mask: MaskFunction, damp: float = 1.0, name: string = ""): MaskedCircle =
     self.mask = mask
     discard self.initCircle(pos=pos, rad=rad, damp=damp)
     return self
 
 method intersection*(self: MaskedCircle, seg: Segment): (Object, float) =
-    let time = self.intersection(seg)[1]
+    let time = self.Circle.intersection(seg)[1]
     if time < 0:
         return (nil, -1.0)
 
@@ -475,9 +504,18 @@ method intersection*(self: MaskedCircle, seg: Segment): (Object, float) =
         return (self, time)
     return (nil, -1.0)
 
+proc translate*(self: MaskedCircle, vec: Vec): MaskedCircle =
+    return MaskedCircle().initMaskedCircle(pos=self.pos + vec, rad=self.rad, damp=self.damp, mask=self.mask)
+
+proc scale*(self: MaskedCircle, s: float): MaskedCircle = 
+    return MaskedCircle().initMaskedCircle(pos=self.pos, rad=self.rad * s, damp=self.damp, mask=self.mask)
+
+method `$`*(self: MaskedCircle): string = fmt"MaskedCircle[{self.index}]: '{self.name}' {self.pos}, rad={self.rad},{self.radsq}, damp={self.damp}"
+
 proc circle_nholes*(nholes: int, eps: float, offset: float): MaskFunction =
+    let angle = offset * 2.0 * PI
     return proc(theta: float): bool =
-        let r: float = nholes.float * (theta - offset) / (2.0 * PI)
+        let r: float = nholes.float * (theta - angle) / (2.0 * PI)
         return abs(r - floor(r + 0.5)) > eps
 
 proc circle_angle_range*(amin: float, amax: float): MaskFunction =
@@ -485,28 +523,7 @@ proc circle_angle_range*(amin: float, amax: float): MaskFunction =
         return (theta > amin) and (theta < amax)
 
 # ---------------------------------------------------------------
-type
-    Box* = ref object of Object
-        ll*, lu*, uu*, ul*: Vec
-        segments*: seq[Segment]
 
-proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0, name: string = ""): Box =
-    let lu = [ll[0], uu[1]]
-    let ul = [uu[0], ll[1]]
-
-    self.ll = ll
-    self.lu = lu
-    self.uu = uu
-    self.ul = ul
-
-    self.segments = @[
-        Segment().initSegment(self.ll, self.lu, damp=damp),
-        Segment().initSegment(self.lu, self.uu, damp=damp),
-        Segment().initSegment(self.uu, self.ul, damp=damp),
-        Segment().initSegment(self.ul, self.ll, damp=damp)
-    ]
-    discard self.initObject(damp=damp, name=name)
-    return self
 
 method `$`*(self: Box): string = fmt"Box[{self.index}]: '{self.name}' {$self.ll} -> {$self.uu}, damp={self.damp}"
 
