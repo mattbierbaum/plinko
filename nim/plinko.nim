@@ -13,7 +13,9 @@ if len(params) != 1:
 else:
     let json = open(params[0], fmRead).readAll()
     var sim = json_to_simulation(json)
-    echo $sim
+
+    if sim.verbose:
+        echo $sim
 
     var time_start = times.cpuTime()
     sim.run()

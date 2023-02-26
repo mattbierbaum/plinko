@@ -161,11 +161,12 @@ proc json_to_simulation*(json: string): Simulation =
     var cfg = parseJson(json)
     if cfg{"simulation"} != nil:
         var s = cfg["simulation"]
-        sim.eps = s["eps"].getFloat(1e-6)
-        sim.dt = s["dt"].getFloat(1e-2)
-        sim.max_steps = s["max_steps"].getInt(1)
-        sim.equal_time = s["equal_time"].getBool(true)
-        sim.accuracy_mode = s["accuracy"].getBool(false)
+        sim.eps = s{"eps"}.getFloat(1e-6)
+        sim.dt = s{"dt"}.getFloat(1e-2)
+        sim.max_steps = s{"max_steps"}.getInt(1)
+        sim.verbose = s{"verbose"}.getBool(true)
+        sim.equal_time = s{"equal_time"}.getBool(false)
+        sim.accuracy_mode = s{"accuracy"}.getBool(false)
 
     if cfg{"objects"} != nil:
         for node in cfg{"objects"}:

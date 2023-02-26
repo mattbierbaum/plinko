@@ -10,6 +10,7 @@ type
     Simulation* = ref object of RootObj
         t, dt*, eps*: float
         max_steps*: int
+        verbose*: bool
         equal_time*: bool
         accuracy_mode*: bool
         objects*: seq[Object]
@@ -25,6 +26,7 @@ proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_
     self.dt = dt
     self.eps = eps
     self.max_steps = max_steps
+    self.verbose = true
     self.equal_time = false
     self.accuracy_mode = false
     self.objects = @[]
