@@ -11,16 +11,16 @@ proc round*(x: float): float {.inline.} = return ipart(x + 0.5)
 proc fpart*(x: float): float {.inline.} = return x - floor(x)
 proc rfpart*(x: float): float {.inline.} = return 1 - fpart(x)
 
-proc swap*(a: float, b: float): (float, float) = return (b, a)
-proc swap*(a: int, b: int): (int, int) = return (b, a)
+proc swap*(a: float, b: float): (float, float) {.inline.} = return (b, a)
+proc swap*(a: int, b: int): (int, int) {.inline.} = return (b, a)
 
-iterator `..`*(a: float, b: float, c: float): float =
+iterator `..`*(a: float, b: float, c: float): float {.inline.} =
   var res: float = a
   while res <= b:
     yield res
     res = res + c
 
-proc inc(x: var float; y: float = 1.0) =
+proc inc(x: var float; y: float = 1.0) {.inline.} =
     x = x + y
 
 # ========================================================
@@ -50,7 +50,7 @@ proc `$`*(self: DensityPlot): string =
     o &= fmt"  shape={self.grid.shape}"
     return o
 
-proc reflect*(self: DensityPlot, y: float): float =
+proc reflect*(self: DensityPlot, y: float): float {.inline.} =
     return self.grid.shape[1].float - y - 1.0
 
 proc plot*(self: DensityPlot, x: float, y: float, c: float): void =

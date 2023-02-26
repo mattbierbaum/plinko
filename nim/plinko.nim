@@ -1,3 +1,5 @@
+# import nimprof
+
 import ics
 import simulation
 
@@ -13,7 +15,12 @@ else:
     var sim = json_to_simulation(json)
     echo $sim
 
-    let time_start = times.cpuTime()
+    var time_start = times.cpuTime()
     sim.run()
-    let time_end = times.cpuTime()
+    var time_end = times.cpuTime()
     echo fmt"Step rate (M/sec): {sim.max_steps.float/(time_end-time_start)/1e6}"
+
+    time_start = times.cpuTime()
+    sim.close()
+    time_end = times.cpuTime()
+    echo fmt"Close time (sec): {time_end - time_start}"

@@ -132,13 +132,6 @@ proc linear_project*(self: Simulation, part0: PointParticle, part1: PointParticl
 
     self.observer_group.update_collision(parti, mino, mint)
     let (pseg, vseg) = mino.collide(part0, parti, part1)
-    # echo "====================="
-    # echo $part0
-    # echo $parti
-    # echo $part1
-    # echo $pseg
-    # echo $vseg
-    # echo "====================="
 
     if not self.equal_time:
         part0.pos = pseg.p0
@@ -153,7 +146,6 @@ proc step_particle*(self: Simulation, part0: PointParticle): void =
     if not part0.active:
         return
 
-    # echo $part0
     let part1 = self.integrator(part0, self.dt)
     let (parti, is_running) = self.linear_project(part0, part1)
     let active = (
@@ -165,7 +157,6 @@ proc step_particle*(self: Simulation, part0: PointParticle): void =
     part0.copy(parti)
     part0.active = active
     self.observer_group.update_particle(part0)
-
 
 proc step*(self: Simulation, steps: int = 1): void =
     for step in 0 .. steps:
@@ -182,8 +173,6 @@ proc step*(self: Simulation, steps: int = 1): void =
         if self.observer_group.is_triggered():
             break
 
-    self.observer_group.close()
-
 proc `$`*(self: Simulation): string =
     var o = ""
     o = o & fmt"Simulation: dt={self.dt} eps={self.eps} steps={self.max_steps}" & "\n"
@@ -198,3 +187,6 @@ proc `$`*(self: Simulation): string =
 
 proc run*(self: Simulation): void =
     self.step(self.max_steps)
+
+proc close*(self: Simulation): void =
+    self.observer_group.close()

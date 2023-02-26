@@ -17,9 +17,9 @@ type BlendFunction* = proc(a: float, b: float): float
 type NormFunction* = proc(data: seq[float]): seq[float]
 type CmapFunction* = proc(data: seq[float]): seq[uint8]
 
-proc clip*(x: float): float = return max(0.0, min(x, 1.0))
+proc clip*(x: float): float {.inline.} = return max(0.0, min(x, 1.0))
 
-proc gw3c*(a: float): float = 
+proc gw3c*(a: float): float {.inline.} = 
     if a < 0.25:
         return ((16*a - 12)*a + 4)*a
     else:

@@ -5,8 +5,6 @@ import std/strformat
 import roots
 import vector
 
-var OBJECT_INDEX: int = 0
-
 # -------------------------------------------------------------
 type
     PointParticle* = ref object of RootObj
@@ -25,8 +23,7 @@ proc initPointParticle*(
     self.vel = vel
     self.acc = acc
     self.active = true
-    self.index = OBJECT_INDEX
-    OBJECT_INDEX = OBJECT_INDEX + 1
+    self.index = 0
     return self
 
 proc copy*(self: PointParticle, other: PointParticle): void =
@@ -51,9 +48,11 @@ method `$`*(self: ParticleGroup): string {.base.} = ""
 type
     SingleParticle* = ref object of ParticleGroup
         particle*: PointParticle
+        particles*: seq[PointParticle]
 
 proc initSingleParticle*(self: SingleParticle, particle: PointParticle): SingleParticle = 
     self.particle = particle
+    self.particles = @[particle]
     return self
 
 method index*(self: SingleParticle, index: int): PointParticle = 
@@ -61,7 +60,7 @@ method index*(self: SingleParticle, index: int): PointParticle =
         return self.particle
 
 method count*(self: SingleParticle): int = 1
-method items*(self: SingleParticle): seq[PointParticle] = @[self.particle]
+method items*(self: SingleParticle): seq[PointParticle] = return self.particles
 method `$`*(self: SingleParticle): string = $self.particle
 
 # -------------------------------------------------------------
