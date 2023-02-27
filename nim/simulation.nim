@@ -3,6 +3,7 @@ import objects
 import forces
 import neighborlist
 import observers
+import roots
 
 import std/strformat
 
@@ -36,6 +37,7 @@ proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_
     self.force_func = @[]
     self.observers = @[]
     self.integrator = integrate_velocity_verlet
+    self.nbl = Neighborlist()
     return self
 
 proc object_by_name*(self: Simulation, name: string): Object =
@@ -58,6 +60,10 @@ proc add_observer*(self: Simulation, observer: Observer): void {.discardable.} =
     self.observers.add(observer)
 
 proc initialize*(self: Simulation): void =
+    for obj in self.objects:
+        self.nbl.append(obj)
+    self.nbl.calculate()
+
     self.observer_group = observers.ObserverGroup()
     discard self.observer_group.initObserverGroup(self.observers)
     self.observer_group.begin()
@@ -67,9 +73,6 @@ proc set_integrator*(self: Simulation, integrator: Integrator): void =
 
 proc set_neighborlist*(self: Simulation, nbl: Neighborlist): void =
     self.nbl = nbl
-    for obj in self.objects:
-        self.nbl.append(obj)
-    self.nbl.calculate()
 
 proc intersection_bruteforce*(self: Simulation, seg: Segment): (float, Object) =
     var mint = 2.0
@@ -88,7 +91,6 @@ proc intersection*(self: Simulation, seg: Segment): (float, Object) =
     var mino: Object = nil
 
     let objs = self.nbl.near(seg)
-    # echo fmt"nbl: {objs.len}"
     for obj in objs:
         let (o, t) = obj.intersection(seg)
         if t < mint and t <= 1 and t >= 0:
@@ -96,20 +98,26 @@ proc intersection*(self: Simulation, seg: Segment): (float, Object) =
             mino = o
     return (mint, mino)
 
+var gs = objects.Segment()
+
 proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointParticle, obj: Object, dt: float): float =
-    var s = objects.Segment()
-    var project = objects.PointParticle()
-
     proc f(dt: float): float =
-        project = self.integrator(part0, dt)
-        s = Segment(p0: part0.pos, p1: project.pos)
-        var (o, t) = obj.intersection(s)
-        if t < 0 or t > 1:
-            s = Segment(p0: project.pos, p1: part1.pos)
-            (o, t) = obj.intersection(s)
-        return lengthsq(project.pos - lerp(s.p0, s.p1, t))
+        let project = self.integrator(part0, dt)
+        gs.p0 = part0.pos
+        gs.p1 = project.pos
+        var (o, t) = obj.intersection(gs)
 
-    return f(0.0) # brent(f=f, bracket=[0, dt], tol=1e-12, maxiter=20)
+        if t < 0 or t > 1:
+            gs.p0 = project.pos
+            gs.p1 = part1.pos
+            (o, t) = obj.intersection(gs)
+            if t < 0 or t > 1:
+                return 0.0
+
+        let r = lengthsq(project.pos - lerp(gs.p0, gs.p1, t))
+        return r
+
+    return roots.brent(f=f, bracket=[0.0, 2*dt], tol=1e-16, maxiter=20)
 
 var gparti = PointParticle()
 var gpseg = Segment()
@@ -126,10 +134,11 @@ proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle)
 
     if self.accuracy_mode:
         mint = self.refine_intersection(part0, part1, mino, self.dt)
-        #parti = self.integrator(part0, mint)
+        if mint < 0 or mint > 1:
+            return (part0, nil, -1.0)
+        gparti = self.integrator(part0, (1 - self.eps)*mint)
     else:
         mint = (1 - self.eps) * mint
-        
         gparti.pos = lerp(part0.pos, part1.pos, mint)
         gparti.vel = lerp(part0.vel, part1.vel, mint)
     return (gparti, mino, mint)
