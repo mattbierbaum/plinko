@@ -76,6 +76,13 @@ proc json_to_box(node: JsonNode, sim: Simulation): Box =
     let name = node{"name"}.getStr("")
     return Box().initBox(ll=ll, uu=uu, damp=damp, name=name)
 
+proc json_to_segment(node: JsonNode, sim: Simulation): Segment =
+    let p0 = json_to_vec(node{"p0"})
+    let p1 = json_to_vec(node{"p1"})
+    let damp = node{"damp"}.getFloat(1.0)
+    let name = node{"name"}.getStr("")
+    return Segment().initSegment(p0=p0, p1=p1, damp=damp, name=name)
+
 proc json_to_circle(node: JsonNode, sim: Simulation): Circle =
     let pos = json_to_vec(node{"pos"})
     let rad = node{"rad"}.getFloat()
@@ -107,6 +114,9 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
 
     if node{"type"}.getStr() == "box":
         objs.add(json_to_box(node, sim))
+
+    if node{"type"}.getStr() == "segment":
+        objs.add(json_to_segment(node, sim))
 
     if node{"type"}.getStr() == "ref":
         if node{"index"} != nil:
