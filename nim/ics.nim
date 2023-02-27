@@ -222,6 +222,7 @@ proc json_to_simulation*(json: string): Simulation =
         sim.dt = s{"dt"}.getFloat(1e-2)
         sim.max_steps = s{"max_steps"}.getInt(1)
         sim.verbose = s{"verbose"}.getBool(true)
+        sim.linear = s{"linear"}.getBool(true)
         sim.equal_time = s{"equal_time"}.getBool(false)
         sim.accuracy_mode = s{"accuracy"}.getBool(false)
 

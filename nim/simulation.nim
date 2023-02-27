@@ -11,6 +11,7 @@ type
         t, dt*, eps*: float
         max_steps*: int
         verbose*: bool
+        linear*: bool
         equal_time*: bool
         accuracy_mode*: bool
         objects*: seq[Object]
@@ -27,6 +28,7 @@ proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_
     self.eps = eps
     self.max_steps = max_steps
     self.verbose = true
+    self.linear = true
     self.equal_time = false
     self.accuracy_mode = false
     self.objects = @[]
@@ -141,11 +143,15 @@ proc linear_project*(self: Simulation, part0: PointParticle, part1: PointParticl
     self.observer_group.update_collision(parti, mino, mint)
     let (pseg, vseg) = mino.collide(part0, parti, part1)
     part0.pos = pseg.p0
-    part0.vel = vseg.p0
+    part0.vel = vseg.p0 
 
     if not self.equal_time:
         self.observer_group.update_particle(part0)
 
+    if self.linear:
+        part1.pos = pseg.p1
+        part1.vel = vseg.p1
+        return self.linear_project(part0, part1)
     return (part0, true)
 
 proc step_particle*(self: Simulation, part0: PointParticle): void =

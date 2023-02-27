@@ -23,7 +23,7 @@
             "mask": {
                 "type": "nholes",
                 "n": 4,
-                "gap": 6e-3,
+                "gap": 5e-3,
                 "offset": 0.25
             }
         }
