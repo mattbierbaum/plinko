@@ -1,8 +1,8 @@
 {
 "simulation": {
     "eps": 1e-6,
-    "dt": 1e-2,
-    "max_steps": 50000000,
+    "dt": 1e-3,
+    "max_steps": 5000000,
     "equal_time": false,
     "accuracy": false
 },
@@ -23,7 +23,7 @@
             "mask": {
                 "type": "nholes",
                 "n": 4,
-                "gap": 5e-3,
+                "gap": 6e-3,
                 "offset": 0.25
             }
         }
@@ -44,7 +44,11 @@
         "format": "pgm5",
         "blend": "max",
         "box": { "type": "ref", "name": "boundary"},
-        "resolution": 3000
+        "resolution": 8000
+    },
+    {
+        "type": "step",
+        "interval": 100000
     }
 ],
 "neighborlist": {

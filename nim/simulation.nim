@@ -86,6 +86,7 @@ proc intersection*(self: Simulation, seg: Segment): (float, Object) =
     var mino: Object = nil
 
     let objs = self.nbl.near(seg)
+    # echo fmt"nbl: {objs.len}"
     for obj in objs:
         let (o, t) = obj.intersection(seg)
         if t < mint and t <= 1 and t >= 0:
@@ -139,10 +140,10 @@ proc linear_project*(self: Simulation, part0: PointParticle, part1: PointParticl
 
     self.observer_group.update_collision(parti, mino, mint)
     let (pseg, vseg) = mino.collide(part0, parti, part1)
+    part0.pos = pseg.p0
+    part0.vel = vseg.p0
 
     if not self.equal_time:
-        part0.pos = pseg.p0
-        part0.vel = vseg.p0
         self.observer_group.update_particle(part0)
 
     return (part0, true)
@@ -175,7 +176,8 @@ proc step*(self: Simulation, steps: int = 1): void =
                 self.step_particle(particle)
 
         self.t = self.t + self.dt
-        self.observer_group.update_time(step.float)
+        self.observer_group.update_time(self.t)
+        self.observer_group.update_step(step)
 
         if self.observer_group.is_triggered():
             break

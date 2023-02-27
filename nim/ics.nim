@@ -155,14 +155,22 @@ proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
         return SingleParticle().initSingleParticle(p)
 
 proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
-    if node{"type"}.getStr() == "svg":
+    if node{"type"}.getStr() == "time":
+        let interval = node{"interval"}.getFloat()
+        return TimePrinter().initTimePrinter(interval)
+
+    if node{"type"}.getStr() == "step":
+        let interval = node{"interval"}.getInt()
+        return StepPrinter().initStepPrinter(interval)
+
+    elif node{"type"}.getStr() == "svg":
         let filename = node{"filename"}.getStr()
         let box = cast[Box](json_to_object(node{"box"}, sim)[0])
         let resolution = node{"resolution"}.getInt()
         let dpi = max(box.uu[0] - box.ll[0], box.uu[1] - box.ll[1]) / resolution.float / 100.0
         return SVGLinePlot().initSVGLinePlot(filename=filename, box=box, lw=dpi)
 
-    if node{"type"}.getStr() == "pgm":
+    elif node{"type"}.getStr() == "pgm":
         let eqhist: NormFunction = proc(data: seq[float]): seq[float] =
             return image.eq_hist(data, nbins=256*256)
 

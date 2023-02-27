@@ -5,6 +5,7 @@ import objects
 import plotting
 import vector
 
+import std/math
 import std/streams
 import std/strformat
 import std/strutils
@@ -18,6 +19,7 @@ method begin*(self: Observer): void {.base.} = return
 method set_particle*(self: Observer, particle: PointParticle): void {.base.} = return
 method update_particle*(self: Observer, particle: PointParticle): void {.base.} = return
 method update_time*(self: Observer, time: float): void {.base.} = return
+method update_step*(self: Observer, time: int): void {.base.} = return
 method update_collision*(self: Observer, particle: PointParticle, obj: Object, time: float): void {.base.} = return
 method is_triggered*(self: Observer): bool {.base.} = false
 method is_triggered_particle*(self: Observer, particle: PointParticle): bool {.base.} = false
@@ -332,22 +334,41 @@ end
 
 # =================================================================
 type
-    TimePrinter* = ref object of Observer
-        interval: int
-        step: int
+    StepPrinter* = ref object of Observer
+        interval*: int
 
-proc initTimePrinter*(self: TimePrinter, interval: int = 100000): TimePrinter =
+proc initStepPrinter*(self: StepPrinter, interval: int = 1): StepPrinter =
+    self.interval = interval
+    return self
+
+method update_step*(self: StepPrinter, t: int): void =
+    if t mod self.interval == 0:
+        stdout.writeLine(fmt"Step: {t}")
+
+method `$`*(self: StepPrinter): string =
+    return fmt"StepPrinter: interval={self.interval}"
+
+# =================================================================
+type
+    TimePrinter* = ref object of Observer
+        interval*: float
+        time*: float
+
+proc initTimePrinter*(self: TimePrinter, interval: float = 1.0): TimePrinter =
     self.interval = interval
     return self
 
 method begin*(self: TimePrinter): void =
-    self.step = 0
+    self.time = 0.0 
 
 method update_time*(self: TimePrinter, t: float): void =
-    if self.step mod self.interval == 0:
-        stdout.writeLine($self.step)
+    let next = (1.0 + floor(self.time / self.interval)) * self.interval
+    if self.time < next and t > next:
+        stdout.writeLine(fmt"{self.time}, {next}")
+    self.time = t
 
-    self.step = self.step + t.int
+method `$`*(self: TimePrinter): string =
+    return fmt"TimePrinter: interval={self.interval}"
 
 # =================================================================
 type
@@ -369,6 +390,10 @@ method update_particle*(self: ObserverGroup, particle: PointParticle): void =
 method update_time*(self: ObserverGroup, time: float): void =
     for obs in self.observers:
         obs.update_time(time)
+
+method update_step*(self: ObserverGroup, time: int): void =
+    for obs in self.observers:
+        obs.update_step(time)
 
 method update_collision*(self: ObserverGroup, particle: PointParticle, obj: Object, time: float): void =
     for obs in self.observers:

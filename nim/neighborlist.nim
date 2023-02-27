@@ -30,6 +30,7 @@ type
         cells*: Table[int, seq[Object]]
         seen*: Table[int, Table[int, bool]]
         box*: Box
+        near_seen*: seq[bool]
 
 proc initCellNeighborlist*(self: CellNeighborlist, box: Box, ncells: array[2, int], buffer: float = -1): CellNeighborlist =
     let sidelength: float = max(box.uu[0] - box.ll[0], box.uu[1] - box.ll[1])
@@ -95,11 +96,19 @@ method calculate*(self: CellNeighborlist): void =
                     if t >= 0 and t <= 1:
                         self.add_to_cell(i, j, l, obj)
 
+    var max_index = 0
+    for obj in self.objects:
+        if obj.index > max_index:
+            max_index = obj.index
+    self.near_seen = newSeq[bool](max_index+1)
+
 proc addcell*(self: CellNeighborlist, i: int, j: int, objs: var seq[Object]): void =
     assert(i >= 0 or i <= self.ncells[0] or j >= 0 or j <= self.ncells[1])
     let ind = self.cell_ind(i, j)
     for obj in self.cells[ind]:
-        objs.add(obj)
+        if not self.near_seen[obj.index]:
+            self.near_seen[obj.index] = true
+            objs.add(obj)
 
 method near*(self: CellNeighborlist, seg: Segment): seq[Object] =
     let box = self.box
@@ -151,6 +160,11 @@ method near*(self: CellNeighborlist, seg: Segment): seq[Object] =
             else:
                 self.addcell(x, iy0, objs)
                 self.addcell(x, iy1, objs)
+
+    for obj in objs:
+        if obj == nil:
+            break
+        self.near_seen[obj.index] = false
     return objs
 
 method `$`*(self: CellNeighborlist): string =
