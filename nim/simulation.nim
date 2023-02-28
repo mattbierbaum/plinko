@@ -120,9 +120,9 @@ proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle)
         mint = self.refine_intersection(part0, part1, mino, self.dt)
         if mint < 0 or mint > 1:
             return (part0, nil, -1.0)
-        gparti = self.integrator(part0, (1 - self.eps)*mint)
+        gparti = self.integrator(part0, (1 - mino.buffer_sign * self.eps)*mint)
     else:
-        mint = (1 - self.eps) * mint
+        mint = (1 - mino.buffer_sign * self.eps) * mint
         gparti.pos = lerp(part0.pos, part1.pos, mint)
         gparti.vel = lerp(part0.vel, part1.vel, mint)
     return (gparti, mino, mint)

@@ -124,6 +124,7 @@ type
         damp*: float
         index*: int
         name*: string
+        buffer_sign*: float
 
 type 
     Segment* = ref object of Object
@@ -136,6 +137,7 @@ type
 
 proc initObject*(self: Object, damp: float, name: string = ""): Object = 
     self.damp = damp
+    self.buffer_sign = if damp < 0: -1.0 else: 1.0
     self.index = 0
     if name.len > 0:
         self.name = name
@@ -701,13 +703,17 @@ proc initRegularPolygon*(self: RegularPolygon, N: int, pos: Vec, size: float, da
 # -------------------------------------------------------------
 method collide*(self: Object, part0: PointParticle, parti: PointParticle, part1: PointParticle): (Segment, Segment) {.base.} =
     let scoll = Segment(p0: part0.pos, p1: parti.pos)
-    let stotal = Segment(p0: part0.pos, p1: part1.pos)
-    let norm = self.normal(scoll)
-    let dir = reflect(stotal.p1 - scoll.p1, norm)
-
-    stotal.p0 = scoll.p1
-    stotal.p1 = scoll.p1 + dir
+    let stotal = Segment(p0: parti.pos, p1: part1.pos)
     let vseg = Segment(p0:parti.vel, p1:part1.vel)
+
+    if self.damp < 0:
+        vseg.p0 = vseg.p0 * abs(self.damp)
+        vseg.p1 = vseg.p1 * abs(self.damp)
+        return (stotal, vseg)
+
+    let norm = self.normal(scoll)
+    let dir = reflect(part1.pos - parti.pos, norm)
+    stotal.p1 = parti.pos + dir
     vseg.p0 = reflect(vseg.p0, norm) * self.damp
     vseg.p1 = reflect(vseg.p1, norm) * self.damp
     return (stotal, vseg)
