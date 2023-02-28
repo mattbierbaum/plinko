@@ -4,7 +4,8 @@
     "dt": 1e-2,
     "max_steps": 1000000,
     "equal_time": false,
-    "accuracy": false
+    "accuracy": false,
+    "linear": false
 },
 "objects": [
     { 

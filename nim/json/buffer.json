@@ -1,0 +1,32 @@
+{
+"simulation": {
+    "eps": 1e-6,
+    "dt": 1e-3,
+    "max_steps": 100000,
+    "equal_time": false,
+    "accuracy": false
+},
+"objects": [
+    { "type": "box", "name": "boundary", "ll": [0.0, 0.0], "uu": [1.0, 1.0], "damp": 1.0 },
+    { "type": "segment", "p0": [ 0.5, 0.25], "p1": [0.5, 0.75], "damp": -0.5},
+    { "type": "segment", "p0": [ 0.501, 0.25], "p1": [0.501, 0.75], "damp": -0.5},
+    { "type": "circle", "pos": [ 0.0, 0.0], "rad": 0.1, "damp": 1.0}
+],
+"particles": [ { "type": "single", "pos": [0.5, 0.9], "vel": [0.2111, 0.0] } ],
+"forces": [ { "type": "gravity", "g": -1.0 } ],
+"observers": [
+    {"type": "step", "interval": 100000},
+    {
+        "type": "pgm", "filename": "test.pgm", "format": "pgm5", "blend": "add",
+        "box": { "type": "ref", "name": "boundary"},
+        "resolution": 1000
+    }
+],
+"neighborlist": {
+    "type": "cell",
+    "ncells": [100, 100],
+    "buffer": 0.1,
+    "box": { "type": "ref", "name": "boundary" }
+}
+}
+

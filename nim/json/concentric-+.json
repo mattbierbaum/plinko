@@ -33,12 +33,8 @@
     { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.12501, "damp": 1.0 },
     { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.4999, "damp": 1.0 }
 ],
-"particles": [
-    { "type": "single", "pos": [0.501, 0.97], "vel": [0.1, 0.0] }
-],
-"forces": [
-    { "type": "gravity", "g": -1.0 }
-],
+"particles": [ { "type": "single", "pos": [0.501, 0.97], "vel": [0.1, 0.0] } ],
+"forces": [ { "type": "gravity", "g": -1.0 } ],
 "observers": [
     {
         "type": "pgm", 
@@ -48,10 +44,7 @@
         "box": { "type": "ref", "name": "boundary"},
         "resolution": 8000
     },
-    {
-        "type": "step",
-        "interval": 100000
-    }
+    { "type": "step", "interval": 100000 }
 ],
 "neighborlist": {
     "type": "cell",
