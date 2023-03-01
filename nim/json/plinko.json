@@ -14,7 +14,7 @@
     }
 ],
 "particles": [
-    { "type": "single", "pos": [20, 42.3], "vel": [0.1, 0.0] }
+    { "type": "single", "pos": [20, 41.3], "vel": [0.1, 0.0] }
 ],
 "forces": [
     { "type": "gravity", "g": -1.0 }

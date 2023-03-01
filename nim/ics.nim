@@ -11,14 +11,14 @@ import std/json
 import std/math
 import std/tables
 
-type ObjectTranslationGenerator = proc(pos: Vec): Circle
-type ObjectScaleGenerator = proc(scale: float): MaskedCircle
+type ObjectTranslationGenerator[T] = proc(pos: Vec): T
+type ObjectScaleGenerator[T] = proc(scale: float): T
 
-proc hex_grid_object*(rows: int, cols: int, f: ObjectTranslationGenerator): (seq[Circle], Vec) =
+proc hex_grid_object*[T](rows: int, cols: int, f: ObjectTranslationGenerator[T]): (seq[T], Vec) =
     var a = 1.0
     var rt3 = math.sqrt(3.0)
 
-    var objs: seq[Circle] = @[]
+    var objs: seq[T] = @[]
     for i in 0 .. rows-1:
         for j in 0 .. cols-1:
             if (i.float*a*rt3 >= 1e-10):
@@ -27,11 +27,11 @@ proc hex_grid_object*(rows: int, cols: int, f: ObjectTranslationGenerator): (seq
             if not (j == cols - 1):
                 objs.add(f([(j.float+0.5)*a, (i.float+0.5)*a*rt3]))
 
-    let boundary = [(cols.float-1.0)*a, (rows.float+1)*rt3*a]
+    let boundary = [(cols.float-1.0)*a, (rows.float)*rt3*a]
     return (objs, boundary)
 
-proc concentric*(min_scale: float, max_scale: float, steps: int, f: ObjectScaleGenerator): (seq[MaskedCircle], Box) =
-    var objs: seq[MaskedCircle] = @[]
+proc concentric*[T](min_scale: float, max_scale: float, steps: int, f: ObjectScaleGenerator[T]): (seq[T], Box) =
+    var objs: seq[T] = @[]
     var boundary: Box
     for i in 0 .. steps - 1:
         let s = min_scale + (max_scale - min_scale) / (steps.float-1.0) * i.float
@@ -127,29 +127,28 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
             objs.add(sim.object_by_name(name))
 
     if node{"type"}.getStr() == "tri-lattice":
-        proc generate_object(pos: Vec): Circle =
-            var o: Circle = json_to_circle(node{"object"}, sim)
-            o = o.translate(-o.center()).Circle
-            o = o.translate(pos).Circle
+        proc generate_object_translate(pos: Vec): Object =
+            var o: Object = json_to_object(node{"object"}, sim)[0]
+            o = o.translate(-o.center())
+            o = o.translate(pos)
             return o
 
         let rows = node{"rows"}.getInt(0)
         let cols = node{"columns"}.getInt(0)
-        let (obj, boundary) = hex_grid_object(rows=rows, cols=cols, f=generate_object)
+        let (obj, boundary) = hex_grid_object(rows=rows, cols=cols, f=generate_object_translate)
         objs.add(Box().initBox(ll=[0.0,0.0], uu=boundary, name="boundary"))
         for o in obj:
             objs.add(o)
 
     if node{"type"}.getStr() == "concentric":
-        proc generate_object(scale: float): MaskedCircle =
-            var o: MaskedCircle = json_to_masked_circle(node{"object"}, sim)
-            o = o.scale(scale).MaskedCircle
-            return o
+        proc generate_object_scale(scale: float): Object =
+            var o: Object = json_to_object(node{"object"}, sim)[0]
+            return o.scale(scale)
 
         let min_scale = node{"scaling_function"}{"min_scale"}.getFloat(1.0)
         let max_scale = node{"scaling_function"}{"max_scale"}.getFloat(1.0)
         let steps = node{"scaling_function"}{"steps"}.getInt(1)
-        let (obj, boundary) = concentric(min_scale=min_scale, max_scale=max_scale, steps=steps, f=generate_object)
+        let (obj, boundary) = concentric(min_scale=min_scale, max_scale=max_scale, steps=steps, f=generate_object_scale)
         boundary.name = "boundary"
         objs.add(boundary)
         for o in obj:
