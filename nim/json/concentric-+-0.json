@@ -2,30 +2,38 @@
 "simulation": {
     "eps": 1e-6,
     "dt": 1e-3,
-    "max_steps": 15000000,
+    "max_steps": 3500000,
     "equal_time": false,
     "accuracy": false,
     "linear": true,
-    "verbose": true
+    "verbose": false
 },
 "objects": [
     { 
-        "type": "tri-lattice", "rows": 4, "columns": 8, 
-        "object": { 
+        "type": "concentric", 
+        "scaling_function": {
+            "type": "linear",
+            "min_scale": 1.0,
+            "max_scale": 4.0,
+            "steps": 150
+        },
+        "object": {
             "type": "masked_circle",
             "pos": [ 0.5, 0.5],
-            "rad": 0.4997,
-            "damp": 1.0,
+            "rad": 0.125,
+            "damp": 0.999999,
             "mask": {
                 "type": "nholes",
-                "n": 1,
-                "gap": 0.25,
-                "offset": 0.5
+                "n": 128,
+                "gap": 9e-3,
+                "offset": 0.0
             }
         }
-    }
+    },
+    { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.12501, "damp": 1.0 },
+    { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.4999, "damp": 1.0 }
 ],
-"particles": [ { "type": "single", "pos": [4.5, 6.3], "vel": [0.1, 0.0] } ],
+"particles": [ { "type": "single", "pos": [0.501, 0.7], "vel": [0.1, 0.0] } ],
 "forces": [ { "type": "gravity", "g": -1.0 } ],
 "observers": [
     {
@@ -36,7 +44,7 @@
         "box": { "type": "ref", "name": "boundary"},
         "resolution": 8000
     },
-    {"type": "step", "interval": 100000}
+    { "type": "step", "interval": 100000 }
 ],
 "neighborlist": {
     "type": "cell",
