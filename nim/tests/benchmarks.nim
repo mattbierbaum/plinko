@@ -1,6 +1,9 @@
+# import nimprof
+
 import ../objects
 import ../roots
 import ../vector
+import ../simulation
 
 import std/times
 import std/strformat
@@ -67,7 +70,7 @@ proc segment_creation(): (string, int, float) =
 
 proc roots_quadratic(): (string, int, float) =
     var sum = 0.0
-    let steps = 1e6.int
+    let steps = 1e7.int
     var v = [-1.0, -1.0, 1.0]
     for i in 0 .. steps:
         sum += quadratic(v)[0]
@@ -85,12 +88,55 @@ proc roots_quadratic_seq(): (string, int, float) =
 
 proc circle_intersection(): (string, int, float) =
     var sum = 0.0
-    let steps = 1e6.int
+    let steps = 1e7.int
     var c = Circle().initCircle(pos=[0.0, 0.0], rad=0.5)
     var s = Segment().initSegment(p0=[0.0,0.0], p1=[1.0,1.0])
     for i in 0 .. steps:
         sum += c.intersection(s)[1]
     return ("circle_intersection", steps, sum)
+
+proc circle_intersection_dispatch(): (string, int, float) =
+    var sum = 0.0
+    let steps = 1e7.int
+    var c: Object = Circle().initCircle(pos=[0.0, 0.0], rad=0.5)
+    var s = Segment().initSegment(p0=[0.0,0.0], p1=[1.0,1.0])
+    for i in 0 .. steps:
+        sum += c.intersection(s)[1]
+    return ("circle_intersection_dispatch", steps, sum)
+
+proc simulation_collide(): (string, int, float) =
+    var circle: Object = Circle().initCircle(pos=[0.5, 0.5], rad=0.5)
+    var sim: Simulation = Simulation().initSimulation(max_steps=1)
+    sim.add_object(circle)
+    sim.initialize()
+
+    var p0 = PointParticle().initPointParticle(
+        pos=[0.5, 0.001], vel=[0.0, 0.0], acc=[0.0, 0.0])
+    var p1 = PointParticle().initPointParticle(
+        pos=[0.5, -0.001], vel=[0.0, 0.0], acc=[0.0, 0.0])
+
+    var sum = 0.0
+    let steps = 1e6.int
+    for i in 0 .. steps:
+        let (p, _) = sim.step_collisions(p0, p1)
+        sum += p.pos[0]
+    return ("simulation_collide", steps, sum)
+
+proc simulation_intersection(): (string, int, float) =
+    var circle: Object = Circle().initCircle(pos=[0.5, 0.5], rad=0.5)
+    var sim: Simulation = Simulation().initSimulation(max_steps=1)
+    sim.linear = false
+    sim.accuracy_mode = false
+    sim.add_object(circle)
+    sim.initialize()
+
+    var s = Segment().initSegment([0.5,0.001], [0.5,-0.001])
+    var sum = 0.0
+    let steps = 1e6.int
+    for i in 0 .. steps:
+        let (t, _) = sim.intersect_objects(s)
+        sum += t
+    return ("simulation_intersection", steps, sum)
 
 benchmark(array_creation)
 benchmark(array_modification)
@@ -100,3 +146,6 @@ benchmark(seq_modification)
 benchmark(segment_creation)
 benchmark(roots_quadratic)
 benchmark(circle_intersection)
+benchmark(circle_intersection_dispatch)
+benchmark(simulation_collide)
+benchmark(simulation_intersection)

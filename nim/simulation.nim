@@ -84,7 +84,9 @@ proc intersect_objects*(self: Simulation, seg: Segment): (float, Object) =
         if t < mint and t <= 1 and t >= 0:
             mint = t
             mino = o
-    return (mint, mino)
+    if mint >= 0 and mint <= 1:
+        return (mint, mino)
+    return (-1.0, nil)
 
 var gs = objects.Segment()
 
@@ -107,7 +109,7 @@ var gparti = PointParticle()
 var gpseg = Segment()
 
 proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, Object, float) =
-    # var parti = PointParticle()
+    # var gparti = PointParticle()
     # var pseg = Segment(p0: part0.pos, p1: part1.pos)
     gpseg.p0 = part0.pos
     gpseg.p1 = part1.pos
@@ -123,6 +125,10 @@ proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle)
         gparti = self.integrator(part0, (1 - mino.buffer_sign * self.eps)*mint)
     else:
         mint = (1 - mino.buffer_sign * self.eps) * mint
+        # gparti.pos[0] = mint * part0.pos[0] + part1.pos[0]
+        # gparti.pos[1] = mint * part0.pos[1] + part1.pos[1]
+        # gparti.pos[0] = (1 - mint) * part0.pos[0] + mint * part1.pos[0]
+        # gparti.pos[1] = (1 - mint) * part0.pos[1] + mint * part1.pos[1]
         gparti.pos = lerp(part0.pos, part1.pos, mint)
         gparti.vel = lerp(part0.vel, part1.vel, mint)
     return (gparti, mino, mint)
