@@ -221,6 +221,11 @@ proc json_to_force(node: JsonNode, sim: Simulation): IndependentForce =
     if node{"type"}.getStr() == "gravity":
         return generate_force_gravity(node{"g"}.getFloat())
 
+    if node{"type"}.getStr() == "central":
+        let c = json_to_vec(node{"pos"})
+        let k = node{"k"}.getFloat()
+        return generate_force_central(c, k)
+
 proc json_to_simulation*(json: string): Simulation =
     var sim = Simulation().initSimulation()
 
