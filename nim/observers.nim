@@ -17,6 +17,7 @@ type
 method init*(self: Observer): void {.base.} = return
 method begin*(self: Observer): void {.base.} = return
 method set_particle*(self: Observer, particle: PointParticle): void {.base.} = return
+method record_object*(self: Observer, obj: Object): void {.base.} = return
 method update_particle*(self: Observer, particle: PointParticle): void {.base.} = return
 method update_time*(self: Observer, time: float): void {.base.} = return
 method update_step*(self: Observer, time: int): void {.base.} = return
@@ -76,6 +77,14 @@ proc initImageRecorder*(
     self.cmap = cmap
     self.norm = norm
     return self
+
+method record_object*(self: ImageRecorder, obj: Object): void =
+    var s = 1000
+    for t in 0 .. s:
+        var t0 = t.float / s.float
+        var t1 = (t.float + 1.float) / s.float
+        var s0 = Segment().initSegment(p0=obj.t(t0), p1=obj.t(t1))
+        self.plotter.draw_segment(s0)
 
 method update_particle*(self: ImageRecorder, particle: PointParticle): void =
    let ind = particle.index
@@ -382,6 +391,10 @@ proc initObserverGroup*(self: ObserverGroup, observers: seq[Observer]): Observer
 method begin*(self: ObserverGroup): void =
     for obs in self.observers:
         obs.begin()
+
+method record_object*(self: ObserverGroup, obj: Object): void =
+    for obs in self.observers:
+        obs.record_object(obj)
 
 method update_particle*(self: ObserverGroup, particle: PointParticle): void =
     for obs in self.observers:

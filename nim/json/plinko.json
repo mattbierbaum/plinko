@@ -5,25 +5,23 @@
     "max_steps": 1000000,
     "equal_time": false,
     "accuracy": false,
-    "linear": false
+    "linear": false,
+    "record_objects": true
 },
 "objects": [
     { 
-        "type": "tri-lattice", "rows": 24, "columns": 48, 
-        "object": { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.49, "damp": 0.99999 }
+        "type": "tri-lattice", "rows": 4, "columns": 8, 
+        "object": { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.45, "damp": 0.95}
     }
 ],
-"particles": [
-    { "type": "single", "pos": [20, 41.3], "vel": [0.1, 0.0] }
-],
-"forces": [
-    { "type": "gravity", "g": -1.0 }
-],
+"particles": [ { "type": "single", "pos": [4.0, 6.6], "vel": [0.1, 0.0] } ],
+"forces": [ { "type": "gravity", "g": -1.0 } ],
+"interrupts": [ { "type": "collision", "object": { "type": "ref", "name": "bottom" } } ],
 "observers": [
     { 
         "type": "svg", "filename": "test.svg", 
         "box": { "type": "ref", "name": "boundary"},
-        "resolution": 8000
+        "resolution": 2000
     },
     {
         "type": "pgm", 
@@ -31,7 +29,7 @@
         "format": "pgm5",
         "blend": "add",
         "box": { "type": "ref", "name": "boundary"},
-        "resolution": 8000
+        "resolution": 2000
     }
 ],
 "neighborlist": {

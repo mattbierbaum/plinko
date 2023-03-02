@@ -16,6 +16,7 @@ type
         linear*: bool
         equal_time*: bool
         accuracy_mode*: bool
+        record_objects*: bool
         objects*: seq[Object]
         particle_groups: seq[ParticleGroup]
         force_func: seq[IndependentForce]
@@ -33,6 +34,7 @@ proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_
     self.linear = true
     self.equal_time = false
     self.accuracy_mode = false
+    self.record_objects = false
     self.objects = @[]
     self.particle_groups = @[]
     self.force_func = @[]
@@ -72,6 +74,10 @@ proc initialize*(self: Simulation): void =
     self.observer_group = observers.ObserverGroup()
     discard self.observer_group.initObserverGroup(self.observers)
     self.observer_group.begin()
+
+    if self.record_objects:
+        for obj in self.objects:
+            self.observer_group.record_object(obj)
 
 proc set_integrator*(self: Simulation, integrator: Integrator): void =
     self.integrator = integrator

@@ -6,7 +6,8 @@
     "equal_time": false,
     "accuracy": true,
     "linear": false,
-    "verbose": false
+    "verbose": false,
+    "record_objects": false
 },
 "objects": [
     { 
@@ -26,7 +27,7 @@
     },
     {"type": "circle", "pos": [5.5,5.2], "rad": 5.0, "damp": 1.0}
 ],
-"particles": [ { "type": "single", "pos": [5.0, 5.1], "vel": [1.21, 1.012] } ],
+"particles": [ { "type": "single", "pos": [5.0, 5.1], "vel": [1.21, 1.0142] } ],
 "forces": [ { "type": "central", "k": -0.1 , "pos": [5.5, 5.2]} ],
 "interrupts": [
     { "type": "collision", "object": { "type": "ref", "name": "boundary" } },

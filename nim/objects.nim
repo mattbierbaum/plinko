@@ -172,6 +172,7 @@ proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0, name: string = "")
     return self
 
 method `$`*(self: Object): string {.base.} = "Object"
+method t*(self: Object, t: float): Vec {.base.} = [0.0, 0.0]
 method normal*(self: Object, seg: Segment): Vec {.base.} = [0.0, 0.0]
 method center*(self: Object): Vec {.base.} = [0.0, 0.0]
 method translate*(self: Object, v: Vec): Object {.base.} = Object()
@@ -251,6 +252,9 @@ method scale*(self: Segment, s: float): Object =
 
 method boundary*(self: Segment): Box =
     return Box().initBox(ll=min(self.p0, self.p1), uu=max(self.p0, self.p1))
+
+method t*(self: Segment, t: float): Vec =
+    return lerp(self.p0, self.p1, t)
 
 # ---------------------------------------------------------------
 #[
@@ -491,6 +495,9 @@ proc rotate*(self: Circle, theta: float): Circle =
 method boundary*(self: Circle): Box =
     return Box().initBox(ll=self.pos-[self.rad, self.rad], uu=self.pos+[self.rad, self.rad])
 
+method t*(self: Circle, t: float): Vec =
+    return self.pos + self.rad * [math.sin(2*PI*t), math.cos(2*PI*t)]
+
 # ----------------------------------------------------------------
 type 
     MaskFunction* = proc(theta: float): bool
@@ -590,6 +597,16 @@ method by_name*(self: Box, name: string): Object =
     for seg in self.segments:
         if seg.name == name:
             return seg
+
+method t*(self: Box, v: float): Vec =
+    if v >= 0.00 and v < 0.25:
+        return self.segments[0].t((v - 0.00) * 0.25)
+    if v >= 0.25 and v < 0.50:
+        return self.segments[1].t((v - 0.25) * 0.25)
+    if v >= 0.50 and v < 0.75:
+        return self.segments[2].t((v - 0.50) * 0.25)
+    if v >= 0.75 and v < 1.00:
+        return self.segments[3].t((v - 0.75) * 0.25)
 
 # ---------------------------------------------------------------
 type

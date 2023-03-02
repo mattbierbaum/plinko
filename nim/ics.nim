@@ -257,6 +257,7 @@ proc json_to_simulation*(json: string): Simulation =
         sim.linear = s{"linear"}.getBool(true)
         sim.equal_time = s{"equal_time"}.getBool(false)
         sim.accuracy_mode = s{"accuracy"}.getBool(false)
+        sim.record_objects = s{"record_objects"}.getBool(false)
 
     if cfg{"objects"} != nil:
         for node in cfg{"objects"}:
