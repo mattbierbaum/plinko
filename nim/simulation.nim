@@ -1,9 +1,10 @@
-import vector
-import objects
 import forces
+import interrupts
 import neighborlist
+import objects
 import observers
 import roots
+import vector
 
 import std/strformat
 
@@ -42,8 +43,9 @@ proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_
 
 proc object_by_name*(self: Simulation, name: string): Object =
     for obj in self.objects:
-        if obj.name == name:
-            return obj
+        let tmp = obj.by_name(name)
+        if tmp != nil:
+            return tmp
 
 proc add_object*(self: Simulation, obj: Object): void =
     let index = self.objects.len
@@ -58,6 +60,9 @@ proc add_force*(self: Simulation, force: IndependentForce): void {.discardable.}
 
 proc add_observer*(self: Simulation, observer: Observer): void {.discardable.} =
     self.observers.add(observer)
+
+proc add_interrupt*(self: Simulation, interrupt: Interrupt): void {.discardable.} =
+    self.observers.add(interrupt)
 
 proc initialize*(self: Simulation): void =
     for obj in self.objects:
@@ -125,10 +130,6 @@ proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle)
         gparti = self.integrator(part0, (1 - mino.buffer_sign * self.eps)*mint)
     else:
         mint = (1 - mino.buffer_sign * self.eps) * mint
-        # gparti.pos[0] = mint * part0.pos[0] + part1.pos[0]
-        # gparti.pos[1] = mint * part0.pos[1] + part1.pos[1]
-        # gparti.pos[0] = (1 - mint) * part0.pos[0] + mint * part1.pos[0]
-        # gparti.pos[1] = (1 - mint) * part0.pos[1] + mint * part1.pos[1]
         gparti.pos = lerp(part0.pos, part1.pos, mint)
         gparti.vel = lerp(part0.vel, part1.vel, mint)
     return (gparti, mino, mint)

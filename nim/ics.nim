@@ -1,11 +1,12 @@
-import vector
-import objects
 import forces
-import observers
-import neighborlist
-import simulation
 import image
+import interrupts
+import neighborlist
+import objects
+import observers
 import plotting
+import simulation
+import vector
 
 import std/json
 import std/math
@@ -14,7 +15,7 @@ import std/tables
 type ObjectTranslationGenerator[T] = proc(pos: Vec): T
 type ObjectScaleGenerator[T] = proc(scale: float): T
 
-proc hex_grid_object*[T](rows: int, cols: int, f: ObjectTranslationGenerator[T]): (seq[T], Vec) =
+proc hex_grid_object*[T](rows: int, cols: int, f: ObjectTranslationGenerator[T]): (seq[T], Box) =
     var a = 1.0
     var rt3 = math.sqrt(3.0)
 
@@ -28,7 +29,10 @@ proc hex_grid_object*[T](rows: int, cols: int, f: ObjectTranslationGenerator[T])
                 objs.add(f([(j.float+0.5)*a, (i.float+0.5)*a*rt3]))
 
     let boundary = [(cols.float-1.0)*a, (rows.float)*rt3*a]
-    return (objs, boundary)
+    let box = Box().initBox(ll=[0.0,0.0], uu=boundary, name="boundary")
+    box.top.name = "top"
+    box.bottom.name = "bottom"
+    return (objs, box)
 
 proc concentric*[T](min_scale: float, max_scale: float, steps: int, f: ObjectScaleGenerator[T]): (seq[T], Box) =
     var objs: seq[T] = @[]
@@ -44,6 +48,9 @@ proc concentric*[T](min_scale: float, max_scale: float, steps: int, f: ObjectSca
             boundary = Box().initBox(ll=min(boundary.ll, bd.ll), uu=max(boundary.uu, bd.uu))
 
         objs.add(obj)
+    boundary.top.name = "top"
+    boundary.bottom.name = "bottom"
+    boundary.name = "boundary"
     return (objs, boundary)
 
 proc square_grid_object*(rows: int, cols: int, f: ObjectTranslationGenerator): (seq[Object], Vec) =
@@ -136,7 +143,7 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
         let rows = node{"rows"}.getInt(0)
         let cols = node{"columns"}.getInt(0)
         let (obj, boundary) = hex_grid_object(rows=rows, cols=cols, f=generate_object_translate)
-        objs.add(Box().initBox(ll=[0.0,0.0], uu=boundary, name="boundary"))
+        objs.add(boundary)
         for o in obj:
             objs.add(o)
 
@@ -149,7 +156,6 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
         let max_scale = node{"scaling_function"}{"max_scale"}.getFloat(1.0)
         let steps = node{"scaling_function"}{"steps"}.getInt(1)
         let (obj, boundary) = concentric(min_scale=min_scale, max_scale=max_scale, steps=steps, f=generate_object_scale)
-        boundary.name = "boundary"
         objs.add(boundary)
         for o in obj:
             objs.add(o)
@@ -208,6 +214,15 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
             cmap=cmap, norm=norm)
         return obs
 
+proc json_to_interrupt(node: JsonNode, sim: Simulation): Interrupt =
+    if node{"type"}.getStr() == "maxsteps":
+        let maxstep = node{"steps"}.getInt(0)
+        return MaxSteps().initMaxSteps(max=maxstep)
+    
+    if node{"type"}.getStr() == "collision":
+        let obj = json_to_object(node{"object"}, sim)[0]
+        return Collision().initCollision(obj)
+
 proc json_to_neighborlist(node: JsonNode, sim: Simulation): Neighborlist =
     if node{"type"}.getStr() == "naive":
         return Neighborlist()
@@ -252,6 +267,10 @@ proc json_to_simulation*(json: string): Simulation =
     if cfg{"observers"} != nil:
         for node in cfg{"observers"}:
             sim.add_observer(json_to_observer(node, sim))
+
+    if cfg{"interrupts"} != nil:
+        for node in cfg{"interrupts"}:
+            sim.add_interrupt(json_to_interrupt(node, sim))
 
     if cfg{"forces"} != nil:
         for node in cfg{"forces"}:

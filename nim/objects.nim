@@ -133,6 +133,8 @@ type
 type
     Box* = ref object of Object
         ll*, lu*, uu*, ul*: Vec
+        bottom*: Segment
+        top*: Segment
         segments*: seq[Segment]
 
 proc initObject*(self: Object, damp: float, name: string = ""): Object = 
@@ -164,6 +166,8 @@ proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0, name: string = "")
         Segment().initSegment(self.uu, self.ul, damp=damp),
         Segment().initSegment(self.ul, self.ll, damp=damp)
     ]
+    self.top = self.segments[1]
+    self.bottom = self.segments[3]
     discard self.initObject(damp=damp, name=name)
     return self
 
@@ -174,6 +178,9 @@ method translate*(self: Object, v: Vec): Object {.base.} = Object()
 method scale*(self: Object, s: float): Object {.base.} = Object()
 method intersection*(self: Object, seg: Segment): (Object, float) {.base.} = (nil, -1.0)
 method boundary*(self: Object): Box {.base.} = Box()
+method by_name*(self: Object, name: string): Object {.base.} =
+    if self.name == name:
+        return self
 
 proc set_index*(self: Object, i: int) = 
     self.index = i
@@ -576,6 +583,13 @@ proc contains*(self: Box, pt: Vec): bool =
 
 proc translate*(self: Box, x: Vec): Box =
     return Box().initBox(ll=self.ll+x, uu=self.uu+x, damp=self.damp)
+
+method by_name*(self: Box, name: string): Object =
+    if self.name == name:
+        return self
+    for seg in self.segments:
+        if seg.name == name:
+            return seg
 
 # ---------------------------------------------------------------
 type
