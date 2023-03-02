@@ -2,6 +2,7 @@ import objects
 import observers
 import vector
 
+import std/strformat
 import std/tables
 
 type
@@ -65,6 +66,8 @@ method reset*(self: Collision): void =
     self.triggers = initTable[int, bool]()
     self.triggered = false
 
+method `$`*(self: Collision): string = fmt"Collision: {self.obj}"
+
 # ================================================================
 type
     Stalled* = ref object of Interrupt
@@ -72,11 +75,13 @@ type
         triggers*: Table[int, bool]
         zero_streak*: Table[int, int]
         interval*: int
+        count*: int
         step*: int
 
-proc initStalled*(self: Stalled, interval: int = 1000): Stalled =
+proc initStalled*(self: Stalled, count: int = 100, interval: int = 10000): Stalled =
     self.step = 0
     self.interval = interval
+    self.count = count
     self.triggered = false
     self.triggers = initTable[int, bool]()
     self.zero_streak = initTable[int, int]()
@@ -102,19 +107,22 @@ method is_triggered_particle*(self: Stalled, particle: PointParticle): bool =
 method update_particle*(self: Stalled, particle: PointParticle): void =
     # actually trigger the individual particle
     self.step = self.step + 1
-    if (self.step mod self.interval) == 0:
+    if (self.step mod self.interval) != 0:
         return
 
-    if length(particle.vel) < 1e-12:
-        let i = particle.index
+    let i = particle.index
+    if length(particle.vel) < 1e-6:
         let z = self.zero_streak[i]
-
-        self.zero_streak[i] = z + 1
-        if z > 1000:
+        if z >= self.count:
             self.triggers[particle.index] = true
             self.triggered = self.calc_triggered()
+        self.zero_streak[i] = z + 1
+    else:
+        self.zero_streak[i] = 0
 
 method reset*(self: Stalled): void = 
     self.zero_streak = initTable[int, int]()
     self.triggers = initTable[int, bool]()
     self.triggered = false
+
+method `$`*(self: Stalled): string = fmt"Stalled: {self.interval} {self.count}"
