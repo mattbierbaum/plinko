@@ -223,6 +223,9 @@ proc json_to_interrupt(node: JsonNode, sim: Simulation): Interrupt =
         let obj = json_to_object(node{"object"}, sim)[0]
         return Collision().initCollision(obj)
 
+    if node{"type"}.getStr() == "stalled":
+        return Stalled().initStalled()
+
 proc json_to_neighborlist(node: JsonNode, sim: Simulation): Neighborlist =
     if node{"type"}.getStr() == "naive":
         return Neighborlist()

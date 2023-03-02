@@ -25,13 +25,11 @@
         }
     }
 ],
-"particles": [ { "type": "single", "pos": [3.1, 10.3], "vel": [0.1, 0.0] } ],
+"particles": [ { "type": "single", "pos": [3.1, 10.3], "vel": [0.011, 0.0] } ],
 "forces": [ { "type": "gravity", "g": -1.0 } ],
 "interrupts": [
-    {
-        "type": "collision",
-        "object": { "type": "ref", "name": "bottom" }
-    }
+    { "type": "collision", "object": { "type": "ref", "name": "bottom" } },
+    { "type": "stalled" }
 ],
 "observers": [
     {
