@@ -1,0 +1,36 @@
+{
+"simulation": {
+    "eps": 1e-6,
+    "dt": 1e-3,
+    "max_steps": 10000,
+    "equal_time": false,
+    "accuracy": false,
+    "linear": false,
+    "record_objects": false,
+    "verbose": false
+},
+"objects": [ { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.5, "damp": 1.0} ],
+"particles": [ 
+    { 
+        "type": "uniform", 
+        "p0": [0.50, 0.20], 
+        "p1": [0.50, 0.20], 
+        "v0": [-2.00, 1.5], 
+        "v1": [2.00, 1.5], 
+        "N": 10000
+    }
+],
+"forces": [ { "type": "central", "k": 1.0, "pos": [0.5, 0.5] } ],
+"observers": [
+    {
+        "type": "pgm", 
+        "filename": "test.pgm", 
+        "format": "pgm5",
+        "blend": "add",
+        "norm": "eq_hist",
+        "box": { "type": "box", "ll": [0.0,0.0], "uu": [1.0,1.0] },
+        "resolution": 10000
+    },
+    {"type": "step", "interval": 100}
+]
+}
