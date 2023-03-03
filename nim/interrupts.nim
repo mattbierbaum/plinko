@@ -30,45 +30,35 @@ method update_step*(self: MaxSteps, step: int): void =
 type
     Collision* = ref object of Interrupt
         obj*: Object
-        triggered*: bool
         seen*: Table[int, bool]
         not_triggered*: Table[int, bool]
 
 proc initCollision*(self: Collision, obj: Object): Collision =
     self.obj = obj
-    self.triggered = false
     self.seen = initTable[int, bool]()
     self.not_triggered = initTable[int, bool]()
     return self
 
-proc calc_triggered(self: Collision): bool =
-    if self.seen.len == 0:
-        return false
-
-    if self.not_triggered.len == 0:
-        return true
-    return false
-
 method is_triggered*(self: Collision): bool = 
-    return self.triggered 
+    if self.seen.len == 0 or self.not_triggered.len > 0:
+        return false
+    return true
 
 method is_triggered_particle*(self: Collision, particle: PointParticle): bool = 
-    if particle.index notin self.seen:
+    if not self.seen.hasKey(particle.index):
         self.seen[particle.index] = true
         self.not_triggered[particle.index] = true
         return false
-    return not particle.index in self.not_triggered
+    return not self.not_triggered.hasKey(particle.index)
 
 method update_collision*(self: Collision, particle: PointParticle, obj: Object, time: float): void =
     # actually trigger the individual particle
     if self.obj == obj:
         self.not_triggered.del(particle.index)
-        self.triggered = self.calc_triggered()
 
 method reset*(self: Collision): void =
     self.seen = initTable[int, bool]() 
     self.not_triggered = initTable[int, bool]()
-    self.triggered = false
 
 method `$`*(self: Collision): string = fmt"Collision: {self.obj}"
 

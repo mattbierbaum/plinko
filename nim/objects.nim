@@ -111,8 +111,8 @@ type
 
 proc initUniformParticles*(self: UniformParticles, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: int): UniformParticles =
     echo fmt"{p0} {p1} {v0} {v1} {N}"
-    for i in 0 .. N:
-        let f: float = i / N
+    for i in 0 .. N - 1:
+        let f: float = i / (N - 1)
         let pos = lerp(p0, p1, f)
         let vel = lerp(v0, v1, f)
         self.particles.add(PointParticle().initPointParticle(pos, vel, [0.0, 0.0]))
@@ -127,7 +127,7 @@ proc initUniformParticles2D*(self: UniformParticles2D, p0: Vec, p1: Vec, v0: Vec
     let Ny = N[1]
     let N = Nx * Ny
 
-    for i in 0 .. N:
+    for i in 0 .. N - 1:
         let j = i - 1
         let fx = (j mod Nx) div Nx
         let fy = (j div Nx) div Ny
