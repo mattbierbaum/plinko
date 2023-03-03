@@ -33,7 +33,7 @@ proc copy*(self: PointParticle, other: PointParticle): void =
     self.index = other.index
     self.active = other.active
 
-proc `$`*(self: PointParticle): string = fmt"<pos={$self.pos} vel={$self.vel}>"
+proc `$`*(self: PointParticle): string = fmt"Particle[{self.index}] <pos={$self.pos} vel={$self.vel}>"
 
 # -------------------------------------------------------------
 type
@@ -42,6 +42,7 @@ type
 method index*(self: ParticleGroup, index: int): PointParticle {.base.} = result
 method count*(self: ParticleGroup): int {.base.} = result
 method items*(self: ParticleGroup): seq[PointParticle] {.base.} = @[PointParticle()]
+method set_indices*(self: ParticleGroup, ind: int): int {.base.} = return ind
 method `$`*(self: ParticleGroup): string {.base.} = ""
 
 # -------------------------------------------------------------
@@ -56,12 +57,17 @@ proc initSingleParticle*(self: SingleParticle, particle: PointParticle): SingleP
     return self
 
 method index*(self: SingleParticle, index: int): PointParticle = 
-    if index == 1:
+    if index == 0:
         return self.particle
 
 method count*(self: SingleParticle): int = 1
 method items*(self: SingleParticle): seq[PointParticle] = return self.particles
-method `$`*(self: SingleParticle): string = $self.particle
+
+method set_indices*(self: SingleParticle, ind: int): int =
+    self.particle.index = ind
+    return ind + 1
+
+method `$`*(self: SingleParticle): string = return fmt"SingleParticle: {$self.particle}"
 
 # -------------------------------------------------------------
 type
@@ -75,6 +81,19 @@ proc initParticleList*(self: ParticleList, particles: seq[PointParticle]): Parti
 method index*(self: ParticleList, index: int): PointParticle = result = self.particles[index]
 method count*(self: ParticleList): int = len(self.particles)
 method items*(self: ParticleList): seq[PointParticle] = self.particles
+
+method set_indices*(self: ParticleList, ind: int): int =
+    var tmp_index = ind
+    for particle in self.particles:
+        particle.index = tmp_index
+        tmp_index += 1
+    return tmp_index
+
+method `$`*(self: ParticleList): string =
+    var o = "ParticleList: \n"
+    for particle in self.particles:
+        o &= fmt"  {$particle}" & "\n"
+    return o
 
 proc partition*(self: ParticleList, total: int): seq[ParticleList] =
     let size = (self.count() div total)
@@ -91,8 +110,9 @@ type
     UniformParticles* = ref object of ParticleList
 
 proc initUniformParticles*(self: UniformParticles, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: int): UniformParticles =
-    for i in 1 .. N:
-        let f = i / N
+    echo fmt"{p0} {p1} {v0} {v1} {N}"
+    for i in 0 .. N:
+        let f: float = i / N
         let pos = lerp(p0, p1, f)
         let vel = lerp(v0, v1, f)
         self.particles.add(PointParticle().initPointParticle(pos, vel, [0.0, 0.0]))
@@ -107,7 +127,7 @@ proc initUniformParticles2D*(self: UniformParticles2D, p0: Vec, p1: Vec, v0: Vec
     let Ny = N[1]
     let N = Nx * Ny
 
-    for i in 1 .. N:
+    for i in 0 .. N:
         let j = i - 1
         let fx = (j mod Nx) div Nx
         let fy = (j div Nx) div Ny

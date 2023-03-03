@@ -18,6 +18,7 @@ type
         accuracy_mode*: bool
         record_objects*: bool
         objects*: seq[Object]
+        particle_index*: int
         particle_groups: seq[ParticleGroup]
         force_func: seq[IndependentForce]
         observers: seq[Observer]
@@ -36,6 +37,7 @@ proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_
     self.accuracy_mode = false
     self.record_objects = false
     self.objects = @[]
+    self.particle_index = 0
     self.particle_groups = @[]
     self.force_func = @[]
     self.observers = @[]
@@ -55,6 +57,7 @@ proc add_object*(self: Simulation, obj: Object): void =
     self.objects.add(obj)
 
 proc add_particle*(self: Simulation, particle_group: ParticleGroup): void {.discardable.} =
+    self.particle_index = particle_group.set_indices(self.particle_index)
     self.particle_groups.add(particle_group)
 
 proc add_force*(self: Simulation, force: IndependentForce): void {.discardable.} =
@@ -200,7 +203,7 @@ proc `$`*(self: Simulation): string =
     for obj in self.objects:
         o = o & fmt"  o: {$obj}" & "\n"
     for obj in self.particle_groups:
-        o = o & fmt"  p: {$obj}" & "\n"
+        o = o & fmt"{$obj}" & "\n"
     for obs in self.observers:
         o = o & fmt"{$obs}" & "\n"
     o &= $self.nbl

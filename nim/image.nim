@@ -111,12 +111,20 @@ proc eq_hist*(data: seq[float], nbins: int=256*256): seq[float] =
             arr[i] = y1 + (y2 - y1)/(x2 - x1) * (v - x1)
     return arr
 
-proc clip*(data: seq[float], vmin: float=1.0, vmax: float=1.0): seq[float] =
+proc clip_norm*(data: seq[float], vmin: float=1.0, vmax: float=1.0): seq[float] =
     var arr = newSeq[float](data.len)
     var (min, max) = data.minmax()
 
     min = vmin * min
     max = vmax * max
+
+    for i, v in data:
+        arr[i] = clip((v - min) / (max - min))
+    return arr
+
+proc none_norm*(data: seq[float]): seq[float] = 
+    var arr = newSeq[float](data.len)
+    var (min, max) = data.minmax()
 
     for i, v in data:
         arr[i] = clip((v - min) / (max - min))

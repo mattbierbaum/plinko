@@ -66,6 +66,8 @@ proc square_grid_object*(rows: int, cols: int, f: ObjectTranslationGenerator): (
 
 proc json_to_vec(json: JsonNode): Vec =
     var vals: seq[float] = @[]
+    if json == nil:
+        return [0.0, 0.0]
     for elem in json.elems:
         vals.add(elem.getFloat())
     return [vals[0], vals[1]]
@@ -169,6 +171,14 @@ proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
         let p = PointParticle().initPointParticle(pos=pos, vel=vel)
         return SingleParticle().initSingleParticle(p)
 
+    if node{"type"}.getStr() == "uniform":
+        let p0 = json_to_vec(node{"p0"}) 
+        let p1 = json_to_vec(node{"p1"})
+        let v0 = json_to_vec(node{"v0"}) 
+        let v1 = json_to_vec(node{"v1"})
+        let N = node{"N"}.getInt(0)
+        return UniformParticles().initUniformParticles(p0=p0, p1=p1, v0=v0, v1=v1, N=N)
+
 proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
     if node{"type"}.getStr() == "time":
         let interval = node{"interval"}.getFloat()
@@ -188,9 +198,11 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
     elif node{"type"}.getStr() == "pgm":
         let eqhist: NormFunction = proc(data: seq[float]): seq[float] =
             return image.eq_hist(data, nbins=256*256)
+        let none: NormFunction = proc(data: seq[float]): seq[float] =
+            return none_norm(data)
 
         let cmap_table = {"gray": gray, "gray_r": gray_r}.toTable()
-        let norm_table = {"eq_hist": eqhist}.toTable()
+        let norm_table = {"eq_hist": eqhist, "none": none}.toTable()
         let blend_table = {
             "add": blendmode_additive,
             "min": blendmode_min,

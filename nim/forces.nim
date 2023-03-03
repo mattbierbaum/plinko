@@ -35,4 +35,7 @@ proc integrate_velocity_verlet*(p0: PointParticle, dt: float): PointParticle =
     var p1 = PointParticle()
     p1.pos = p0.pos + p0.vel * dt + 0.5 * p0.acc * dt * dt
     p1.vel = p0.vel + p0.acc * dt
+    p1.acc = p0.acc
+    p1.active = p0.active
+    p1.index = p0.index
     return p1

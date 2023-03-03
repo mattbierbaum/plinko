@@ -31,39 +31,43 @@ type
     Collision* = ref object of Interrupt
         obj*: Object
         triggered*: bool
-        triggers*: Table[int, bool]
+        seen*: Table[int, bool]
+        not_triggered*: Table[int, bool]
 
 proc initCollision*(self: Collision, obj: Object): Collision =
     self.obj = obj
     self.triggered = false
-    self.triggers = initTable[int, bool]()
+    self.seen = initTable[int, bool]()
+    self.not_triggered = initTable[int, bool]()
     return self
 
 proc calc_triggered(self: Collision): bool =
-    if self.triggers.len == 0:
+    if self.seen.len == 0:
         return false
 
-    var all = true
-    for i, trigger in self.triggers:
-        all = all and trigger
+    if self.not_triggered.len == 0:
+        return true
+    return false
 
-    return all
-
-method is_triggered*(self: Collision): bool = return self.triggered 
+method is_triggered*(self: Collision): bool = 
+    return self.triggered 
 
 method is_triggered_particle*(self: Collision, particle: PointParticle): bool = 
-    if particle.index notin self.triggers:
+    if particle.index notin self.seen:
+        self.seen[particle.index] = true
+        self.not_triggered[particle.index] = true
         return false
-    return self.triggers[particle.index]
+    return not particle.index in self.not_triggered
 
 method update_collision*(self: Collision, particle: PointParticle, obj: Object, time: float): void =
     # actually trigger the individual particle
     if self.obj == obj:
-        self.triggers[particle.index] = true
+        self.not_triggered.del(particle.index)
         self.triggered = self.calc_triggered()
 
 method reset*(self: Collision): void =
-    self.triggers = initTable[int, bool]()
+    self.seen = initTable[int, bool]() 
+    self.not_triggered = initTable[int, bool]()
     self.triggered = false
 
 method `$`*(self: Collision): string = fmt"Collision: {self.obj}"
