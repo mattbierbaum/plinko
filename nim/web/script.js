@@ -39,20 +39,26 @@ var offscreen = canvas.transferControlToOffscreen();
 
 var run_button = document.getElementById("run");
 
-const console_log = window.console.log;
-window.console.log = function (...args) {
-    console_log(...args);
-    var textarea = document.getElementById('log');
-    console_log(textarea);
-    if (!textarea) {
-        console_log('nothing');
-        return;
-    }
-    args.forEach(arg => textarea.value += `${JSON.stringify(arg)}\n`);
-}
+// const console_log = window.console.log;
+// window.console.log = function (...args) {
+//     console_log(...args);
+//     var textarea = document.getElementById('log');
+//     console_log(textarea);
+//     if (!textarea) {
+//         console_log('nothing');
+//         return;
+//     }
+//     args.forEach(arg => textarea.value += `${JSON.stringify(arg)}\n`);
+// }
 
 run_button.onclick = function () {
     var json = document.getElementById("source").value;
     var worker = new Worker("worker.js");
+
+    worker.addEventListener("message", function handleMessageFromWorker(msg) {
+        console.log("message from worker received in main:", msg);
+        const data = msg.data;
+        document.getElementById("log").value += data;
+    });
     worker.postMessage({ json: json, canvas: offscreen }, [offscreen]);
 }

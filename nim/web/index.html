@@ -11,21 +11,42 @@
         }
 
         div#ui {
-            flex: 1 1 25%;
-            flex-flow: column;
+            display: flex;
+            flex-flow: row;
             height: 100vh;
+            width: 100vh;
+        }
+
+        div#inputs {
+            display: flex;
+            flex: 1 1 auto;
+            flex-flow: column;
+            row-gap: 10px;
+            align-items: stretch;
             min-width: 440px;
         }
 
-        div#ui>textarea {
-            flex: 0 0 50%;
-            min-width: 100%;
-            height: 49%;
+        div#inputs>textarea {
+            flex: 1 1 auto;
             font-size: 12px;
         }
 
-        canvas {
-            flex: 3 3 75%;
+        div#buttons {
+            display: flex;
+            flex: 0 0 auto;
+            flex-flow: row;
+            column-gap: 10px;
+            margin-left: 10px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        div#buttons>button {
+            flex: 1 1 auto;
+        }
+
+        div#ui>canvas {
+            flex: 3 3 auto;
             height: 100vh;
         }
     </style>
@@ -34,11 +55,16 @@
 
 <body>
     <div id="ui">
+    <div id="inputs">
         <textarea id="source"></textarea>
-        <button id="run">Run</button>
         <textarea id="log"></textarea>
+        <div id="buttons">
+            <button id="run">Run</button>
+            <button id="run">Reset</button>
+        </div>
     </div>
     <canvas id="canvas" height="2048" width="1024" style="image-rendering: pixelated"></canvas>
+    </div>
 </body>
 
 </html>

@@ -55,11 +55,12 @@ method is_triggered_particle*(self: MaxCollisions, particle: PointParticle): boo
     return not self.not_triggered.hasKey(particle.index)
 
 method update_collision*(self: MaxCollisions, particle: PointParticle, obj: Object, time: float): void =
-    # actually trigger the individual particle
     let i = particle.index
-    self.collisions[i] = self.collisions[i] + 1
-    if self.collisions[i] > self.max:
-        self.not_triggered.del(i)
+    if self.seen.hasKey(i):
+        self.collisions[i] = self.collisions[i] + 1
+        echo self.collisions[i]
+        if self.collisions[i] >= self.max:
+            self.not_triggered.del(i)
 
 method reset*(self: MaxCollisions): void =
     self.seen = initTable[int, bool]() 
