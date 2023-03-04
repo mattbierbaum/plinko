@@ -21,7 +21,8 @@ else:
     var time_start = times.cpuTime()
     sim.run()
     var time_end = times.cpuTime()
-    echo fmt"Step rate (M/sec): {sim.max_steps.float/(time_end-time_start)/1e6}"
+    let particle_steps = sim.particle_index.float * sim.max_steps.float
+    echo fmt"Step rate (M/sec): {particle_steps/(time_end-time_start)/1e6}"
 
     time_start = times.cpuTime()
     sim.close()

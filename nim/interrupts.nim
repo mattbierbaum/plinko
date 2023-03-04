@@ -28,6 +28,48 @@ method update_step*(self: MaxSteps, step: int): void =
 
 # ================================================================
 type
+    MaxCollisions* = ref object of Interrupt
+        max*: int
+        collisions*: Table[int, int]
+        seen*: Table[int, bool]
+        not_triggered*: Table[int, bool]
+
+proc initMaxCollisions*(self: MaxCollisions, max: int): MaxCollisions =
+    self.max = max
+    self.seen = initTable[int, bool]()
+    self.collisions = initTable[int, int]()
+    self.not_triggered = initTable[int, bool]()
+    return self
+
+method is_triggered*(self: MaxCollisions): bool = 
+    if self.seen.len == 0 or self.not_triggered.len > 0:
+        return false
+    return true
+
+method is_triggered_particle*(self: MaxCollisions, particle: PointParticle): bool = 
+    if not self.seen.hasKey(particle.index):
+        self.seen[particle.index] = true
+        self.not_triggered[particle.index] = true
+        self.collisions[particle.index] = 0
+        return false
+    return not self.not_triggered.hasKey(particle.index)
+
+method update_collision*(self: MaxCollisions, particle: PointParticle, obj: Object, time: float): void =
+    # actually trigger the individual particle
+    let i = particle.index
+    self.collisions[i] = self.collisions[i] + 1
+    if self.collisions[i] > self.max:
+        self.not_triggered.del(i)
+
+method reset*(self: MaxCollisions): void =
+    self.seen = initTable[int, bool]() 
+    self.collisions = initTable[int, int]()
+    self.not_triggered = initTable[int, bool]()
+
+method `$`*(self: MaxCollisions): string = fmt"MaxCollisions: {self.max}"
+
+# ================================================================
+type
     Collision* = ref object of Interrupt
         obj*: Object
         seen*: Table[int, bool]

@@ -53,7 +53,7 @@ proc `$`*(self: DensityPlot): string =
 proc reflect*(self: DensityPlot, y: float): float {.inline.} =
     return self.grid.shape[1].float - y - 1.0
 
-proc plot*(self: DensityPlot, x: float, y: float, c: float): void =
+proc plot*(self: DensityPlot, x: float, y: float, c: float): void {.inline.} =
     if x < 0 or x >= self.grid.shape[0].float or y < 0 or y >= self.grid.shape[1].float:
         return
 

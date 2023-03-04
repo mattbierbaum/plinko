@@ -76,6 +76,8 @@ method append*(self: CellNeighborlist, obj: Object): void =
 
 proc add_to_cell*(self: CellNeighborlist, ci: int, cj: int, l: int, obj: Object): void =
     let ind = self.cell_ind(ci, cj)
+    if not self.seen.hasKey(ind):
+        return
     if not self.seen[ind].hasKey(l):
         self.seen[ind][l] = true
         self.cells[ind].add(obj)

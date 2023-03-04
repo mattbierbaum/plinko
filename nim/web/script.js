@@ -32,10 +32,24 @@ var initial_script = `
 }`;
 
 document.getElementById("source").value = initial_script;
-var htmlCanvas = document.getElementById("canvas");
-var offscreen = htmlCanvas.transferControlToOffscreen();
+var canvas = document.getElementById("canvas");
+canvas.width = canvas.clientWidth;
+canvas.height = canvas.clientHeight;
+var offscreen = canvas.transferControlToOffscreen();
 
 var run_button = document.getElementById("run");
+
+const console_log = window.console.log;
+window.console.log = function (...args) {
+    console_log(...args);
+    var textarea = document.getElementById('log');
+    console_log(textarea);
+    if (!textarea) {
+        console_log('nothing');
+        return;
+    }
+    args.forEach(arg => textarea.value += `${JSON.stringify(arg)}\n`);
+}
 
 run_button.onclick = function () {
     var json = document.getElementById("source").value;

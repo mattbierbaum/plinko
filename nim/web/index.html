@@ -1,10 +1,44 @@
 <!DOCTYPE html>
+
 <head>
+    <style media="screen" type="text/css">
+        body {
+            margin: 0px;
+            padding: 0px;
+            display: flex;
+            flex-flow: row;
+            align-items: stretch;
+        }
+
+        div#ui {
+            flex: 1 1 25%;
+            flex-flow: column;
+            height: 100vh;
+            min-width: 440px;
+        }
+
+        div#ui>textarea {
+            flex: 0 0 50%;
+            min-width: 100%;
+            height: 49%;
+            font-size: 12px;
+        }
+
+        canvas {
+            flex: 3 3 75%;
+            height: 100vh;
+        }
+    </style>
     <script type="text/javascript" src="script.js" defer></script>
 </head>
+
 <body>
-    <textarea id="source" cols="80" rows="80"></textarea>
-    <button id="run">Run</button>
-    <canvas id="canvas" height="512" width="512"></canvas>
+    <div id="ui">
+        <textarea id="source"></textarea>
+        <button id="run">Run</button>
+        <textarea id="log"></textarea>
+    </div>
+    <canvas id="canvas" height="2048" width="1024" style="image-rendering: pixelated"></canvas>
 </body>
+
 </html>

@@ -252,6 +252,10 @@ proc json_to_interrupt(node: JsonNode, sim: Simulation): Interrupt =
     if node{"type"}.getStr() == "collision":
         let obj = json_to_object(node{"object"}, sim)[0]
         return Collision().initCollision(obj)
+    
+    if node{"type"}.getStr() == "max_collisions":
+        let max = node{"max"}.getInt(0)
+        return MaxCollisions().initMaxCollisions(max)
 
     if node{"type"}.getStr() == "stalled":
         return Stalled().initStalled()
