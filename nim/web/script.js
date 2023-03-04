@@ -35,9 +35,10 @@ document.getElementById("source").value = initial_script;
 
 var run_button = document.getElementById("run");
 run_button.onclick = function () {
+    var zoom = parseInt(document.getElementById("zoom").value);
     var canvas = document.getElementById("canvas");
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
+    canvas.width = zoom*canvas.clientWidth;
+    canvas.height = zoom*canvas.clientHeight;
     var offscreen = canvas.transferControlToOffscreen();
 
     var json = document.getElementById("source").value;

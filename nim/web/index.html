@@ -45,6 +45,12 @@
             flex: 1 1 auto;
         }
 
+        div#buttons>input {
+            flex: 0 0 auto;
+            width: 30px;
+            text-align: center;
+        }
+
         div#display {
             display: flex;
             flex: 3 3 auto;
@@ -70,6 +76,7 @@
             <div id="buttons">
                 <button id="run">Run</button>
                 <button id="reset">Reset</button>
+                <input type="text" id="zoom" value="2"></input>
             </div>
         </div>
         <div id="display">
