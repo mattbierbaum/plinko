@@ -32,13 +32,12 @@ var initial_script = `
 }`;
 
 document.getElementById("source").value = initial_script;
-var canvas = document.getElementById("canvas");
-canvas.width = canvas.clientWidth;
-canvas.height = canvas.clientHeight;
 
 var run_button = document.getElementById("run");
 run_button.onclick = function () {
     var canvas = document.getElementById("canvas");
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
     var offscreen = canvas.transferControlToOffscreen();
 
     var json = document.getElementById("source").value;

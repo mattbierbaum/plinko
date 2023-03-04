@@ -91,13 +91,20 @@ method close*(self: JsImageRecorder): void =
     var ctx = self.canvas.getContext2d()
     var img = ctx.createImageData(self.w, self.h)
     var toned = self.tone().data
+    let w = self.canvas.width
+    let h = self.canvas.height
 
     for i, v in toned:
-        img.data[4*i+0] = toned[i]
-        img.data[4*i+1] = toned[i]
-        img.data[4*i+2] = toned[i]
-        img.data[4*i+3] = 255
-    ctx.putImageData(img, 0.0,0.0)
+        let ix: int = (i mod self.plotter.grid.shape[0]).int
+        let iy: int = (i / self.plotter.grid.shape[0]).int
+        let j = iy * w + ix
+        if j >= w*h:
+            break
+        img.data[4*j+0] = toned[i]
+        img.data[4*j+1] = toned[i]
+        img.data[4*j+2] = toned[i]
+        img.data[4*j+3] = 255
+    ctx.putImageData(img, 0.0, 0.0)
 
 # =================================================================
 type
