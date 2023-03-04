@@ -1,8 +1,8 @@
 import forces
 import interrupts
 import neighborlist
-import objects
 import observers
+import objects
 import roots
 import vector
 

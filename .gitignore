@@ -22,3 +22,5 @@ c/plinko-nbounces
 data/
 nim/main
 nim/plinko
+nim/js.js
+nim/web/js.js

@@ -137,11 +137,13 @@ proc draw_point*(self: DensityPlot, p: Vec): void =
 proc get_array*(self: DensityPlot): Array2D[float] = return self.grid
 
 proc show*(self: DensityPlot): void =
+    var o = ""
     for j in countdown(self.grid.shape[2]-1, 0):
         for i in countup(0, self.grid.shape[1]-1):
             let c: int = self.grid.data[(i + j*self.grid.shape[1]).int].int
             if c == 0:
-                stdout.write(" ")
+                o &= " "
             else:
-                stdout.write("*")
-        stdout.writeLine("")
+                o &= "*"
+        o &= "\n"
+    echo o
