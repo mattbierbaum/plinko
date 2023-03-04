@@ -21,7 +21,7 @@ type
         particle_index*: int
         particle_groups: seq[ParticleGroup]
         force_func: seq[IndependentForce]
-        observers: seq[Observer]
+        observers*: seq[Observer]
         observer_group: ObserverGroup
         integrator: Integrator
         nbl*: Neighborlist

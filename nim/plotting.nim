@@ -26,9 +26,9 @@ proc inc(x: var float; y: float = 1.0) {.inline.} =
 # ========================================================
 type
     DensityPlot* = ref object of RootObj
-        box: Box
-        dpi: float
-        blendmode: BlendFunction
+        box*: Box
+        dpi*: float
+        blendmode*: BlendFunction
         grid*: Array2D[float]
 
 proc initDensityPlot*(self: DensityPlot, box: Box, dpi: float, blendmode: BlendFunction): DensityPlot =

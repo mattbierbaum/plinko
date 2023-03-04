@@ -315,5 +315,4 @@ proc json_to_simulation*(json: string): Simulation =
     else:
         sim.set_neighborlist(Neighborlist())
 
-    sim.initialize()
     return sim

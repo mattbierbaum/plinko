@@ -13,6 +13,7 @@ if len(params) != 1:
 else:
     let json = open(params[0], fmRead).readAll()
     var sim = json_to_simulation(json)
+    sim.initialize()
 
     if sim.verbose:
         echo $sim
