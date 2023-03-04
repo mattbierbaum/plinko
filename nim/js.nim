@@ -1,9 +1,6 @@
 # import nimprof
 
-proc simple_echo(txt: cstring): void = echo $txt
-var log_func: proc(txt: cstring): void = simple_echo
-proc echo*(txt: string): void = log_func(txt.cstring)
-
+import log
 import ics
 import observers_js
 import simulation
@@ -15,10 +12,14 @@ proc create_simulation*(json: cstring, canvas: Canvas): Simulation {.exportc.} =
     sim.initialize()
     return sim
 
+proc log_simulation*(sim: Simulation): void {.exportc.} =
+    echo $sim
+
 proc run_simulation*(sim: Simulation): void {.exportc.} =
     sim.run()
     sim.close()
-    echo $sim
 
-proc setup_log*(logger: proc (txt: cstring): void): void {.exportc.} =
-    log_func = logger
+proc setup_logger*(logger: proc (txt: cstring): void): void {.exportc.} =
+    let string_logger: LogFunction = proc(itxt: string): void =
+        logger(itxt.cstring)
+    set_logger(string_logger)

@@ -2,7 +2,6 @@ import observers
 import plotting
 
 import std/dom
-import std/strformat
 
 type
     ImageData* = ref ImageDataObj
@@ -86,7 +85,6 @@ method set_canvas*(self: JsImageRecorder, canvas: Canvas): void =
     self.h = self.canvas.height
     let b = self.plotter.box
     let dpi = min(self.w.float / (b.uu[0] - b.ll[0]), self.h.float / (b.uu[1] - b.ll[1]))
-    echo fmt"dpi = {dpi}"
     self.plotter = DensityPlot().initDensityPlot(box=self.plotter.box, dpi=dpi, blendmode=self.plotter.blendmode)
 
 method close*(self: JsImageRecorder): void =

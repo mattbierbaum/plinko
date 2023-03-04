@@ -1,6 +1,7 @@
 {.warning[LockLevel]:off.}
 import array2d
 import image
+import log
 import objects
 import plotting
 import vector

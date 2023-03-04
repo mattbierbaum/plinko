@@ -1,17 +1,18 @@
-importScripts('js.js');
+importScripts('js.js' + '?' + Math.random());
 
 self.onmessage = function (evt) {
     if (evt.data.json) {
-        setup_log(function(a){
-            postMessage(a)
+        setup_logger(function(a){
+            postMessage(a);
         })
         var json = evt.data.json;
         var canvas = evt.data.canvas;
         var sim = create_simulation(json, canvas);
+        log_simulation(sim);
         run_simulation(sim);
+        postMessage("done");
     }
 
-    // pass incoming events into the stage
     if (evt.data.eventName) {
         console.log(eventName);
     }

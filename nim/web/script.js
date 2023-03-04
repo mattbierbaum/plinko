@@ -35,30 +35,35 @@ document.getElementById("source").value = initial_script;
 var canvas = document.getElementById("canvas");
 canvas.width = canvas.clientWidth;
 canvas.height = canvas.clientHeight;
-var offscreen = canvas.transferControlToOffscreen();
 
 var run_button = document.getElementById("run");
-
-// const console_log = window.console.log;
-// window.console.log = function (...args) {
-//     console_log(...args);
-//     var textarea = document.getElementById('log');
-//     console_log(textarea);
-//     if (!textarea) {
-//         console_log('nothing');
-//         return;
-//     }
-//     args.forEach(arg => textarea.value += `${JSON.stringify(arg)}\n`);
-// }
-
 run_button.onclick = function () {
-    var json = document.getElementById("source").value;
-    var worker = new Worker("worker.js");
+    var canvas = document.getElementById("canvas");
+    var offscreen = canvas.transferControlToOffscreen();
 
+    var json = document.getElementById("source").value;
+    var worker = new Worker("worker.js" + '?' + Math.random());
     worker.addEventListener("message", function handleMessageFromWorker(msg) {
-        console.log("message from worker received in main:", msg);
         const data = msg.data;
-        document.getElementById("log").value += data;
+        if (data === "done") {
+
+        } else {
+            var log = document.getElementById("log");
+            log.value += data + "\n";
+            log.scrollTop = log.scrollHeight;
+        }
     });
     worker.postMessage({ json: json, canvas: offscreen }, [offscreen]);
+}
+
+var reset_button = document.getElementById("reset");
+reset_button.onclick = function () {
+    var newcanvas = document.createElement('canvas');
+    var oldcanvas = document.getElementById('canvas');
+    newcanvas.id = oldcanvas.id;
+    newcanvas.width = oldcanvas.width;
+    newcanvas.height = oldcanvas.height;
+    newcanvas.style = oldcanvas.style;
+    oldcanvas.replaceWith(newcanvas);
+    document.getElementById("log").value = "";
 }

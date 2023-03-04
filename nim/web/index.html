@@ -45,9 +45,11 @@
             flex: 1 1 auto;
         }
 
-        div#ui>canvas {
+        div#display {
             flex: 3 3 auto;
             height: 100vh;
+            align-items: center;
+            justify-content: center;
         }
     </style>
     <script type="text/javascript" src="script.js" defer></script>
@@ -55,15 +57,17 @@
 
 <body>
     <div id="ui">
-    <div id="inputs">
-        <textarea id="source"></textarea>
-        <textarea id="log"></textarea>
-        <div id="buttons">
-            <button id="run">Run</button>
-            <button id="run">Reset</button>
+        <div id="inputs">
+            <textarea id="source"></textarea>
+            <textarea id="log"></textarea>
+            <div id="buttons">
+                <button id="run">Run</button>
+                <button id="reset">Reset</button>
+            </div>
         </div>
-    </div>
-    <canvas id="canvas" height="2048" width="1024" style="image-rendering: pixelated"></canvas>
+        <div id="display">
+            <canvas id="canvas" height="2048" width="1024" style="image-rendering: pixelated"></canvas>
+        </div>
     </div>
 </body>
 
