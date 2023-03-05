@@ -12,6 +12,7 @@ type
     Simulation* = ref object of RootObj
         t, dt*, eps*: float
         max_steps*: int
+        threads*: int
         verbose*: bool
         linear*: bool
         equal_time*: bool
@@ -19,7 +20,7 @@ type
         record_objects*: bool
         objects*: seq[Object]
         particle_index*: int
-        particle_groups: seq[ParticleGroup]
+        particle_groups*: seq[ParticleGroup]
         force_func: seq[IndependentForce]
         observers*: seq[Observer]
         observer_group: ObserverGroup
@@ -31,6 +32,7 @@ proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_
     self.dt = dt
     self.eps = eps
     self.max_steps = max_steps
+    self.threads = 1
     self.verbose = true
     self.linear = true
     self.equal_time = false
@@ -57,6 +59,8 @@ proc add_object*(self: Simulation, obj: Object): void =
     self.objects.add(obj)
 
 proc add_particle*(self: Simulation, particle_group: ParticleGroup): void {.discardable.} =
+    if particle_group == nil:
+        return
     self.particle_index = particle_group.set_indices(self.particle_index)
     self.particle_groups.add(particle_group)
 
@@ -102,9 +106,8 @@ proc intersect_objects*(self: Simulation, seg: Segment): (float, Object) =
         return (mint, mino)
     return (-1.0, nil)
 
-var gs = objects.Segment()
-
 proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointParticle, obj: Object, dt: float): float =
+    var gs = objects.Segment()
     proc f(dt: float): float =
         let project = self.integrator(part0, dt)
         gs.p0 = part0.pos
@@ -119,14 +122,14 @@ proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointPa
         return lengthsq(project.pos - lerp(gs.p0, gs.p1, t))
     return roots.brent(f=f, bracket=[0.0, 2*dt], tol=1e-20, mintol=1e-20, maxiter=10)
 
-var gparti = PointParticle()
-var gpseg = Segment()
+# var gparti = PointParticle()
+# var gpseg = Segment()
 
 proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, Object, float) =
-    # var gparti = PointParticle()
-    # var pseg = Segment(p0: part0.pos, p1: part1.pos)
-    gpseg.p0 = part0.pos
-    gpseg.p1 = part1.pos
+    var gparti = PointParticle()
+    var gpseg = Segment(p0: part0.pos, p1: part1.pos)
+    # gpseg.p0 = part0.pos
+    # gpseg.p1 = part1.pos
     var (mint, mino) = self.intersect_objects(gpseg)
 
     if mint < 0 or mint > 1:
@@ -201,11 +204,11 @@ proc `$`*(self: Simulation): string =
     var o = ""
     o = o & fmt"Simulation: dt={self.dt} eps={self.eps} steps={self.max_steps}" & "\n"
     for obj in self.objects:
-        o = o & fmt"  o: {$obj}" & "\n"
+        o &= &"  o: {$obj}\n"
     for obj in self.particle_groups:
-        o = o & fmt"{$obj}" & "\n"
+        o &= &"{$obj}\n"
     for obs in self.observers:
-        o = o & fmt"{$obs}" & "\n"
+        o &= &"{$obs}\n"
     o &= $self.nbl
     return o
 

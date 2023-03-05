@@ -3,14 +3,6 @@ import std/math
 proc sign(x: float): float =
     return (if x > 0: 1 else: -1)
 
-let sort_networks: seq[seq[array[2, int]]] = @[
-    @[[0,0]],
-    @[[0,1]],
-    @[[1,2], [0,2], [0,1]],
-    @[[0,1], [2,3], [0,2], [1,3], [1,2]],
-    @[[0,1], [3,4], [2,4], [2,3], [1,4], [0,3], [0,2], [1,3], [1,2]],
-]
-
 proc cswap[IX, float](arr: var array[IX, float], i0: int, i1: int) =
     if arr[i0] > arr[i1]:
         let t = arr[i0]
@@ -18,6 +10,14 @@ proc cswap[IX, float](arr: var array[IX, float], i0: int, i1: int) =
         arr[i1] = t
 
 proc sort[IX, float](arr: var array[IX, float]): array[IX, float] =
+    let sort_networks: seq[seq[array[2, int]]] = @[
+        @[[0,0]],
+        @[[0,1]],
+        @[[1,2], [0,2], [0,1]],
+        @[[0,1], [2,3], [0,2], [1,3], [1,2]],
+        @[[0,1], [3,4], [2,4], [2,3], [1,4], [0,3], [0,2], [1,3], [1,2]],
+    ]
+
     for i, inds in sort_networks[arr.len-1]:
         cswap(arr, inds[0], inds[1])
     return arr
@@ -256,15 +256,3 @@ proc brent*(f: proc(t: float):float,
     iter = iter
     funcalls = funcalls
     return xmin
-
-#[
-proc roots*[IX, float](poly: array[IX, float]): array[IX, float] =
-    let N = len(poly)
-
-    if N == 1:
-        return linear(poly)
-    elif N == 2:
-        return quadratic(poly)
-    elif N == 3:
-        return cubic(poly)
-]#

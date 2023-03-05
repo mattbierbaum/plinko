@@ -1,6 +1,7 @@
 {.warning[LockLevel]:off.}
 import std/math
 import std/strformat
+import std/strutils
 
 import roots
 import vector
@@ -44,6 +45,7 @@ method count*(self: ParticleGroup): int {.base.} = result
 method items*(self: ParticleGroup): seq[PointParticle] {.base.} = @[PointParticle()]
 method set_indices*(self: ParticleGroup, ind: int): int {.base.} = return ind
 method `$`*(self: ParticleGroup): string {.base.} = ""
+method partition*(self: ParticleGroup, num: int): seq[ParticleGroup] {.base.} = return newSeq[ParticleGroup](num)
 
 # -------------------------------------------------------------
 type
@@ -66,6 +68,11 @@ method items*(self: SingleParticle): seq[PointParticle] = return self.particles
 method set_indices*(self: SingleParticle, ind: int): int =
     self.particle.index = ind
     return ind + 1
+
+method partition*(self: SingleParticle, num: int): seq[ParticleGroup] =
+    var o = newSeq[ParticleGroup](num)
+    o[0] = self
+    return o
 
 method `$`*(self: SingleParticle): string = return fmt"SingleParticle: {$self.particle}"
 
@@ -93,16 +100,16 @@ method `$`*(self: ParticleList): string =
     var o = "ParticleList: \n"
     for particle in self.particles:
         o &= fmt"  {$particle}" & "\n"
-    return o
+    return o.strip()
 
-proc partition*(self: ParticleList, total: int): seq[ParticleList] =
+method partition*(self: ParticleList, total: int): seq[ParticleGroup] =
     let size = (self.count() div total)
-    var list: seq[ParticleList] = @[]
-    for i in 1 .. total:
-        let particles: seq[PointParticle] = @[]
-        for ind in 1 + (i-1)*size .. 1 + i*size:
-            self.particles.add(self.particles[ind])
-        list[i] = ParticleList().initParticleList(particles)
+    var list: seq[ParticleGroup] = @[]
+    for i in 0 .. total-1:
+        var particles: seq[PointParticle] = @[]
+        for ind in i*size .. (i+1)*size-1:
+            particles.add(self.particles[ind])
+        list.add(ParticleList().initParticleList(particles))
     return list
 
 # -------------------------------------------------------------
@@ -110,7 +117,6 @@ type
     UniformParticles* = ref object of ParticleList
 
 proc initUniformParticles*(self: UniformParticles, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: int): UniformParticles =
-    echo fmt"{p0} {p1} {v0} {v1} {N}"
     for i in 0 .. N - 1:
         let f: float = i / (N - 1)
         let pos = lerp(p0, p1, f)

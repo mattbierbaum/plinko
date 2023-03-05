@@ -2,6 +2,7 @@
 
 import ics
 import simulation
+import simulation_parallel
 
 import std/os
 import std/strformat
@@ -19,7 +20,7 @@ else:
         echo $sim
 
     var time_start = times.cpuTime()
-    sim.run()
+    sim = sim.run_parallel()
     var time_end = times.cpuTime()
     let particle_steps = sim.particle_index.float * sim.max_steps.float
     echo fmt"Step rate (M/sec): {particle_steps/(time_end-time_start)/1e6}"
