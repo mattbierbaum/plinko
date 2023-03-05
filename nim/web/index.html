@@ -26,6 +26,10 @@
             align-items: stretch;
         }
 
+        div#inputs>select {
+            flex: 0 0 auto;
+        }
+
         div#inputs>textarea {
             flex: 1 1 auto;
             font-size: 12px;
@@ -67,12 +71,14 @@
             height: 100%;
         }
     </style>
-    <script type="text/javascript" src="script.js" defer></script>
+    <script type="text/javascript" src="examples.js" ></script>
+    <script type="text/javascript" src="script.js"></script>
 </head>
 
 <body>
     <div id="ui">
         <div id="inputs">
+            <select id="presets"></select>
             <textarea id="source"></textarea>
             <textarea id="log" disabled></textarea>
             <div id="buttons">
