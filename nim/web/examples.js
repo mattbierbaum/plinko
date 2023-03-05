@@ -1,3 +1,64 @@
+var example_concentric = `{
+"simulation": {
+    "eps": 1e-6,
+    "dt": 1e-3,
+    "max_steps": 2500000,
+    "equal_time": false,
+    "accuracy": false,
+    "linear": true,
+    "verbose": false
+},
+"objects": [
+    { 
+        "type": "concentric", 
+        "scaling_function": {
+            "type": "linear",
+            "min_scale": 1.0,
+            "max_scale": 4.0,
+            "steps": 150
+        },
+        "object": {
+            "type": "masked_circle",
+            "pos": [ 0.5, 0.5],
+            "rad": 0.125,
+            "damp": 0.999999,
+            "mask": {
+                "type": "nholes",
+                "n": 4,
+                "gap": 8e-3,
+                "offset": 0.0
+            }
+        }
+    },
+    { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.12501, "damp": 1.0 },
+    { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.4999, "damp": 1.0 }
+],
+"particles": [ 
+    { 
+        "type": "single", 
+        "pos": [0.501, 0.97], 
+        "vel": [0.1, 0.0] 
+    } 
+],
+"forces": [ { "type": "gravity", "g": -1.0 } ],
+"observers": [
+    {
+        "type": "pgm", 
+        "filename": "canvas", 
+        "blend": "add",
+        "box": { "type": "ref", "name": "boundary"}
+    },
+    { "type": "step", "interval": 100000 }
+],
+"neighborlist": {
+    "type": "cell",
+    "ncells": [100, 100],
+    "buffer": 0.02,
+    "box": { "type": "ref", "name": "boundary" }
+}
+}
+`;
+
 var example_plinko_simple = `{
 "simulation": {
     "eps": 1e-6,
@@ -83,6 +144,7 @@ var example_orbits = `{
 }`;
 
 var examples = {
+    "concentric-plus": example_concentric,
     "plinko-simple": example_plinko_simple,
     "orbits": example_orbits,
 }
