@@ -235,7 +235,7 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
         let blend = blend_table[node{"blend"}.getStr("add")]
 
         let box = cast[Box](json_to_object(node{"box"}, sim)[0])
-        let resolution = node{"resolution"}.getInt()
+        let resolution = node{"resolution"}.getInt(100)
         let dpi = resolution.float / max(box.uu[0] - box.ll[0], box.uu[1] - box.ll[1]) 
 
         let plotter = DensityPlot().initDensityPlot(box=box, dpi=dpi, blendmode=blend)

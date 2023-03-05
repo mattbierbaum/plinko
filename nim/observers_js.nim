@@ -78,6 +78,7 @@ type
         h*, w*: int
 
 method set_canvas*(self: Observer, canvas: Canvas): void {.base.} = return
+method get_canvas_ratio*(self: Observer): float {.base.} = return 0.0
 
 method set_canvas*(self: JsImageRecorder, canvas: Canvas): void =
     self.canvas = canvas
@@ -86,6 +87,9 @@ method set_canvas*(self: JsImageRecorder, canvas: Canvas): void =
     let b = self.plotter.box
     let dpi = min(self.w.float / (b.uu[0] - b.ll[0]), self.h.float / (b.uu[1] - b.ll[1]))
     self.plotter = DensityPlot().initDensityPlot(box=self.plotter.box, dpi=dpi, blendmode=self.plotter.blendmode)
+
+method get_canvas_ratio*(self: JsImageRecorder): float =
+    return self.plotter.grid.shape[0] / self.plotter.grid.shape[1]
 
 method close*(self: JsImageRecorder): void =
     var ctx = self.canvas.getContext2d()
