@@ -126,12 +126,19 @@ method close*(self: LastStateRecorder): void =
     file.close()
 
 # =================================================================
-proc save_csv*(self: ImageRecorder): void = self.plotter.grid.save_csv(self.filename)
-proc save_bin*(self: ImageRecorder): void = self.plotter.grid.save_bin(self.filename)
-proc save_pgm2*(self: ImageRecorder): void = self.tone().save_pgm2(self.filename)
-proc save_pgm5*(self: ImageRecorder): void = self.tone().save_pgm5(self.filename)
+type
+    NativeImageRecorder* = ref object of ImageRecorder
 
-method close*(self: ImageRecorder): void =
+proc save_csv*(self: NativeImageRecorder): void = self.plotter.grid.save_csv(self.filename)
+proc save_bin*(self: NativeImageRecorder): void = self.plotter.grid.save_bin(self.filename)
+proc save_pgm2*(self: NativeImageRecorder): void = self.tone().save_pgm2(self.filename)
+proc save_pgm5*(self: NativeImageRecorder): void = self.tone().save_pgm5(self.filename)
+
+method duplicate*(self: NativeImageRecorder): Observer =
+    return NativeImageRecorder().initImageRecorder(
+        self.filename, self.plotter.duplicate(), self.format, self.cmap, self.norm)
+
+method close*(self: NativeImageRecorder): void =
     if self.format == "bin":
         self.save_bin()
     if self.format == "csv":
@@ -141,8 +148,15 @@ method close*(self: ImageRecorder): void =
     if self.format == "pgm5":
         self.save_pgm5()
 
+proc `+`*(self: NativeImageRecorder, other: NativeImageRecorder): Observer =
+    self.plotter.grid = self.plotter.grid + other.plotter.grid
+    return self
+
 # =================================================================
-method close*(self: SVGLinePlot): void =
+type
+    NativeSVGLinePlot* = ref object of SVGLinePlot
+
+method close*(self: NativeSVGLinePlot): void =
     self.buffer.write(self.path_end)
     self.buffer.write(self.footer)
     var file = open(self.filename, fmWrite)

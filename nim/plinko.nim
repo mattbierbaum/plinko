@@ -14,6 +14,13 @@ import std/times
 import std/threadpool
 {.experimental: "parallel".}
 
+proc combine*(self: ObserverGroup, other: ObserverGroup): ObserverGroup =
+    for i, obs0 in self.observers:
+        for j, obs1 in other.observers:
+            if obs0 of NativeImageRecorder and obs1 of NativeImageRecorder:
+                self.observers[i] = obs0.NativeImageRecorder + obs1.NativeImageRecorder
+    return self
+
 proc duplicate_for_thread*(self: Simulation): Simulation =
     var s = Simulation().initSimulation()
     s.dt = self.dt
@@ -25,7 +32,7 @@ proc duplicate_for_thread*(self: Simulation): Simulation =
     s.equal_time = self.equal_time
     s.accuracy_mode = self.accuracy_mode
     s.record_objects = self.record_objects
-    s.particle_index = 0 #self.particle_index
+    s.particle_index = 0
     s.particle_groups = @[]
     s.observer_group = self.observer_group.duplicate().ObserverGroup
     s.observers = self.observer_group.observers
@@ -50,7 +57,7 @@ proc partition*(self: Simulation): seq[Simulation] =
 
 proc join*(sims: seq[Simulation]): Simulation =
     for i in 1 .. sims.len-1:
-        sims[0].observer_group = sims[0].observer_group + sims[i].observer_group
+        sims[0].observer_group = sims[0].observer_group.combine(sims[i].observer_group)
     return sims[0]
 
 proc run_parallel*(self: Simulation): Simulation =
