@@ -31,59 +31,6 @@ method `$`*(self: Observer): string {.base.} = "Observer"
 
 # =================================================================
 type
-    ObserverGroup* = ref object of Observer
-        observers*: seq[Observer]
-
-proc initObserverGroup*(self: ObserverGroup, observers: seq[Observer]): ObserverGroup =
-    self.observers = observers
-    return self
-
-method begin*(self: ObserverGroup): void =
-    for obs in self.observers:
-        obs.begin()
-
-method record_object*(self: ObserverGroup, obj: Object): void =
-    for obs in self.observers:
-        obs.record_object(obj)
-
-method update_particle*(self: ObserverGroup, particle: PointParticle): void =
-    for obs in self.observers:
-        obs.update_particle(particle)
-
-method update_time*(self: ObserverGroup, time: float): void =
-    for obs in self.observers:
-        obs.update_time(time)
-
-method update_step*(self: ObserverGroup, time: int): void =
-    for obs in self.observers:
-        obs.update_step(time)
-
-method update_collision*(self: ObserverGroup, particle: PointParticle, obj: Object, time: float): void =
-    for obs in self.observers:
-        obs.update_collision(particle, obj, time)
-
-method is_triggered*(self: ObserverGroup): bool =
-    for obs in self.observers:
-        if obs.is_triggered():
-            return true
-    return false
-
-method is_triggered_particle*(self: ObserverGroup, particle: PointParticle): bool =
-    for obs in self.observers:
-        if obs.is_triggered_particle(particle):
-            return true
-    return false
-
-method reset*(self: ObserverGroup): void =
-    for obs in self.observers:
-        obs.reset()
-
-method close*(self: ObserverGroup): void =
-    for obs in self.observers:
-        obs.close()
-
-# =================================================================
-type
     StepPrinter* = ref object of Observer
         interval*: int
 
@@ -173,6 +120,10 @@ proc tone*(self: ImageRecorder): Array2D[uint8] =
    arr = arr.initArray2D(shape=self.plotter.grid.shape)
    arr.data = data
    return arr
+
+proc `+`*(self: ImageRecorder, other: ImageRecorder): Observer =
+    self.plotter.grid = self.plotter.grid + other.plotter.grid
+    return self
 
 method `$`*(self: ImageRecorder): string = 
     var o = "ImageRecorder: \n"
@@ -287,3 +238,62 @@ method update_particle*(self: SVGLinePlot, particle: PointParticle): void =
         self.buffer.write(self.path_end)
         self.count = 0
 
+# =================================================================
+type
+    ObserverGroup* = ref object of Observer
+        observers*: seq[Observer]
+
+proc initObserverGroup*(self: ObserverGroup, observers: seq[Observer]): ObserverGroup =
+    self.observers = observers
+    return self
+
+method begin*(self: ObserverGroup): void =
+    for obs in self.observers:
+        obs.begin()
+
+method record_object*(self: ObserverGroup, obj: Object): void =
+    for obs in self.observers:
+        obs.record_object(obj)
+
+method update_particle*(self: ObserverGroup, particle: PointParticle): void =
+    for obs in self.observers:
+        obs.update_particle(particle)
+
+method update_time*(self: ObserverGroup, time: float): void =
+    for obs in self.observers:
+        obs.update_time(time)
+
+method update_step*(self: ObserverGroup, time: int): void =
+    for obs in self.observers:
+        obs.update_step(time)
+
+method update_collision*(self: ObserverGroup, particle: PointParticle, obj: Object, time: float): void =
+    for obs in self.observers:
+        obs.update_collision(particle, obj, time)
+
+method is_triggered*(self: ObserverGroup): bool =
+    for obs in self.observers:
+        if obs.is_triggered():
+            return true
+    return false
+
+method is_triggered_particle*(self: ObserverGroup, particle: PointParticle): bool =
+    for obs in self.observers:
+        if obs.is_triggered_particle(particle):
+            return true
+    return false
+
+method reset*(self: ObserverGroup): void =
+    for obs in self.observers:
+        obs.reset()
+
+method close*(self: ObserverGroup): void =
+    for obs in self.observers:
+        obs.close()
+
+proc `+`*(self: ObserverGroup, other: ObserverGroup): ObserverGroup =
+    for i, obs0 in self.observers:
+        for j, obs1 in other.observers:
+            if obs0 of ImageRecorder and obs1 of ImageRecorder:
+                self.observers[i] = obs0.ImageRecorder + obs1.ImageRecorder
+    return self

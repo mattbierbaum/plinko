@@ -2,11 +2,41 @@
 
 import ics
 import simulation
-import simulation_parallel
 
+import std/cpuinfo
 import std/os
 import std/strformat
 import std/times
+
+import std/threadpool
+{.experimental: "parallel".}
+
+proc run_parallel*(self: Simulation): Simulation =
+    if self.threads == 1:
+        return self.run()
+
+    if self.threads <= 0:
+        self.threads = countProcessors()
+
+    echo "Partitioning..."
+    var sims = self.partition()
+    var flowsims = newSeq[FlowVar[Simulation]](sims.len)
+
+    echo "Launching..."
+    parallel:
+        for i, sim in sims:
+            flowsims[i] = spawn sim.run()
+    sync()
+
+    echo "Copying results..."
+    var newsims: seq[Simulation] = @[]
+    for flow in flowsims:
+        newsims.add(^flow)
+
+    echo "Joining..."
+    var o = join(newsims)
+    echo "Done."
+    return o
 
 let params = commandLineParams()
 if len(params) != 1:

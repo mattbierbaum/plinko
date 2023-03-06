@@ -10,6 +10,11 @@ proc initArray2D*[T](self: Array2D[T], shape: array[2, int]): Array2D[T] =
     self.data = newSeq[T](self.size)
     return self
 
+proc `+`*[T](self: Array2D[T], other: Array2D[T]): Array2D[T] =
+    for i, v in other.data:
+        self.data[i] += v
+    return self
+
 proc clamp_index*(self: Array2D, index: int): int =
     return max(min(index, self.size-1), 0)
 

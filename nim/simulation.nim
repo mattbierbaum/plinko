@@ -212,8 +212,30 @@ proc `$`*(self: Simulation): string =
     o &= $self.nbl
     return o
 
-proc run*(self: Simulation): void =
+proc run*(self: Simulation): Simulation =
     self.step(self.max_steps)
+    return self
 
 proc close*(self: Simulation): void =
     self.observer_group.close()
+
+proc partition*(self: Simulation): seq[Simulation] =
+    var sims: seq[Simulation] = @[]
+    var particles : seq[seq[ParticleGroup]] = @[]
+
+    for i in 0 .. self.threads-1:
+        particles.add(@[])
+        sims.add(deepCopy(self))
+        sims[i].particle_groups = @[]
+
+    for grp in self.particle_groups:
+        let grps = grp.partition(self.threads)
+        for i, g in grps:
+            sims[i].add_particle(g)
+
+    return sims
+
+proc join*(sims: seq[Simulation]): Simulation =
+    for i in 1 .. sims.len-1:
+        sims[0].observer_group = sims[0].observer_group + sims[i].observer_group
+    return sims[0]

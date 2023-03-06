@@ -32,6 +32,6 @@
         "box": { "type": "box", "ll": [0.0,0.0], "uu": [1.0,1.0] },
         "resolution": 10000
     },
-    {"type": "step", "interval": 100}
+    {"type": "step", "interval": 1000}
 ]
 }
