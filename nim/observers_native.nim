@@ -9,6 +9,8 @@ import std/streams
 import std/strformat
 import std/tables
 
+proc clear_warning*(): void = return
+
 proc save_csv*[T](self: Array2D[T], filename: string,
         mode: string = "w"): void =
     var file: File
@@ -124,15 +126,12 @@ method close*(self: LastStateRecorder): void =
     file.close()
 
 # =================================================================
-type
-    NativeImageRecorder* = ref object of ImageRecorder
+proc save_csv*(self: ImageRecorder): void = self.plotter.grid.save_csv(self.filename)
+proc save_bin*(self: ImageRecorder): void = self.plotter.grid.save_bin(self.filename)
+proc save_pgm2*(self: ImageRecorder): void = self.tone().save_pgm2(self.filename)
+proc save_pgm5*(self: ImageRecorder): void = self.tone().save_pgm5(self.filename)
 
-proc save_csv*(self: NativeImageRecorder): void = self.plotter.grid.save_csv(self.filename)
-proc save_bin*(self: NativeImageRecorder): void = self.plotter.grid.save_bin(self.filename)
-proc save_pgm2*(self: NativeImageRecorder): void = self.tone().save_pgm2(self.filename)
-proc save_pgm5*(self: NativeImageRecorder): void = self.tone().save_pgm5(self.filename)
-
-method close*(self: NativeImageRecorder): void =
+method close*(self: ImageRecorder): void =
     if self.format == "bin":
         self.save_bin()
     if self.format == "csv":
@@ -143,12 +142,8 @@ method close*(self: NativeImageRecorder): void =
         self.save_pgm5()
 
 # =================================================================
-type
-    NativeSVGLinePlot* = ref object of SVGLinePlot
-
-method close*(self: NativeSVGLinePlot): void =
+method close*(self: SVGLinePlot): void =
     self.buffer.write(self.path_end)
     self.buffer.write(self.footer)
     var file = open(self.filename, fmWrite)
     file.write(self.buffer.data)
-

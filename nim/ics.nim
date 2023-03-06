@@ -8,24 +8,6 @@ import plotting
 import simulation
 import vector
 
-proc GenericImageRecorder(): ImageRecorder = 
-    return ImageRecorder()
-
-proc GenericSVGLinePlot(): SVGLinePlot = 
-    return SVGLinePlot()
-
-var ImageRecorderImpl = GenericImageRecorder
-var SVGLinePlotImpl = GenericSVGLinePlot
-
-when not defined(js):
-    import observers_native
-    ImageRecorderImpl = proc(): ImageRecorder = return NativeImageRecorder()
-    SVGLinePlotImpl = proc(): SVGLinePlot = return NativeSVGLinePlot()
-else:
-    import observers_js
-    ImageRecorderImpl = proc(): ImageRecorder = return JsImageRecorder()
-    SVGLinePlotImpl = proc(): SVGLinePlot = return JsSvgLinePlot()
-
 import std/json
 import std/math
 import std/tables
@@ -211,7 +193,7 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
         let box = cast[Box](json_to_object(node{"box"}, sim)[0])
         let resolution = node{"resolution"}.getInt()
         let dpi = max(box.uu[0] - box.ll[0], box.uu[1] - box.ll[1]) / resolution.float / 100.0
-        return SVGLinePlotImpl().initSVGLinePlot(filename=filename, box=box, lw=dpi)
+        return SVGLinePlot().initSVGLinePlot(filename=filename, box=box, lw=dpi)
 
     elif node{"type"}.getStr() == "pgm":
         let eqhist: NormFunction = proc(data: seq[float]): seq[float] =
@@ -239,7 +221,7 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
         let dpi = resolution.float / max(box.uu[0] - box.ll[0], box.uu[1] - box.ll[1]) 
 
         let plotter = DensityPlot().initDensityPlot(box=box, dpi=dpi, blendmode=blend)
-        let obs = ImageRecorderImpl().initImageRecorder(
+        let obs = ImageRecorder().initImageRecorder(
             filename=filename, plotter=plotter, format=format,
             cmap=cmap, norm=norm)
         return obs

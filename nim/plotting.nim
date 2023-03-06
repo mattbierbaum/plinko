@@ -43,6 +43,9 @@ proc initDensityPlot*(self: DensityPlot, box: Box, dpi: float, blendmode: BlendF
     self.blendmode = blendmode
     return self
 
+proc duplicate*(self: DensityPlot): DensityPlot =
+    return DensityPlot().initDensityPlot(self.box, self.dpi, self.blendmode)
+
 proc `$`*(self: DensityPlot): string = 
     var o = "DensityPlot:\n"
     o &= fmt"  box={self.box}" & "\n"

@@ -24,7 +24,7 @@ proc log_simulation*(sim: Simulation): void {.exportc.} =
 
 proc run_simulation*(sim: Simulation): void {.exportc.} =
     echo "Starting simulation..."
-    sim.run()
+    discard sim.run()
     echo "Saving observers..."
     sim.close()
     echo "Done."

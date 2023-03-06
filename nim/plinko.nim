@@ -2,6 +2,9 @@
 
 import ics
 import simulation
+import objects
+import observers
+import observers_native
 
 import std/cpuinfo
 import std/os
@@ -10,6 +13,45 @@ import std/times
 
 import std/threadpool
 {.experimental: "parallel".}
+
+proc duplicate_for_thread*(self: Simulation): Simulation =
+    var s = Simulation().initSimulation()
+    s.dt = self.dt
+    s.eps = self.eps
+    s.max_steps = self.max_steps
+    s.threads = self.threads
+    s.verbose = self.verbose
+    s.linear = self.linear
+    s.equal_time = self.equal_time
+    s.accuracy_mode = self.accuracy_mode
+    s.record_objects = self.record_objects
+    s.particle_index = 0 #self.particle_index
+    s.particle_groups = @[]
+    s.observer_group = self.observer_group.duplicate().ObserverGroup
+    s.observers = self.observer_group.observers
+    s.force_func = deepCopy(self.force_func)
+    s.integrator = deepCopy(self.integrator)
+    s.objects = deepCopy(self.objects)
+    s.nbl = deepCopy(self.nbl)
+    return s
+
+proc partition*(self: Simulation): seq[Simulation] =
+    var sims: seq[Simulation] = @[]
+
+    for i in 0 .. self.threads-1:
+        sims.add(self.duplicate_for_thread())
+
+    for grp in self.particle_groups:
+        let grps = grp.partition(self.threads)
+        for i, g in grps:
+            sims[i].add_particle(g)
+
+    return sims
+
+proc join*(sims: seq[Simulation]): Simulation =
+    for i in 1 .. sims.len-1:
+        sims[0].observer_group = sims[0].observer_group + sims[i].observer_group
+    return sims[0]
 
 proc run_parallel*(self: Simulation): Simulation =
     if self.threads == 1:
@@ -20,12 +62,12 @@ proc run_parallel*(self: Simulation): Simulation =
 
     echo "Partitioning..."
     var sims = self.partition()
-    var flowsims = newSeq[FlowVar[Simulation]](sims.len)
+    var flowsims: seq[FlowVar[Simulation]] = @[]
 
     echo "Launching..."
     parallel:
         for i, sim in sims:
-            flowsims[i] = spawn sim.run()
+            flowsims.add(spawn sim.run())
     sync()
 
     echo "Copying results..."
@@ -59,3 +101,5 @@ else:
     sim.close()
     time_end = times.cpuTime()
     echo fmt"Close time (sec): {time_end - time_start}"
+
+    clear_warning()
