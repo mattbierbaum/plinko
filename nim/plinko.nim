@@ -9,21 +9,13 @@ import std/cpuinfo
 import std/os
 import std/strformat
 import std/times
-
 import std/threadpool
-{.experimental: "parallel".}
 
 proc get_threads*(json: string): int =
     var threads = json_to_threads(json)
     if threads <= 0:
         threads = countProcessors()
     return threads
-
-proc create_and_run*(json: string, index: int): Simulation =
-    var sim = json_to_simulation(json, index)
-    sim.initialize()
-    sim.run()
-    return sim
 
 proc combine*(self: ObserverGroup, other: ObserverGroup): ObserverGroup =
     for i, obs0 in self.observers:
@@ -37,11 +29,11 @@ proc join*(sims: seq[Simulation]): Simulation =
         sims[0].observer_group = sims[0].observer_group.combine(sims[i].observer_group)
     return sims[0]
 
-proc run*(json: string): Simulation =
-    var sim = json_to_simulation(json)
+proc run*(json: string, index: int=0): Simulation =
+    var sim = json_to_simulation(json, index)
     sim.initialize()
 
-    if sim.verbose:
+    if sim.verbose and index == 0:
         echo $sim
 
     sim.run()
@@ -51,9 +43,8 @@ proc run_parallel*(json: string): Simulation =
     echo "Launching parallel..."
     let threads = get_threads(json)
     var flowsims: seq[FlowVar[Simulation]] = @[]
-    parallel:
-        for i in 0 .. threads-1:
-            flowsims.add(spawn create_and_run(json, i))
+    for i in 0 .. threads-1:
+        flowsims.add(spawn run(json, i))
     sync()
 
     echo "Copying results..."
