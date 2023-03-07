@@ -132,10 +132,6 @@ proc save_bin*(self: NativeImageRecorder): void = self.plotter.grid.save_bin(sel
 proc save_pgm2*(self: NativeImageRecorder): void = self.tone().save_pgm2(self.filename)
 proc save_pgm5*(self: NativeImageRecorder): void = self.tone().save_pgm5(self.filename)
 
-method duplicate*(self: NativeImageRecorder): Observer =
-    return NativeImageRecorder().initImageRecorder(
-        self.filename, self.plotter.duplicate(), self.format, self.cmap, self.norm)
-
 method close*(self: NativeImageRecorder): void =
     if self.format == "bin":
         self.save_bin()

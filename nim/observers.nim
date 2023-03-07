@@ -27,7 +27,6 @@ method is_triggered*(self: Observer): bool {.base.} = false
 method is_triggered_particle*(self: Observer, particle: PointParticle): bool {.base.} = false
 method reset*(self: Observer): void {.base.} = return
 method close*(self: Observer): void {.base.} = return
-method duplicate*(self: Observer): Observer {.base.} = self
 method `$`*(self: Observer): string {.base.} = "Observer"
 
 # =================================================================
@@ -83,12 +82,6 @@ method close*(self: ObserverGroup): void =
     for obs in self.observers:
         obs.close()
 
-method duplicate*(self: ObserverGroup): Observer =
-    var obs: seq[Observer] = @[]
-    for o in self.observers:
-        obs.add(o.duplicate())
-    return ObserverGroup().initObserverGroup(obs)
-
 # =================================================================
 type
     StepPrinter* = ref object of Observer
@@ -97,9 +90,6 @@ type
 proc initStepPrinter*(self: StepPrinter, interval: int = 1): StepPrinter =
     self.interval = interval
     return self
-
-method duplicate*(self: StepPrinter): Observer =
-    return StepPrinter().initStepPrinter(self.interval)
 
 method update_step*(self: StepPrinter, t: int): void =
     if t mod self.interval == 0:
@@ -117,9 +107,6 @@ type
 proc initTimePrinter*(self: TimePrinter, interval: float = 1.0): TimePrinter =
     self.interval = interval
     return self
-
-method duplicate*(self: TimePrinter): Observer =
-    return TimePrinter().initTimePrinter(self.interval)
 
 method begin*(self: TimePrinter): void =
     self.time = 0.0 
@@ -158,10 +145,6 @@ proc initImageRecorder*(
     self.cmap = cmap
     self.norm = norm
     return self
-
-method duplicate*(self: ImageRecorder): Observer =
-    return ImageRecorder().initImageRecorder(
-        self.filename, self.plotter.duplicate(), self.format, self.cmap, self.norm)
 
 method record_object*(self: ImageRecorder, obj: Object): void =
     var s = 1000
