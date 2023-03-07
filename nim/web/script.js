@@ -33,6 +33,7 @@ window.onload = function () {
 
     var run_button = document.getElementById("run");
     run_button.onclick = function () {
+        var source = document.getElementById("source");
         if (run_button.textContent === "Run") {
             reset();
 
@@ -49,6 +50,7 @@ window.onload = function () {
                 if (data.type === "status") {
                     if (data.msg === "done") {
                         run_button.textContent = "Run";
+                        source.disabled = false;
                     }
                 } else if (data.type === "log") {
                     var log = document.getElementById("log");
@@ -61,9 +63,11 @@ window.onload = function () {
             });
             worker.postMessage({ json: json, canvas: offscreen }, [offscreen]);
             run_button.textContent = "Stop";
+            source.disabled = true;
         } else if (run_button.textContent === "Stop") {
             worker.terminate();
             run_button.textContent = "Run";
+            source.disabled = false;
         }
     }
 

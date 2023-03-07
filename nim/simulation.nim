@@ -212,9 +212,8 @@ proc `$`*(self: Simulation): string =
     o &= $self.nbl
     return o
 
-proc run*(self: Simulation): Simulation =
+proc run*(self: Simulation): void =
     self.step(self.max_steps)
-    return self
 
 proc close*(self: Simulation): void =
     self.observer_group.close()

@@ -45,7 +45,10 @@ method count*(self: ParticleGroup): int {.base.} = result
 method items*(self: ParticleGroup): seq[PointParticle] {.base.} = @[PointParticle()]
 method set_indices*(self: ParticleGroup, ind: int): int {.base.} = return ind
 method `$`*(self: ParticleGroup): string {.base.} = ""
-method partition*(self: ParticleGroup, num: int): seq[ParticleGroup] {.base.} = return newSeq[ParticleGroup](num)
+method partition*(self: ParticleGroup, num: int): seq[ParticleGroup] {.base.} = 
+    var parts = newSeq[ParticleGroup](num)
+    parts[0] = self
+    return parts
 
 # -------------------------------------------------------------
 type
@@ -68,11 +71,6 @@ method items*(self: SingleParticle): seq[PointParticle] = return self.particles
 method set_indices*(self: SingleParticle, ind: int): int =
     self.particle.index = ind
     return ind + 1
-
-method partition*(self: SingleParticle, num: int): seq[ParticleGroup] =
-    var o = newSeq[ParticleGroup](num)
-    o[0] = self
-    return o
 
 method `$`*(self: SingleParticle): string = return fmt"SingleParticle: {$self.particle}"
 

@@ -191,6 +191,10 @@ proc tone*(self: ImageRecorder): Array2D[uint8] =
    arr.data = data
    return arr
 
+proc `+`*(self: ImageRecorder, other: ImageRecorder): Observer =
+    self.plotter.grid = self.plotter.grid + other.plotter.grid
+    return self
+
 method `$`*(self: ImageRecorder): string = 
     var o = "ImageRecorder: \n"
     o &= fmt"  filename='{self.filename}'" & "\n"

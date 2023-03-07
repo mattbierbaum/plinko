@@ -29,7 +29,7 @@ else:
 type ObjectTranslationGenerator[T] = proc(pos: Vec): T
 type ObjectScaleGenerator[T] = proc(scale: float): T
 
-proc hex_grid_object*[T](rows: int, cols: int, f: ObjectTranslationGenerator[T]): (seq[T], Box) =
+proc hex_grid_object*[T](rows: int, cols: int, top: float, f: ObjectTranslationGenerator[T]): (seq[T], Box) =
     var a = 1.0
     var rt3 = math.sqrt(3.0)
 
@@ -43,7 +43,7 @@ proc hex_grid_object*[T](rows: int, cols: int, f: ObjectTranslationGenerator[T])
                 objs.add(f([(j.float+0.5)*a, (i.float+0.5)*a*rt3]))
 
     let boundary = [(cols.float-1.0)*a, (rows.float)*rt3*a]
-    let box = Box().initBox(ll=[0.0,0.0], uu=boundary, name="boundary")
+    let box = Box().initBox(ll=[0.0,0.0], uu=boundary+[0.0, top], name="boundary")
     box.top.name = "top"
     box.bottom.name = "bottom"
     return (objs, box)
@@ -156,9 +156,10 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
             o = o.translate(pos)
             return o
 
+        let top = node{"top"}.getFloat(0.0)
         let rows = node{"rows"}.getInt(0)
         let cols = node{"columns"}.getInt(0)
-        let (obj, boundary) = hex_grid_object(rows=rows, cols=cols, f=generate_object_translate)
+        let (obj, boundary) = hex_grid_object(rows=rows, cols=cols, top=top, f=generate_object_translate)
         objs.add(boundary)
         for o in obj:
             objs.add(o)
@@ -274,7 +275,13 @@ proc json_to_force(node: JsonNode, sim: Simulation): IndependentForce =
         let k = node{"k"}.getFloat()
         return generate_force_central(c, k)
 
-proc json_to_simulation*(json: string): Simulation =
+proc json_to_threads*(json: string): int =
+    var cfg = parseJson(json)
+    if cfg{"simulation"} != nil:
+        return cfg["simulation"]{"threads"}.getInt(1)
+    return 1
+
+proc json_to_simulation*(json: string, index: int = 0): Simulation =
     var sim = Simulation().initSimulation()
 
     var cfg = parseJson(json)
@@ -297,7 +304,8 @@ proc json_to_simulation*(json: string): Simulation =
 
     if cfg{"particles"} != nil:
         for node in cfg{"particles"}:
-            sim.add_particle(json_to_particle(node, sim))
+            let partitions = json_to_particle(node, sim).partition(sim.threads)
+            sim.add_particle(partitions[index])
 
     if cfg{"observers"} != nil:
         for node in cfg{"observers"}:

@@ -9,8 +9,6 @@ import std/streams
 import std/strformat
 import std/tables
 
-proc clear_warning*(): void = return
-
 proc save_csv*[T](self: Array2D[T], filename: string,
         mode: string = "w"): void =
     var file: File

@@ -2,26 +2,28 @@
 "simulation": {
     "eps": 1e-6,
     "dt": 1e-3,
-    "max_steps": 16000,
+    "max_steps": 6000,
     "equal_time": false,
     "accuracy": true,
     "linear": false,
-    "record_objects": true
+    "record_objects": true,
+    "verbose": false,
+    "threads": 8
 },
 "objects": [
     { 
-        "type": "tri-lattice", "rows": 4, "columns": 9, 
-        "object": { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.35, "damp": 0.95}
+        "type": "tri-lattice", "rows": 2, "columns": 5, "top": 1.0,
+        "object": { "type": "circle", "pos": [ 0.5, 0.5], "rad": 0.35, "damp": 0.85}
     }
 ],
 "particles": [ 
     { 
         "type": "uniform", 
-        "p0": [3.80, 6.8], 
-        "p1": [4.20, 6.8], 
-        "v0": [-0.010000001, 0.0], 
-        "v1": [0.010000001, 0.0], 
-        "N": 10000
+        "p0": [1.80, 4.2], 
+        "p1": [2.20, 4.2], 
+        "v0": [-0.010000001, -0.4], 
+        "v1": [0.010000001, -0.4], 
+        "N": 40000
     }
 ],
 "forces": [ { "type": "gravity", "g": -1.0 } ],
