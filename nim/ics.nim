@@ -229,6 +229,7 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
         }.toTable()
 
         let filename: string = node{"filename"}.getStr()
+        let start: int = node{"start"}.getInt(1)
         let format: string = node{"format"}.getStr("pgm2")
         let cmap = cmap_table[node{"cmap"}.getStr("gray_r")]
         let norm = norm_table[node{"norm"}.getStr("eq_hist")]
@@ -241,7 +242,7 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
         let plotter = DensityPlot().initDensityPlot(box=box, dpi=dpi, blendmode=blend)
         let obs = ImageRecorderImpl().initImageRecorder(
             filename=filename, plotter=plotter, format=format,
-            cmap=cmap, norm=norm)
+            cmap=cmap, norm=norm, start=start)
         return obs
 
     elif node{"type"}.getStr() == "movie":

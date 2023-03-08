@@ -129,6 +129,8 @@ type
         lastposition*: Table[int, Vec]
         cmap*: CmapFunction
         norm*: NormFunction
+        start*: int
+        step*: int
 
 proc initImageRecorder*(
         self: ImageRecorder, 
@@ -136,12 +138,15 @@ proc initImageRecorder*(
         plotter: DensityPlot,
         format: string = "pgm5", 
         cmap: CmapFunction,
-        norm: NormFunction): ImageRecorder =
+        norm: NormFunction,
+        start: int = 0): ImageRecorder =
     self.format = format
     self.filename = filename
     self.plotter = plotter
     self.lastposition = initTable[int, Vec]()
 
+    self.step = 0
+    self.start = start
     self.cmap = cmap
     self.norm = norm
     return self
@@ -154,15 +159,19 @@ method record_object*(self: ImageRecorder, obj: Object): void =
         var s0 = Segment().initSegment(p0=obj.t(t0), p1=obj.t(t1))
         self.plotter.draw_segment(s0)
 
+method update_step*(self: ImageRecorder, step: int): void =
+    self.step = step
+
 method update_particle*(self: ImageRecorder, particle: PointParticle): void =
    let ind = particle.index
    if self.lastposition.hasKey(ind):
-       var lastposition = self.lastposition[ind]
-       var segment = Segment().initSegment(lastposition, particle.pos)
-       self.plotter.draw_segment(segment)
-       self.lastposition[ind] = particle.pos
+        var lastposition = self.lastposition[ind]
+        var segment = Segment().initSegment(lastposition, particle.pos)
+        if self.step > self.start:
+            self.plotter.draw_segment(segment)
+        self.lastposition[ind] = particle.pos
    else:
-       self.lastposition[ind] = particle.pos
+        self.lastposition[ind] = particle.pos
 
 method update_collision*(self: ImageRecorder, particle: PointParticle, obj: Object, time: float): void = return
 method reset*(self: ImageRecorder): void = self.lastposition = initTable[int, Vec]()
@@ -188,7 +197,6 @@ method `$`*(self: ImageRecorder): string =
 type
     PeriodicImageRecorder* = ref object of ImageRecorder
         step_interval*: int
-        step*: int
         saves*: int
 
 proc initPeriodicImageRecorder*(

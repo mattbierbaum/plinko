@@ -37,6 +37,7 @@ proc run*(json: string, index: int=0): Simulation =
         echo $sim
 
     sim.run()
+    sim.nbl = nil
     return sim
 
 proc run_parallel*(json: string): Simulation =
