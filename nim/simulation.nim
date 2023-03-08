@@ -12,6 +12,7 @@ type
     Simulation* = ref object of RootObj
         t, dt*, eps*: float
         max_steps*: int
+        particle_steps*: int
         threads*: int
         verbose*: bool
         linear*: bool
@@ -31,6 +32,7 @@ proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_
     self.t = 0
     self.dt = dt
     self.eps = eps
+    self.particle_steps = 0
     self.max_steps = max_steps
     self.threads = 1
     self.verbose = true
@@ -172,6 +174,7 @@ proc step_particle*(self: Simulation, part0: PointParticle): void =
     if not part0.active:
         return
 
+    self.particle_steps += 1
     let part1 = self.integrator(part0, self.dt)
     let (parti, is_running) = self.step_collisions(part0, part1)
     let active = (

@@ -27,6 +27,7 @@ proc combine*(self: ObserverGroup, other: ObserverGroup): ObserverGroup =
 proc join*(sims: seq[Simulation]): Simulation =
     for i in 1 .. sims.len-1:
         sims[0].observer_group = sims[0].observer_group.combine(sims[i].observer_group)
+        sims[0].particle_steps = sims[0].particle_steps + sims[i].particle_steps
     return sims[0]
 
 proc run*(json: string, index: int=0): Simulation =
@@ -38,6 +39,7 @@ proc run*(json: string, index: int=0): Simulation =
 
     sim.run()
     sim.nbl = nil
+    sim.observer_group.clear_intermediates()
     return sim
 
 proc run_parallel*(json: string): Simulation =
@@ -72,8 +74,7 @@ else:
     else:
         sim = run_parallel(json)
     var time_end = times.cpuTime()
-    let particle_steps = sim.particle_index.float * sim.max_steps.float
-    echo fmt"Step rate (M/sec): {particle_steps/(time_end-time_start)/1e6}"
+    echo fmt"Step rate (M/sec): {sim.particle_steps.float/(time_end-time_start)/1e6}"
 
     time_start = times.cpuTime()
     sim.close()

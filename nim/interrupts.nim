@@ -66,6 +66,9 @@ method reset*(self: MaxCollisions): void =
     self.collisions = initTable[int, int]()
     self.not_triggered = initTable[int, bool]()
 
+method clear_intermediates*(self: MaxCollisions): void =
+    self.reset()
+
 method `$`*(self: MaxCollisions): string = fmt"MaxCollisions: {self.max}"
 
 # ================================================================
@@ -101,6 +104,9 @@ method update_collision*(self: Collision, particle: PointParticle, obj: Object, 
 method reset*(self: Collision): void =
     self.seen = initTable[int, bool]() 
     self.not_triggered = initTable[int, bool]()
+
+method clear_intermediates*(self: Collision): void =
+    self.reset()
 
 method `$`*(self: Collision): string = fmt"Collision: {self.obj}"
 
@@ -160,5 +166,8 @@ method reset*(self: Stalled): void =
     self.zero_streak = initTable[int, int]()
     self.triggers = initTable[int, bool]()
     self.triggered = false
+
+method clear_intermediates*(self: Stalled): void =
+    self.reset()
 
 method `$`*(self: Stalled): string = fmt"Stalled: {self.interval} {self.count}"

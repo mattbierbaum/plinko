@@ -27,6 +27,7 @@ method is_triggered*(self: Observer): bool {.base.} = false
 method is_triggered_particle*(self: Observer, particle: PointParticle): bool {.base.} = false
 method reset*(self: Observer): void {.base.} = return
 method close*(self: Observer): void {.base.} = return
+method clear_intermediates*(self: Observer): void {.base.} = return
 method `$`*(self: Observer): string {.base.} = "Observer"
 
 # =================================================================
@@ -81,6 +82,10 @@ method reset*(self: ObserverGroup): void =
 method close*(self: ObserverGroup): void =
     for obs in self.observers:
         obs.close()
+
+method clear_intermediates*(self: ObserverGroup): void =
+    for obs in self.observers:
+        obs.clear_intermediates()
 
 # =================================================================
 type
@@ -173,8 +178,11 @@ method update_particle*(self: ImageRecorder, particle: PointParticle): void =
    else:
         self.lastposition[ind] = particle.pos
 
-method update_collision*(self: ImageRecorder, particle: PointParticle, obj: Object, time: float): void = return
-method reset*(self: ImageRecorder): void = self.lastposition = initTable[int, Vec]()
+method reset*(self: ImageRecorder): void = 
+    self.lastposition = initTable[int, Vec]()
+
+method clear_intermediates*(self: ImageRecorder): void =
+    self.reset()
 
 proc tone*(self: ImageRecorder): Array2D[uint8] = 
    let data = self.cmap(self.norm(self.plotter.grid.data))
@@ -194,6 +202,7 @@ method `$`*(self: ImageRecorder): string =
     o &= $self.plotter
     return o
 
+# =================================================================
 type
     PeriodicImageRecorder* = ref object of ImageRecorder
         step_interval*: int
