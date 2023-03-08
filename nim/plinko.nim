@@ -67,16 +67,18 @@ else:
     let json = open(params[0], fmRead).readAll()
     let threads = get_threads(json)
 
-    var time_start = times.cpuTime()
+    var time_start = times.getTime()
     var sim: Simulation = nil
     if threads == 1:
         sim = run(json)
     else:
         sim = run_parallel(json)
-    var time_end = times.cpuTime()
-    echo fmt"Step rate (M/sec): {sim.particle_steps.float/(time_end-time_start)/1e6}"
+    var time_end = times.getTime()
+    var dt = (time_end - time_start).inNanoseconds.float / 1e9
+    echo fmt"Step rate (M/sec): {sim.particle_steps.float/dt/1e6} ({dt} sec)"
 
-    time_start = times.cpuTime()
+    time_start = times.getTime()
     sim.close()
-    time_end = times.cpuTime()
-    echo fmt"Close time (sec): {time_end - time_start}"
+    time_end = times.getTime()
+    dt = (time_end - time_start).inNanoseconds.float / 1e9
+    echo fmt"Close time (sec): {dt}"
