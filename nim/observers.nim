@@ -185,6 +185,26 @@ method `$`*(self: ImageRecorder): string =
     o &= $self.plotter
     return o
 
+type
+    PeriodicImageRecorder* = ref object of ImageRecorder
+        step_interval*: int
+        step*: int
+        saves*: int
+
+proc initPeriodicImageRecorder*(
+        self: PeriodicImageRecorder, 
+        filename: string,
+        plotter: DensityPlot,
+        format: string = "pgm5", 
+        cmap: CmapFunction,
+        norm: NormFunction,
+        step_interval: int): PeriodicImageRecorder =
+    discard self.ImageRecorder.initImageRecorder(filename, plotter, format, cmap, norm)
+    self.step_interval = step_interval
+    self.step = 0
+    self.saves = 0
+    return self
+
 # =================================================================
 type
     PointImageRecorder* = ref object of ImageRecorder

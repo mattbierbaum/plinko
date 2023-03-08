@@ -13,13 +13,16 @@ import std/math
 import std/tables
 
 proc GenericImageRecorder(): ImageRecorder = return ImageRecorder()
+proc GenericPeriodicImageRecorder(): PeriodicImageRecorder = return PeriodicImageRecorder()
 proc GenericSVGLinePlot(): SVGLinePlot = return SVGLinePlot()
 var ImageRecorderImpl = GenericImageRecorder
+var PeriodicImageRecorderImpl = GenericPeriodicImageRecorder
 var SVGLinePlotImpl = GenericSVGLinePlot
 
 when not defined(js):
     import observers_native
     ImageRecorderImpl = proc(): ImageRecorder = return NativeImageRecorder()
+    PeriodicImageRecorderImpl = proc(): PeriodicImageRecorder = return NativePeriodicImageRecorder()
     SVGLinePlotImpl = proc(): SVGLinePlot = return NativeSVGLinePlot()
 else:
     import observers_js
@@ -239,6 +242,38 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
         let obs = ImageRecorderImpl().initImageRecorder(
             filename=filename, plotter=plotter, format=format,
             cmap=cmap, norm=norm)
+        return obs
+
+    elif node{"type"}.getStr() == "movie":
+        let eqhist: NormFunction = proc(data: seq[float]): seq[float] =
+            return image.eq_hist(data, nbins=256*256)
+        let none: NormFunction = proc(data: seq[float]): seq[float] =
+            return none_norm(data)
+
+        let cmap_table = {"gray": gray, "gray_r": gray_r}.toTable()
+        let norm_table = {"eq_hist": eqhist, "none": none}.toTable()
+        let blend_table = {
+            "add": blendmode_additive,
+            "min": blendmode_min,
+            "max": blendmode_max,
+            "avg": blendmode_average,
+        }.toTable()
+
+        let filename: string = node{"filename"}.getStr()
+        let interval: int = node{"interval"}.getInt(1)
+        let format: string = node{"format"}.getStr("pgm2")
+        let cmap = cmap_table[node{"cmap"}.getStr("gray_r")]
+        let norm = norm_table[node{"norm"}.getStr("eq_hist")]
+        let blend = blend_table[node{"blend"}.getStr("add")]
+
+        let box = cast[Box](json_to_object(node{"box"}, sim)[0])
+        let resolution = node{"resolution"}.getInt(100)
+        let dpi = resolution.float / max(box.uu[0] - box.ll[0], box.uu[1] - box.ll[1]) 
+
+        let plotter = DensityPlot().initDensityPlot(box=box, dpi=dpi, blendmode=blend)
+        let obs = PeriodicImageRecorderImpl().initPeriodicImageRecorder(
+            filename=filename, plotter=plotter, format=format,
+            cmap=cmap, norm=norm, step_interval=interval)
         return obs
 
 proc json_to_interrupt(node: JsonNode, sim: Simulation): Interrupt =

@@ -58,7 +58,6 @@ method update_collision*(self: MaxCollisions, particle: PointParticle, obj: Obje
     let i = particle.index
     if self.seen.hasKey(i):
         self.collisions[i] = self.collisions[i] + 1
-        echo self.collisions[i]
         if self.collisions[i] >= self.max:
             self.not_triggered.del(i)
 

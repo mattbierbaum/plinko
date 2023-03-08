@@ -148,6 +148,25 @@ proc `+`*(self: NativeImageRecorder, other: NativeImageRecorder): Observer =
 
 # =================================================================
 type
+    NativePeriodicImageRecorder* = ref object of PeriodicImageRecorder
+
+proc write_metadata*(self: NativePeriodicImageRecorder): void =
+    var file = open(self.filename & "-shape.csv", fmWrite)
+    file.write(fmt"{self.plotter.grid.shape[0]}, {self.plotter.grid.shape[1]}, {self.saves}")
+    file.close()
+
+method update_step*(self: NativePeriodicImageRecorder, step: int): void =
+    self.step += 1
+    if self.step.int mod self.step_interval.int == 0:
+        self.saves += 1
+        if self.saves == 1:
+            self.plotter.grid.save_bin(self.filename, "w")
+        else:
+            self.plotter.grid.save_bin(self.filename, "a")
+        self.write_metadata()
+
+# =================================================================
+type
     NativeSVGLinePlot* = ref object of SVGLinePlot
 
 method close*(self: NativeSVGLinePlot): void =
