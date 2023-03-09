@@ -31,7 +31,7 @@ def process_file(prefix):
         data, _ = image_histogram_equalization(arr[i], cdf=cdf, bins=bins)
         matplotlib.image.imsave(fn, data, cmap='gray_r', vmax=vmax)
 
-    cmd = f"ffmpeg -v warning -i {fn_literal} -tune stillimage -pix_fmt yuv420p -c:v libx264 -tune stillimage {fn_movie}"
+    cmd = f"ffmpeg -y -v warning -i {fn_literal} -tune stillimage -pix_fmt yuv420p -c:v libx264 -tune stillimage {fn_movie}"
     subprocess.run(cmd, shell=True)
 
 if __name__ == '__main__':

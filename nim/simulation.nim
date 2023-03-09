@@ -80,8 +80,7 @@ proc initialize*(self: Simulation): void =
         self.nbl.append(obj)
     self.nbl.calculate()
 
-    self.observer_group = observers.ObserverGroup()
-    discard self.observer_group.initObserverGroup(self.observers)
+    self.observer_group = ObserverGroup().initObserverGroup(self.observers)
     self.observer_group.begin()
 
     if self.record_objects:
@@ -210,8 +209,7 @@ proc `$`*(self: Simulation): string =
         o &= &"  o: {$obj}\n"
     for obj in self.particle_groups:
         o &= &"{$obj}\n"
-    for obs in self.observers:
-        o &= &"{$obs}\n"
+    o &= $self.observer_group
     o &= $self.nbl
     return o
 

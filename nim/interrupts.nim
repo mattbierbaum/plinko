@@ -21,6 +21,7 @@ proc initMaxSteps*(self: MaxSteps, max: int = 0): MaxSteps =
 
 method reset*(self: MaxSteps): void = self.triggered = false
 method is_triggered*(self: MaxSteps): bool = return self.triggered
+method is_triggered_particle*(self: MaxSteps, particle: PointParticle): bool = return self.triggered
 
 method update_step*(self: MaxSteps, step: int): void =
     if step > self.max:
@@ -28,87 +29,73 @@ method update_step*(self: MaxSteps, step: int): void =
 
 # ================================================================
 type
-    MaxCollisions* = ref object of Interrupt
-        max*: int
-        collisions*: Table[int, int]
+    PerParticleInterrupt* = ref object of Interrupt
         seen*: Table[int, bool]
         not_triggered*: Table[int, bool]
 
-proc initMaxCollisions*(self: MaxCollisions, max: int): MaxCollisions =
-    self.max = max
+proc initPerParticleInterrupt*(self: PerParticleInterrupt): PerParticleInterrupt =
     self.seen = initTable[int, bool]()
-    self.collisions = initTable[int, int]()
     self.not_triggered = initTable[int, bool]()
-    return self
 
-method is_triggered*(self: MaxCollisions): bool = 
+method is_triggered*(self: PerParticleInterrupt): bool = 
     if self.seen.len == 0 or self.not_triggered.len > 0:
         return false
     return true
 
-method is_triggered_particle*(self: MaxCollisions, particle: PointParticle): bool = 
+method is_triggered_particle*(self: PerParticleInterrupt, particle: PointParticle): bool = 
     if not self.seen.hasKey(particle.index):
         self.seen[particle.index] = true
         self.not_triggered[particle.index] = true
-        self.collisions[particle.index] = 0
         return false
     return not self.not_triggered.hasKey(particle.index)
 
+proc trigger*(self: PerParticleInterrupt, particle: PointParticle): void =
+    self.seen[particle.index] = true
+    self.not_triggered.del(particle.index)
+
+# ================================================================
+type
+    MaxCollisions* = ref object of PerParticleInterrupt
+        max*: int
+        counter*: CollisionCounter
+
+proc initMaxCollisions*(self: MaxCollisions, max: int): MaxCollisions =
+    self.max = max
+    self.counter = CollisionCounter().initCollisionCounter()
+    discard self.initPerParticleInterrupt()
+    return self
+
 method update_collision*(self: MaxCollisions, particle: PointParticle, obj: Object, time: float): void =
-    let i = particle.index
-    if self.seen.hasKey(i):
-        self.collisions[i] = self.collisions[i] + 1
-        if self.collisions[i] >= self.max:
-            self.not_triggered.del(i)
+    self.counter.update_collision(particle, obj, time)
+    if self.counter.num_collisions(particle) >= self.max:
+        self.trigger(particle)
 
 method reset*(self: MaxCollisions): void =
-    self.seen = initTable[int, bool]() 
-    self.collisions = initTable[int, int]()
-    self.not_triggered = initTable[int, bool]()
-
-method clear_intermediates*(self: MaxCollisions): void =
-    self.reset()
+    procCall self.PerParticleInterrupt.reset()
+    self.counter.reset()
 
 method `$`*(self: MaxCollisions): string = fmt"MaxCollisions: {self.max}"
 
 # ================================================================
 type
-    Collision* = ref object of Interrupt
-        obj*: Object
-        seen*: Table[int, bool]
-        not_triggered*: Table[int, bool]
+    Collision* = ref object of PerParticleInterrupt
+        counter*: CollisionCounter
 
 proc initCollision*(self: Collision, obj: Object): Collision =
-    self.obj = obj
-    self.seen = initTable[int, bool]()
-    self.not_triggered = initTable[int, bool]()
+    self.counter = CollisionCounter().initCollisionCounter(obj=obj)
+    discard self.initPerParticleInterrupt()
     return self
 
-method is_triggered*(self: Collision): bool = 
-    if self.seen.len == 0 or self.not_triggered.len > 0:
-        return false
-    return true
-
-method is_triggered_particle*(self: Collision, particle: PointParticle): bool = 
-    if not self.seen.hasKey(particle.index):
-        self.seen[particle.index] = true
-        self.not_triggered[particle.index] = true
-        return false
-    return not self.not_triggered.hasKey(particle.index)
-
 method update_collision*(self: Collision, particle: PointParticle, obj: Object, time: float): void =
-    # actually trigger the individual particle
-    if self.obj == obj:
-        self.not_triggered.del(particle.index)
+    self.counter.update_collision(particle, obj, time)
+    if self.counter.num_collisions(particle) >= 1:
+        self.trigger(particle)
 
 method reset*(self: Collision): void =
-    self.seen = initTable[int, bool]() 
-    self.not_triggered = initTable[int, bool]()
+    procCall self.PerParticleInterrupt.reset()
+    self.counter.reset()
 
-method clear_intermediates*(self: Collision): void =
-    self.reset()
-
-method `$`*(self: Collision): string = fmt"Collision: {self.obj}"
+method `$`*(self: Collision): string = fmt"Collision: {self.counter.obj}"
 
 # ================================================================
 type
@@ -166,8 +153,5 @@ method reset*(self: Stalled): void =
     self.zero_streak = initTable[int, int]()
     self.triggers = initTable[int, bool]()
     self.triggered = false
-
-method clear_intermediates*(self: Stalled): void =
-    self.reset()
 
 method `$`*(self: Stalled): string = fmt"Stalled: {self.interval} {self.count}"

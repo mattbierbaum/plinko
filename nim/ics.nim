@@ -197,6 +197,72 @@ proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
         let N = node{"N"}.getInt(0)
         return UniformParticles().initUniformParticles(p0=p0, p1=p1, v0=v0, v1=v1, N=N)
 
+proc json_to_interrupt(node: JsonNode, sim: Simulation): Interrupt =
+    if node{"type"}.getStr() == "maxsteps":
+        let maxstep = node{"steps"}.getInt(0)
+        return MaxSteps().initMaxSteps(max=maxstep)
+    
+    if node{"type"}.getStr() == "collision":
+        let obj = json_to_object(node{"object"}, sim)[0]
+        return Collision().initCollision(obj)
+    
+    if node{"type"}.getStr() == "max_collisions":
+        let max = node{"max"}.getInt(0)
+        return MaxCollisions().initMaxCollisions(max)
+
+    if node{"type"}.getStr() == "stalled":
+        return Stalled().initStalled()
+
+proc json_to_interrupt_group*(node: JsonNode, sim: Simulation): ObserverGroup =
+    var op_table = {"and": AndOp, "or": OrOp}.toTable()
+    var op: BoolOp = OrOp
+    var list_node: JsonNode = nil
+    if node{"list"} != nil:
+        list_node = node{"list"}
+        op = op_table[node{"op"}.getStr("or")]
+    else:
+        list_node = node
+
+    var interrupts: seq[Observer] = @[]
+    for n in list_node:
+        interrupts.add(json_to_interrupt(n, sim))
+    return ObserverGroup().initObserverGroup(interrupts, op)
+
+proc json_to_image_recorder*(img: ImageRecorder, node: JsonNode, sim: Simulation): Observer =
+    let eqhist: NormFunction = proc(data: seq[float]): seq[float] =
+        return image.eq_hist(data, nbins=256*256)
+    let none: NormFunction = proc(data: seq[float]): seq[float] =
+        return none_norm(data)
+
+    let cmap_table = {"gray": gray, "gray_r": gray_r}.toTable()
+    let norm_table = {"eq_hist": eqhist, "none": none}.toTable()
+    let blend_table = {
+        "add": blendmode_additive,
+        "min": blendmode_min,
+        "max": blendmode_max,
+        "avg": blendmode_average,
+    }.toTable()
+
+    let filename: string = node{"filename"}.getStr()
+    let format: string = node{"format"}.getStr("pgm2")
+    let cmap = cmap_table[node{"cmap"}.getStr("gray_r")]
+    let norm = norm_table[node{"norm"}.getStr("eq_hist")]
+    let blend = blend_table[node{"blend"}.getStr("add")]
+
+    let box = cast[Box](json_to_object(node{"box"}, sim)[0])
+    let resolution = node{"resolution"}.getInt(100)
+    let dpi = resolution.float / max(box.uu[0] - box.ll[0], box.uu[1] - box.ll[1]) 
+
+    var triggers: ObserverGroup = nil
+    if node{"triggers"} != nil:
+        triggers = json_to_interrupt_group(node{"triggers"}, sim)
+
+    let plotter = DensityPlot().initDensityPlot(box=box, dpi=dpi, blendmode=blend)
+    let obs = img.initImageRecorder(
+        filename=filename, plotter=plotter, format=format,
+        cmap=cmap, norm=norm, triggers=triggers)
+    return obs
+
 proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
     if node{"type"}.getStr() == "time":
         let interval = node{"interval"}.getFloat()
@@ -214,84 +280,13 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
         return SVGLinePlotImpl().initSVGLinePlot(filename=filename, box=box, lw=dpi)
 
     elif node{"type"}.getStr() == "pgm":
-        let eqhist: NormFunction = proc(data: seq[float]): seq[float] =
-            return image.eq_hist(data, nbins=256*256)
-        let none: NormFunction = proc(data: seq[float]): seq[float] =
-            return none_norm(data)
-
-        let cmap_table = {"gray": gray, "gray_r": gray_r}.toTable()
-        let norm_table = {"eq_hist": eqhist, "none": none}.toTable()
-        let blend_table = {
-            "add": blendmode_additive,
-            "min": blendmode_min,
-            "max": blendmode_max,
-            "avg": blendmode_average,
-        }.toTable()
-
-        let filename: string = node{"filename"}.getStr()
-        let start: int = node{"start"}.getInt(1)
-        let format: string = node{"format"}.getStr("pgm2")
-        let cmap = cmap_table[node{"cmap"}.getStr("gray_r")]
-        let norm = norm_table[node{"norm"}.getStr("eq_hist")]
-        let blend = blend_table[node{"blend"}.getStr("add")]
-
-        let box = cast[Box](json_to_object(node{"box"}, sim)[0])
-        let resolution = node{"resolution"}.getInt(100)
-        let dpi = resolution.float / max(box.uu[0] - box.ll[0], box.uu[1] - box.ll[1]) 
-
-        let plotter = DensityPlot().initDensityPlot(box=box, dpi=dpi, blendmode=blend)
-        let obs = ImageRecorderImpl().initImageRecorder(
-            filename=filename, plotter=plotter, format=format,
-            cmap=cmap, norm=norm, start=start)
+        let obs = json_to_image_recorder(ImageRecorderImpl(), node, sim)
         return obs
 
     elif node{"type"}.getStr() == "movie":
-        let eqhist: NormFunction = proc(data: seq[float]): seq[float] =
-            return image.eq_hist(data, nbins=256*256)
-        let none: NormFunction = proc(data: seq[float]): seq[float] =
-            return none_norm(data)
-
-        let cmap_table = {"gray": gray, "gray_r": gray_r}.toTable()
-        let norm_table = {"eq_hist": eqhist, "none": none}.toTable()
-        let blend_table = {
-            "add": blendmode_additive,
-            "min": blendmode_min,
-            "max": blendmode_max,
-            "avg": blendmode_average,
-        }.toTable()
-
-        let filename: string = node{"filename"}.getStr()
         let interval: int = node{"interval"}.getInt(1)
-        let format: string = node{"format"}.getStr("pgm2")
-        let cmap = cmap_table[node{"cmap"}.getStr("gray_r")]
-        let norm = norm_table[node{"norm"}.getStr("eq_hist")]
-        let blend = blend_table[node{"blend"}.getStr("add")]
-
-        let box = cast[Box](json_to_object(node{"box"}, sim)[0])
-        let resolution = node{"resolution"}.getInt(100)
-        let dpi = resolution.float / max(box.uu[0] - box.ll[0], box.uu[1] - box.ll[1]) 
-
-        let plotter = DensityPlot().initDensityPlot(box=box, dpi=dpi, blendmode=blend)
-        let obs = PeriodicImageRecorderImpl().initPeriodicImageRecorder(
-            filename=filename, plotter=plotter, format=format,
-            cmap=cmap, norm=norm, step_interval=interval)
-        return obs
-
-proc json_to_interrupt(node: JsonNode, sim: Simulation): Interrupt =
-    if node{"type"}.getStr() == "maxsteps":
-        let maxstep = node{"steps"}.getInt(0)
-        return MaxSteps().initMaxSteps(max=maxstep)
-    
-    if node{"type"}.getStr() == "collision":
-        let obj = json_to_object(node{"object"}, sim)[0]
-        return Collision().initCollision(obj)
-    
-    if node{"type"}.getStr() == "max_collisions":
-        let max = node{"max"}.getInt(0)
-        return MaxCollisions().initMaxCollisions(max)
-
-    if node{"type"}.getStr() == "stalled":
-        return Stalled().initStalled()
+        var obs = json_to_image_recorder(PeriodicImageRecorderImpl(), node, sim)
+        return obs.PeriodicImageRecorder.initPeriodicImageRecorder(interval)
 
 proc json_to_neighborlist(node: JsonNode, sim: Simulation): Neighborlist =
     if node{"type"}.getStr() == "naive":

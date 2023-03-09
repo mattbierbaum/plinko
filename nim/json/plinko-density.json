@@ -39,10 +39,12 @@
         "blend": "add",
         "norm": "eq_hist",
         "box": { "type": "ref", "name": "boundary"},
-        "start": 1700,
-        "resolution": 2000
+        "resolution": 4000,
+        "triggers": [
+            {"type": "max_collisions", "max": 1}
+        ]
     },
-    {"type": "step", "interval": 100}
+    {"type": "step", "interval": 500}
 ],
 "neighborlist": {
     "type": "cell",

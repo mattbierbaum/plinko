@@ -16,3 +16,7 @@ when defined(testing) :
 #
 task build, "build project":
   exec "nim c plinko.nim"
+
+task debug, "build debug":
+  switch("d", "debug")
+  exec "nim c plinko.nim"

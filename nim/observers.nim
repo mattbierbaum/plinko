@@ -12,6 +12,10 @@ import std/strformat
 import std/strutils
 import std/tables
 
+type BoolOp* = proc (x, y: bool): bool
+let AndOp*: BoolOp = proc(x,y:bool): bool = return x and y
+let OrOp*: BoolOp = proc(x,y:bool): bool = return x or y
+
 type
     Observer* = ref object of RootObj
 
@@ -27,17 +31,22 @@ method is_triggered*(self: Observer): bool {.base.} = false
 method is_triggered_particle*(self: Observer, particle: PointParticle): bool {.base.} = false
 method reset*(self: Observer): void {.base.} = return
 method close*(self: Observer): void {.base.} = return
-method clear_intermediates*(self: Observer): void {.base.} = return
+method clear_intermediates*(self: Observer): void {.base.} = self.reset()
 method `$`*(self: Observer): string {.base.} = "Observer"
 
 # =================================================================
 type
     ObserverGroup* = ref object of Observer
         observers*: seq[Observer]
+        op*: BoolOp
 
-proc initObserverGroup*(self: ObserverGroup, observers: seq[Observer]): ObserverGroup =
+proc initObserverGroup*(self: ObserverGroup, observers: seq[Observer] = @[], op: BoolOp = OrOp): ObserverGroup =
     self.observers = observers
+    self.op = op
     return self
+
+proc len*(self: ObserverGroup): int =
+    return self.observers.len
 
 method begin*(self: ObserverGroup): void =
     for obs in self.observers:
@@ -64,16 +73,22 @@ method update_collision*(self: ObserverGroup, particle: PointParticle, obj: Obje
         obs.update_collision(particle, obj, time)
 
 method is_triggered*(self: ObserverGroup): bool =
-    for obs in self.observers:
-        if obs.is_triggered():
-            return true
-    return false
+    if self.observers.len == 0:
+        return false
+
+    var triggered = self.observers[0].is_triggered()
+    for i, obs in self.observers:
+        triggered = self.op(triggered, obs.is_triggered())
+    return triggered
 
 method is_triggered_particle*(self: ObserverGroup, particle: PointParticle): bool =
-    for obs in self.observers:
-        if obs.is_triggered_particle(particle):
-            return true
-    return false
+    if self.observers.len == 0:
+        return false
+
+    var triggered = self.observers[0].is_triggered_particle(particle)
+    for i, obs in self.observers:
+        triggered = self.op(triggered, obs.is_triggered_particle(particle))
+    return triggered
 
 method reset*(self: ObserverGroup): void =
     for obs in self.observers:
@@ -86,6 +101,19 @@ method close*(self: ObserverGroup): void =
 method clear_intermediates*(self: ObserverGroup): void =
     for obs in self.observers:
         obs.clear_intermediates()
+
+method `$`*(self: ObserverGroup): string =
+    var o = "ObserverGroup:\n"
+    for obs in self.observers:
+        o &= &"{$obs}\n"
+    return o
+
+# =================================================================
+type 
+    TriggeredObserverGroup* = ref object of ObserverGroup
+
+method is_triggered*(self: TriggeredObserverGroup): bool = true
+method is_triggered_particle*(self: TriggeredObserverGroup, particle: PointParticle): bool = true
 
 # =================================================================
 type
@@ -134,8 +162,7 @@ type
         lastposition*: Table[int, Vec]
         cmap*: CmapFunction
         norm*: NormFunction
-        start*: int
-        step*: int
+        triggers*: ObserverGroup
 
 proc initImageRecorder*(
         self: ImageRecorder, 
@@ -144,14 +171,16 @@ proc initImageRecorder*(
         format: string = "pgm5", 
         cmap: CmapFunction,
         norm: NormFunction,
-        start: int = 0): ImageRecorder =
+        triggers: ObserverGroup = nil): ImageRecorder =
     self.format = format
     self.filename = filename
     self.plotter = plotter
     self.lastposition = initTable[int, Vec]()
 
-    self.step = 0
-    self.start = start
+    if triggers == nil:
+        self.triggers = TriggeredObserverGroup().initObserverGroup()
+    else:
+        self.triggers = triggers
     self.cmap = cmap
     self.norm = norm
     return self
@@ -165,24 +194,30 @@ method record_object*(self: ImageRecorder, obj: Object): void =
         self.plotter.draw_segment(s0)
 
 method update_step*(self: ImageRecorder, step: int): void =
-    self.step = step
+    self.triggers.update_step(step)
+
+method update_time*(self: ImageRecorder, time: float): void =
+    self.triggers.update_time(time)
+
+method update_collision*(self: ImageRecorder, particle: PointParticle, obj: Object, time: float): void =
+    self.triggers.update_collision(particle, obj, time)
 
 method update_particle*(self: ImageRecorder, particle: PointParticle): void =
-   let ind = particle.index
-   if self.lastposition.hasKey(ind):
+    self.triggers.update_particle(particle)
+
+    let ind = particle.index
+    if self.lastposition.hasKey(ind):
         var lastposition = self.lastposition[ind]
         var segment = Segment().initSegment(lastposition, particle.pos)
-        if self.step > self.start:
+        if self.triggers.len == 0 or self.triggers.is_triggered_particle(particle):
             self.plotter.draw_segment(segment)
         self.lastposition[ind] = particle.pos
-   else:
+    else:
         self.lastposition[ind] = particle.pos
 
 method reset*(self: ImageRecorder): void = 
     self.lastposition = initTable[int, Vec]()
-
-method clear_intermediates*(self: ImageRecorder): void =
-    self.reset()
+    self.triggers.reset()
 
 proc tone*(self: ImageRecorder): Array2D[uint8] = 
    let data = self.cmap(self.norm(self.plotter.grid.data))
@@ -207,6 +242,13 @@ type
     PeriodicImageRecorder* = ref object of ImageRecorder
         step_interval*: int
         saves*: int
+        step*: int
+
+proc initPeriodicImageRecorder*(self: PeriodicImageRecorder, step_interval: int): PeriodicImageRecorder =
+    self.saves = 0
+    self.step = 0
+    self.step_interval = step_interval
+    return self
 
 proc initPeriodicImageRecorder*(
         self: PeriodicImageRecorder, 
@@ -218,8 +260,8 @@ proc initPeriodicImageRecorder*(
         step_interval: int): PeriodicImageRecorder =
     discard self.ImageRecorder.initImageRecorder(filename, plotter, format, cmap, norm)
     self.step_interval = step_interval
-    self.step = 0
     self.saves = 0
+    self.step = 0
     return self
 
 # =================================================================
@@ -327,3 +369,40 @@ method update_particle*(self: SVGLinePlot, particle: PointParticle): void =
     if self.count > self.breakpt:
         self.buffer.write(self.path_end)
         self.count = 0
+
+# ================================================================
+type
+    CollisionCounter* = ref object of Observer
+        obj*: Object
+        collisions*: Table[int, int]
+        seen*: Table[int, bool]
+
+proc initCollisionCounter*(self: CollisionCounter, obj: Object=nil): CollisionCounter =
+    self.obj = obj
+    self.seen = initTable[int, bool]()
+    self.collisions = initTable[int, int]()
+    return self
+
+proc num_collisions*(self: CollisionCounter, particle: PointParticle): int =
+    if self.seen.hasKey(particle.index):
+        return self.collisions[particle.index]
+    return 0
+
+method update_collision*(self: CollisionCounter, particle: PointParticle, obj: Object, time: float): void =
+    let i = particle.index
+    if self.seen.hasKey(i):
+        if self.obj == nil or obj.index == self.obj.index:
+            self.collisions[i] = self.collisions[i] + 1
+    else:
+        self.seen[i] = true
+        if self.obj == nil or obj.index == self.obj.index:
+            self.collisions[i] = 1
+        else:
+            self.collisions[i] = 0
+
+method reset*(self: CollisionCounter): void =
+    self.seen = initTable[int, bool]() 
+    self.collisions = initTable[int, int]()
+
+method `$`*(self: CollisionCounter): string = fmt"CollisionCounter"
+
