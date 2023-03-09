@@ -1,5 +1,0 @@
-nim c -d:release --gc:markAndSweep --passC:-flto --passL:-s --passL:-static -r nim/main.nim
-nim c --profiler:on --stacktrace:on -r nim/main.nim
-nim c --gcc.exe:musl-gcc --gcc.linkerexe:musl-gcc --opt:speed -d:release --gc:markAndSweep --passC:-flto --passL:-s --passL:-static -r nim/main.nim 
-nim js -o:web/js.js -d:release js.nim
-nim c --threads:on --threadAnalysis:off --opt:speed -d:release  --gc:markAndSweep --passC:-flto --passL:-s --passL:-static -r nim/plinko.nim
