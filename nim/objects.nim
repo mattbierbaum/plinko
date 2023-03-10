@@ -612,8 +612,14 @@ proc contains*(self: Box, pt: Vec): bool =
     let iny = (pt[1] > by0 and pt[1] < by1)
     return inx and iny
 
-proc translate*(self: Box, x: Vec): Box =
+method translate*(self: Box, x: Vec): Object =
     return Box().initBox(ll=self.ll+x, uu=self.uu+x, damp=self.damp)
+
+method scale*(self: Box, s: float): Object =
+    let c = self.center()
+    let ll = (c - self.ll) * s + c
+    let uu = (self.uu - c) * s + c
+    return Box().initBox(ll=ll, uu=uu, damp=self.damp, name=self.name)
 
 method by_name*(self: Box, name: string): Object =
     if self.name == name:
