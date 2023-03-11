@@ -186,8 +186,8 @@ proc initImageRecorder*(
     return self
 
 method record_object*(self: ImageRecorder, obj: Object): void =
-    var s = 1000
-    for t in 0 .. s:
+    let s = 1000
+    for t in 0 .. s-1:
         var t0 = t.float / s.float
         var t1 = (t.float + 1.float) / s.float
         var s0 = Segment().initSegment(p0=obj.t(t0), p1=obj.t(t1))

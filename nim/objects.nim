@@ -569,8 +569,6 @@ proc circle_angle_range*(amin: float, amax: float): MaskFunction =
         return (theta > amin) and (theta < amax)
 
 # ---------------------------------------------------------------
-
-
 method `$`*(self: Box): string = fmt"Box[{self.index}]: '{self.name}' {$self.ll} -> {$self.uu}, damp={self.damp}"
 
 method center*(self: Box): Vec =
@@ -632,13 +630,13 @@ method by_name*(self: Box, name: string): Object =
 
 method t*(self: Box, v: float): Vec =
     if v >= 0.00 and v < 0.25:
-        return self.segments[0].t((v - 0.00) * 0.25)
+        return self.segments[0].t((v - 0.00) / 0.25)
     if v >= 0.25 and v < 0.50:
-        return self.segments[1].t((v - 0.25) * 0.25)
+        return self.segments[1].t((v - 0.25) / 0.25)
     if v >= 0.50 and v < 0.75:
-        return self.segments[2].t((v - 0.50) * 0.25)
-    if v >= 0.75 and v < 1.00:
-        return self.segments[3].t((v - 0.75) * 0.25)
+        return self.segments[2].t((v - 0.50) / 0.25)
+    if v >= 0.75 and v <= 1.00:
+        return self.segments[3].t((v - 0.75) / 0.25)
 
 # ---------------------------------------------------------------
 type
