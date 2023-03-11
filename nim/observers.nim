@@ -391,11 +391,11 @@ proc num_collisions*(self: CollisionCounter, particle: PointParticle): int =
 method update_collision*(self: CollisionCounter, particle: PointParticle, obj: Object, time: float): void =
     let i = particle.index
     if self.seen.hasKey(i):
-        if self.obj == nil or obj.index == self.obj.index:
+        if self.obj == nil or obj.name == self.obj.name:
             self.collisions[i] = self.collisions[i] + 1
     else:
         self.seen[i] = true
-        if self.obj == nil or obj.index == self.obj.index:
+        if self.obj == nil or obj.name == self.obj.name:
             self.collisions[i] = 1
         else:
             self.collisions[i] = 0

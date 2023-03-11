@@ -8,7 +8,7 @@
     "linear": true,
     "verbose": false,
     "record_objects": true,
-    "threads": 1
+    "threads": 8
 },
 "objects": [
     {
@@ -17,7 +17,11 @@
             "type": "box",
             "ll": [ -0.1, -0.1],
             "uu": [ 0.1, 0.1],
-            "damp": 0.95
+            "damp": 0.95,
+            "rotate": {
+                "type": "random",
+                "range": [0.0,0.0]
+            }
         }
     }
 ],
@@ -25,8 +29,8 @@
     {
         "type": "uniform",
         "p0": [6.5, 6.25],
-        "v0": [-1.01, 2.0],
         "p1": [6.5, 6.25],
+        "v0": [-1.01, 2.0],
         "v1": [-1.82, 3.0],
         "N": 2000
     }

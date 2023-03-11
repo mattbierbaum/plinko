@@ -203,6 +203,7 @@ method normal*(self: Object, seg: Segment): Vec {.base.} = [0.0, 0.0]
 method center*(self: Object): Vec {.base.} = [0.0, 0.0]
 method translate*(self: Object, v: Vec): Object {.base.} = Object()
 method scale*(self: Object, s: float): Object {.base.} = Object()
+method rotate*(self: Object, a: float): Object {.base.} = Object()
 method intersection*(self: Object, seg: Segment): (Object, float) {.base.} = (nil, -1.0)
 method boundary*(self: Object): Box {.base.} = Box()
 method by_name*(self: Object, name: string): Object {.base.} =
@@ -569,76 +570,6 @@ proc circle_angle_range*(amin: float, amax: float): MaskFunction =
         return (theta > amin) and (theta < amax)
 
 # ---------------------------------------------------------------
-method `$`*(self: Box): string = fmt"Box[{self.index}]: '{self.name}' {$self.ll} -> {$self.uu}, damp={self.damp}"
-
-method center*(self: Box): Vec =
-    return (self.ll + self.uu)/2.0
-
-method intersection*(self: Box, seg: Segment): (Object, float) =
-    var min_time = 1e100
-    var min_obj: Segment
-
-    for line in self.segments:
-        let (_, t) = line.intersection(seg)
-        if t >= 0 and t <= 1 and (t < min_time or min_time > 1e10):
-            min_time = t
-            min_obj = line
-
-    if min_time >= 0 and min_time < 1:
-        return (min_obj, min_time)
-    return (nil, -1.0)
-
-method normal*(self: Box, seg: Segment): Vec =
-    let (line, _) = self.intersection(seg)
-    return line.normal(seg)
-
-proc crosses*(self: Box, seg: Segment): bool =
-    let (bx0, bx1) = (self.ll[0], self.uu[0])
-    let (by0, by1) = (self.ll[1], self.uu[1])
-    let (p0, p1) = (seg.p0, seg.p1)
-
-    let inx0 = (p0[0] > bx0 and p0[0] < bx1)
-    let inx1 = (p1[0] > bx0 and p1[0] < bx1)
-    let iny0 = (p0[1] > by0 and p0[1] < by1)
-    let iny1 = (p1[1] > by0 and p1[1] < by1)
-
-    return (inx0 and iny0) xor (inx1 and iny1)
-
-proc contains*(self: Box, pt: Vec): bool =
-    let (bx0, bx1) = (self.ll[0], self.uu[0])
-    let (by0, by1) = (self.ll[1], self.uu[1])
-
-    let inx = (pt[0] > bx0 and pt[0] < bx1)
-    let iny = (pt[1] > by0 and pt[1] < by1)
-    return inx and iny
-
-method translate*(self: Box, x: Vec): Object =
-    return Box().initBox(ll=self.ll+x, uu=self.uu+x, damp=self.damp)
-
-method scale*(self: Box, s: float): Object =
-    let c = self.center()
-    let ll = (c - self.ll) * s + c
-    let uu = (self.uu - c) * s + c
-    return Box().initBox(ll=ll, uu=uu, damp=self.damp)
-
-method by_name*(self: Box, name: string): Object =
-    if self.name == name:
-        return self
-    for seg in self.segments:
-        if seg.name == name:
-            return seg
-
-method t*(self: Box, v: float): Vec =
-    if v >= 0.00 and v < 0.25:
-        return self.segments[0].t((v - 0.00) / 0.25)
-    if v >= 0.25 and v < 0.50:
-        return self.segments[1].t((v - 0.25) / 0.25)
-    if v >= 0.50 and v < 0.75:
-        return self.segments[2].t((v - 0.50) / 0.25)
-    if v >= 0.75 and v <= 1.00:
-        return self.segments[3].t((v - 0.75) / 0.25)
-
-# ---------------------------------------------------------------
 type
     Polygon* = ref object of Object
         N: int
@@ -702,13 +633,13 @@ proc contains*(self: Polygon, pt: Vec): bool =
     #- FIXME this is wrong
     return false
 
-proc translate*(self: Polygon, vec: Vec): Polygon =
+method translate*(self: Polygon, vec: Vec): Object =
     var points: seq[Vec] = @[]
     for pt in self.points:
         points.add(pt + vec)
     return Polygon().initPolygon(points, self.damp)
 
-proc rotate*(self: Polygon, theta: float): Polygon =
+method rotate*(self: Polygon, theta: float): Object =
     let c = self.center()
 
     var points: seq[Vec] = @[]
@@ -716,7 +647,7 @@ proc rotate*(self: Polygon, theta: float): Polygon =
         points.add(rotate(pt-c, theta)+c)
     return Polygon().initPolygon(points, self.damp)
 
-proc scale*(self: Polygon, s: float): Polygon = 
+method scale*(self: Polygon, s: float): Object = 
     let c: Vec = self.center()
     let f: float = 1.0 - s/2.0
 
@@ -724,6 +655,13 @@ proc scale*(self: Polygon, s: float): Polygon =
     for i, pt in self.points:
         points.add(vector.lerp(self.points[i], c, f))
     return Polygon().initPolygon(points, self.damp)
+
+method t*(self: Polygon, v: float): Vec =
+    let n = self.segments.len
+    var sf = n.float * v
+    if sf.int >= n:
+        sf = n.float - 1.0
+    return self.segments[sf.int].t(sf - sf.int.float)
 
 proc coordinate_bounding_box*(self: Polygon): Box =
     var (x0, y0) = (1e100, 1e100)
@@ -737,6 +675,12 @@ proc coordinate_bounding_box*(self: Polygon): Box =
         y1 = max(pt[1], y1)
 
     return Box().initBox([x0, y0], [x1, y1])
+
+method `$`*(self: Polygon): string =
+    var o = &"Polygon N={self.points.len-1}:\n"
+    for seg in self.segments:
+        o &= &"  {$seg}\n"
+    return o
 
 # -------------------------------------------------------------
 type 
@@ -760,6 +704,80 @@ proc initRegularPolygon*(self: RegularPolygon, N: int, pos: Vec, size: float, da
         points.add(pos + size * v)
     discard self.initPolygon(points, damp)
     return self
+
+# ---------------------------------------------------------------
+method `$`*(self: Box): string = fmt"Box[{self.index}]: '{self.name}' {$self.ll} -> {$self.uu}, damp={self.damp}"
+
+method center*(self: Box): Vec =
+    return (self.ll + self.uu)/2.0
+
+method intersection*(self: Box, seg: Segment): (Object, float) =
+    var min_time = 1e100
+    var min_obj: Segment
+
+    for line in self.segments:
+        let (_, t) = line.intersection(seg)
+        if t >= 0 and t <= 1 and (t < min_time or min_time > 1e10):
+            min_time = t
+            min_obj = line
+
+    if min_time >= 0 and min_time < 1:
+        return (min_obj, min_time)
+    return (nil, -1.0)
+
+method normal*(self: Box, seg: Segment): Vec =
+    let (line, _) = self.intersection(seg)
+    return line.normal(seg)
+
+proc crosses*(self: Box, seg: Segment): bool =
+    let (bx0, bx1) = (self.ll[0], self.uu[0])
+    let (by0, by1) = (self.ll[1], self.uu[1])
+    let (p0, p1) = (seg.p0, seg.p1)
+
+    let inx0 = (p0[0] > bx0 and p0[0] < bx1)
+    let inx1 = (p1[0] > bx0 and p1[0] < bx1)
+    let iny0 = (p0[1] > by0 and p0[1] < by1)
+    let iny1 = (p1[1] > by0 and p1[1] < by1)
+
+    return (inx0 and iny0) xor (inx1 and iny1)
+
+proc contains*(self: Box, pt: Vec): bool =
+    let (bx0, bx1) = (self.ll[0], self.uu[0])
+    let (by0, by1) = (self.ll[1], self.uu[1])
+
+    let inx = (pt[0] > bx0 and pt[0] < bx1)
+    let iny = (pt[1] > by0 and pt[1] < by1)
+    return inx and iny
+
+method translate*(self: Box, x: Vec): Object =
+    return Box().initBox(ll=self.ll+x, uu=self.uu+x, damp=self.damp)
+
+method scale*(self: Box, s: float): Object =
+    let c = self.center()
+    let ll = (c - self.ll) * s + c
+    let uu = (self.uu - c) * s + c
+    return Box().initBox(ll=ll, uu=uu, damp=self.damp)
+
+method rotate*(self: Box, a: float): Object =
+    let pts = @[self.ll, self.lu, self.uu, self.ul]
+    return Polygon().initPolygon(pts, damp=self.damp).rotate(a)
+
+method by_name*(self: Box, name: string): Object =
+    if self.name == name:
+        return self
+    for seg in self.segments:
+        if seg.name == name:
+            return seg
+
+method t*(self: Box, v: float): Vec =
+    if v >= 0.00 and v < 0.25:
+        return self.segments[0].t((v - 0.00) / 0.25)
+    if v >= 0.25 and v < 0.50:
+        return self.segments[1].t((v - 0.25) / 0.25)
+    if v >= 0.50 and v < 0.75:
+        return self.segments[2].t((v - 0.50) / 0.25)
+    if v >= 0.75 and v <= 1.00:
+        return self.segments[3].t((v - 0.75) / 0.25)
 
 # -------------------------------------------------------------
 method collide*(self: Object, part0: PointParticle, parti: PointParticle, part1: PointParticle): (Segment, Segment) {.base.} =

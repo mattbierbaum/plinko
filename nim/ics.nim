@@ -10,6 +10,7 @@ import vector
 
 import std/json
 import std/math
+import std/random
 import std/tables
 
 proc GenericImageRecorder(): ImageRecorder = return ImageRecorder()
@@ -95,6 +96,18 @@ proc json_to_ivec(json: JsonNode): array[2, int] =
         vals.add(elem.getInt())
     return [vals[0], vals[1]]
 
+proc json_to_transformer(node: JsonNode, obj: Object): Object =
+    var o = obj
+    if node{"rotate"} != nil:
+        let rot = node{"rotate"}
+        if rot{"type"}.getStr() == "constant":
+            o = o.rotate(rot{"value"}.getFloat(0.0)*PI)
+        if rot{"type"}.getStr() == "random":
+            let v = json_to_vec(rot{"range"})
+            let a = (v[1] - v[0])*rand(1.0) + v[0]
+            o = o.rotate(a)
+    return o
+
 proc json_to_box(node: JsonNode, sim: Simulation): Box =
     let ll = json_to_vec(node{"ll"})
     let uu = json_to_vec(node{"uu"})
@@ -127,7 +140,6 @@ proc json_to_masked_circle(node: JsonNode, sim: Simulation): MaskedCircle =
     let gap = f{"gap"}.getFloat(0.0)
     let offset = f{"offset"}.getFloat(0.0)
     let mask = circle_nholes(nholes=n, eps=gap, offset=offset)
-
     return MaskedCircle().initMaskedCircle(pos=pos, rad=rad, damp=damp, name=name, mask=mask)
 
 proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
@@ -136,13 +148,16 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
         objs.add(json_to_circle(node, sim))
 
     if node{"type"}.getStr() == "masked_circle":
-        objs.add(json_to_masked_circle(node, sim))
+        var o = json_to_masked_circle(node, sim)
+        objs.add(json_to_transformer(node, o))
 
     if node{"type"}.getStr() == "box":
-        objs.add(json_to_box(node, sim))
+        var o = json_to_box(node, sim)
+        objs.add(json_to_transformer(node, o))
 
     if node{"type"}.getStr() == "segment":
-        objs.add(json_to_segment(node, sim))
+        var o = json_to_segment(node, sim)
+        objs.add(json_to_transformer(node, o))
 
     if node{"type"}.getStr() == "ref":
         if node{"index"} != nil:
@@ -327,6 +342,7 @@ proc json_to_simulation*(json: string, index: int = 0): Simulation =
         sim.equal_time = s{"equal_time"}.getBool(false)
         sim.accuracy_mode = s{"accuracy"}.getBool(false)
         sim.record_objects = s{"record_objects"}.getBool(false)
+        randomize(s{"seed"}.getInt(1))
 
     if cfg{"objects"} != nil:
         for node in cfg{"objects"}:
