@@ -1,5 +1,4 @@
 import forces
-import interrupts
 import neighborlist
 import observers
 import objects
@@ -72,7 +71,7 @@ proc add_force*(self: Simulation, force: IndependentForce): void {.discardable.}
 proc add_observer*(self: Simulation, observer: Observer): void {.discardable.} =
     self.observers.add(observer)
 
-proc add_interrupt*(self: Simulation, interrupt: Interrupt): void {.discardable.} =
+proc add_interrupt*(self: Simulation, interrupt: Observer): void {.discardable.} =
     self.observers.add(interrupt)
 
 proc initialize*(self: Simulation): void =
@@ -123,14 +122,9 @@ proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointPa
         return lengthsq(project.pos - lerp(gs.p0, gs.p1, t))
     return roots.brent(f=f, bracket=[0.0, 2*dt], tol=1e-20, mintol=1e-20, maxiter=10)
 
-# var gparti = PointParticle()
-# var gpseg = Segment()
-
 proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, Object, float) =
-    var gparti = PointParticle()
+    var gparti = PointParticle().copy(part0)
     var gpseg = Segment(p0: part0.pos, p1: part1.pos)
-    # gpseg.p0 = part0.pos
-    # gpseg.p1 = part1.pos
     var (mint, mino) = self.intersect_objects(gpseg)
 
     if mint < 0 or mint > 1:

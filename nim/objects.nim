@@ -19,20 +19,22 @@ proc initPointParticle*(
         self: PointParticle,
         pos: Vec = [0.0, 0.0], 
         vel: Vec = [0.0, 0.0], 
-        acc: Vec = [0.0, 0.0]): PointParticle =
+        acc: Vec = [0.0, 0.0],
+        index: int = 0): PointParticle =
     self.pos = pos
     self.vel = vel
     self.acc = acc
     self.active = true
-    self.index = 0
+    self.index = index
     return self
 
-proc copy*(self: PointParticle, other: PointParticle): void =
+proc copy*(self: PointParticle, other: PointParticle): PointParticle {.discardable.} =
     self.pos = other.pos
     self.vel = other.vel
     self.acc = other.acc
     self.index = other.index
     self.active = other.active
+    return self
 
 proc `$`*(self: PointParticle): string = fmt"Particle[{self.index}] <pos={$self.pos} vel={$self.vel}>"
 
@@ -619,7 +621,7 @@ method scale*(self: Box, s: float): Object =
     let c = self.center()
     let ll = (c - self.ll) * s + c
     let uu = (self.uu - c) * s + c
-    return Box().initBox(ll=ll, uu=uu, damp=self.damp, name=self.name)
+    return Box().initBox(ll=ll, uu=uu, damp=self.damp)
 
 method by_name*(self: Box, name: string): Object =
     if self.name == name:

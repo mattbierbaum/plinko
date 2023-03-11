@@ -343,8 +343,7 @@ proc json_to_simulation*(json: string, index: int = 0): Simulation =
             sim.add_observer(json_to_observer(node, sim))
 
     if cfg{"interrupts"} != nil:
-        for node in cfg{"interrupts"}:
-            sim.add_interrupt(json_to_interrupt(node, sim))
+        sim.add_observer(json_to_interrupt_group(cfg{"interrupts"}, sim))
 
     if cfg{"forces"} != nil:
         for node in cfg{"forces"}:

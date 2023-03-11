@@ -18,13 +18,13 @@ proc force_none*(particle: PointParticle): Vec =
     result = [0.0, 0.0]
 
 proc integrate_euler*(p0: PointParticle, dt: float): PointParticle =
-    var p1 = PointParticle()
+    var p1 = PointParticle().copy(p0)
     p1.vel = p0.vel + p0.acc * dt
     p1.pos = p0.pos + p1.vel * dt
     return p1
 
 proc integrate_midpoint*(p0: PointParticle, dt: float): PointParticle =
-    var p1 = PointParticle()
+    var p1 = PointParticle().copy(p0)
     p1.vel = p0.vel + p0.acc * dt
     p1.pos = p0.pos + 0.5*(p0.vel + p1.vel) * dt
     return p1
@@ -32,10 +32,7 @@ proc integrate_midpoint*(p0: PointParticle, dt: float): PointParticle =
 proc integrate_velocity_verlet*(p0: PointParticle, dt: float): PointParticle =
     # x1 = x0 + v0*dt + 1/2 * a0 * dt*dt
     # v1 = v0 + 1/2 (a1 + a0) * dt
-    var p1 = PointParticle()
+    var p1 = PointParticle().copy(p0)
     p1.pos = p0.pos + p0.vel * dt + 0.5 * p0.acc * dt * dt
     p1.vel = p0.vel + p0.acc * dt
-    p1.acc = p0.acc
-    p1.active = p0.active
-    p1.index = p0.index
     return p1

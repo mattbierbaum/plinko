@@ -8,7 +8,7 @@
     "linear": true,
     "verbose": false,
     "record_objects": true,
-    "threads": 8
+    "threads": 1
 },
 "objects": [
     {
@@ -32,15 +32,6 @@
     }
 ],
 "forces": [ { "type": "gravity", "g": 0.0 } ],
-"interrupts": [
-    {
-        "type": "collision",
-        "object": {
-            "type": "ref",
-            "name": "bottom"
-        }
-    }
-],
 "observers": [
     {
         "type": "pgm", 

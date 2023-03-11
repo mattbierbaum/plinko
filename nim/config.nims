@@ -1,3 +1,7 @@
+import std/os
+import std/sequtils
+import std/strutils
+
 proc set_common_options(): void =
   switch("threads", "on")
   switch("threadAnalysis", "off")
@@ -35,3 +39,12 @@ task js, "build javascript version":
   switch("d", "release")
   switch("o", "web/js.js")
   setCommand "js", "js.nim"
+
+task test, "Run tests in tests/ dir":
+  let
+    testDir = "tests"
+  if dirExists(testDir):
+    let
+      testFiles = listFiles(testDir).filterIt(it.endsWith(".nim") and it.startsWith("test_"))
+    for t in testFiles:
+      selfExec "c -r " & t
