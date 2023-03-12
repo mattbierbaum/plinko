@@ -72,7 +72,7 @@ proc concentric*[T](min_scale: float, max_scale: float, steps: int, f: ObjectSca
     boundary.name = "boundary"
     return (objs, boundary)
 
-proc square_grid_object*(rows: int, cols: int, f: ObjectTranslationGenerator): (seq[Object], Vec) =
+proc square_grid_object*(rows: int, cols: int, top: float, f: ObjectTranslationGenerator): (seq[Object], Box) =
     var a = 1.0
     
     var objs: seq[Object] = @[]
@@ -81,7 +81,10 @@ proc square_grid_object*(rows: int, cols: int, f: ObjectTranslationGenerator): (
             objs.add(f([a*(j.float-1.0), a*(i.float-1.0)]))
 
     let boundary = [(cols.float+1.0)*a, (rows.float+1.0)*a]
-    return (objs, boundary)
+    let box = Box().initBox(ll=[0.0,0.0], uu=boundary+[0.0, top], name="boundary")
+    box.top.name = "top"
+    box.bottom.name = "bottom"
+    return (objs, box)
 
 proc json_to_vec(json: JsonNode): Vec =
     var vals: seq[float] = @[]
@@ -190,6 +193,21 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
         let rows = node{"rows"}.getInt(0)
         let cols = node{"columns"}.getInt(0)
         let (obj, boundary) = hex_grid_object(rows=rows, cols=cols, top=top, f=generate_object_translate)
+        objs.add(boundary)
+        for o in obj:
+            objs.add(o)
+
+    if node{"type"}.getStr() == "square-lattice":
+        proc generate_object_translate(pos: Vec): Object =
+            var o: Object = json_to_object(node{"object"}, sim)[0]
+            o = o.translate(-o.center())
+            o = o.translate(pos)
+            return o
+
+        let top = node{"top"}.getFloat(0.0)
+        let rows = node{"rows"}.getInt(0)
+        let cols = node{"columns"}.getInt(0)
+        let (obj, boundary) = square_grid_object(rows=rows, cols=cols, top=top, f=generate_object_translate)
         objs.add(boundary)
         for o in obj:
             objs.add(o)

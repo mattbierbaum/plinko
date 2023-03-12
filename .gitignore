@@ -20,7 +20,5 @@ c/plinko-nbounces
 *.bin
 *.svg
 data/
-nim/main
-nim/plinko
 nim/js.js
 nim/web/js.js
