@@ -754,7 +754,7 @@ method translate*(self: Box, x: Vec): Object =
 
 method scale*(self: Box, s: float): Object =
     let c = self.center()
-    let ll = (c - self.ll) * s + c
+    let ll = (self.ll - c) * s + c
     let uu = (self.uu - c) * s + c
     return Box().initBox(ll=ll, uu=uu, damp=self.damp)
 

@@ -98,6 +98,16 @@ proc json_to_ivec(json: JsonNode): array[2, int] =
 
 proc json_to_transformer(node: JsonNode, obj: Object): Object =
     var o = obj
+
+    if node{"scale"} != nil:
+        let rot = node{"scale"}
+        if rot{"type"}.getStr() == "constant":
+            o = o.scale(rot{"value"}.getFloat(1.0))
+        if rot{"type"}.getStr() == "random":
+            let v = json_to_vec(rot{"range"})
+            let a = (v[1] - v[0])*rand(1.0) + v[0]
+            o = o.scale(a)
+
     if node{"rotate"} != nil:
         let rot = node{"rotate"}
         if rot{"type"}.getStr() == "constant":
@@ -106,6 +116,7 @@ proc json_to_transformer(node: JsonNode, obj: Object): Object =
             let v = json_to_vec(rot{"range"})
             let a = (v[1] - v[0])*rand(1.0) + v[0]
             o = o.rotate(a)
+
     return o
 
 proc json_to_box(node: JsonNode, sim: Simulation): Box =

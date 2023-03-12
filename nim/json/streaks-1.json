@@ -1,0 +1,58 @@
+{
+"simulation": {
+    "eps": 1e-6,
+    "dt": 1e-2,
+    "max_steps": 600,
+    "equal_time": false,
+    "accuracy": false,
+    "linear": true,
+    "verbose": false,
+    "record_objects": true,
+    "threads": 8
+},
+"objects": [
+    {
+        "type": "tri-lattice", "rows": 4, "columns": 8,
+        "object": {
+            "type": "box",
+            "ll": [ -0.1, -0.1],
+            "uu": [ 0.1, 0.1],
+            "damp": 0.99,
+            "rotate": {
+                "type": "constant",
+                "value": 0.1
+            }
+        }
+    }
+],
+"particles": [
+    {
+        "type": "uniform",
+        "p0": [6.5, 6.25],
+        "p1": [6.5, 6.25],
+        "v0": [-1.01, 3.0],
+        "v1": [-1.82, 4.0],
+        "N": 2000
+    }
+],
+"forces": [ { "type": "gravity", "g": 0.0 } ],
+"observers": [
+    {
+        "type": "pgm", 
+        "filename": "test.pgm", 
+        "format": "pgm5",
+        "blend": "add",
+        "norm": "eq_hist",
+        "box": { "type": "ref", "name": "boundary" },
+        "resolution": 3000,
+        "triggers": [{"type": "max_collisions", "max": 1}]
+    },
+    { "type": "step", "interval": 200 }
+],
+"neighborlist": {
+    "type": "cell",
+    "ncells": [100, 100],
+    "buffer": 0.1,
+    "box": { "type": "ref", "name": "boundary" }
+}
+}
