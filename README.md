@@ -1,16 +1,24 @@
 PLINKO
 ======
 
+This is a set off programs and scripts to generate visualizations based
+on the Price is Right game Plinko. The very basics implement plinko 
+(a grid of pegs with a puck bouncing between them) while more generic
+geometries, forces, and interactions are possible. Each implementation
+has a set of examples and help information.
+
 There are several implementations here:
 
 * **c** -- older c implementation with internal and python plotting
 * **lua** -- newer lua implementation that plots internally
-* **nim** -- newest nim implementation, feature parity with lua
+* **nim** -- newest nim implementation, feature parity with lua with web version.
 
 C
 ---
 
-The C version if compiled with `make` in the `c` directory.
+The C version if compiled with `make` in the `c` directory. Different
+setups have different binaries. Most of the results must be run through
+the Python analysis scripts to produce visualizations.
 
 Lua
 ---
