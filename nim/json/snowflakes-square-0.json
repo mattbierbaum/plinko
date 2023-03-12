@@ -1,0 +1,51 @@
+{
+"simulation": {
+    "eps": 1e-6,
+    "dt": 1e-3,
+    "max_steps": 20000000,
+    "equal_time": false,
+    "accuracy": true,
+    "linear": false,
+    "verbose": false,
+    "record_objects": false
+},
+"objects": [
+    { 
+        "type": "square-lattice", "rows": 12, "columns": 12, 
+        "object": {
+            "type": "masked_circle",
+            "pos": [ 0.5, 0.5],
+            "rad": 0.5001,
+            "damp": 0.999999611,
+            "mask": {
+                "type": "nholes",
+                "n": 4,
+                "gap": 1.30e-3,
+                "offset": 0.0
+            }
+        }
+    }
+],
+"particles": [ { "type": "single", "pos": [6.0, 11.1], "vel": [1.21, 1.0142] } ],
+"forces": [ { "type": "gravity", "g": -1.0  }],
+"interrupts": [
+    { "type": "collision", "object": { "type": "ref", "name": "bottom" } }
+],
+"observers": [
+    {
+        "type": "pgm", 
+        "filename": "test.pgm", 
+        "format": "pgm5",
+        "blend": "add",
+        "box": { "type": "ref", "name": "boundary"},
+        "resolution": 8000
+    },
+    { "type": "step", "interval": 100000 }
+],
+"neighborlist": {
+    "type": "cell",
+    "ncells": [100, 100],
+    "buffer": 0.1,
+    "box": { "type": "ref", "name": "boundary" }
+}
+}

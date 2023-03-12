@@ -13,8 +13,8 @@ proc set_common_options(): void =
   switch("opt", "speed")
   switch("gc", "markAndSweep")
   switch("passC", "-flto")
-  switch("passL", "-s")
-  switch("passL", "-static")
+  #switch("passL", "-s")
+  #switch("passL", "-static")
   switch("o", output)
 
 task release, "build standard release":
