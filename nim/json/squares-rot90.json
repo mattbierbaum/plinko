@@ -2,13 +2,12 @@
 "simulation": {
     "eps": 1e-6,
     "dt": 1e-3,
-    "max_steps": 18000000,
+    "max_steps": 8000000,
     "equal_time": false,
     "accuracy": false,
     "linear": true,
     "verbose": false,
     "record_objects": false,
-    "seed": 7,
     "threads": 1
 },
 "objects": [
@@ -20,12 +19,12 @@
             "uu": [ 1.0, 1.0],
             "damp": 0.99999,
             "rotate": {
-                "type": "random",
-                "range": [-1.0,1.0]
+                "type": "constant",
+                "value": 0.25
             },
             "scale": {
                 "type": "constant",
-                "value": 0.4072111
+                "value": 0.3522111
             }
         }
     }
