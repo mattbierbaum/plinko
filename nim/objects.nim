@@ -298,7 +298,7 @@ proc choose(self: BezierCurve, n: int, k: int): int =
         val = val * (n + 1 - i) div i
     return val
 
-proc get_coeff*(self: BezierCurve): seq[Vec] =
+method get_coeff*(self: BezierCurve): seq[Vec] {.base.} =
     #[
       cj = n! / (n-j)! sum_{i=0}^{j} (-1)^{i+j} P_i / (i!(j-i)!)
          = (n j) \sum_{i=0}^j (-1)^{i+j} (j i) P_i
@@ -315,7 +315,6 @@ proc get_coeff*(self: BezierCurve): seq[Vec] =
 
         let pre = self.choose(n-1, j)
         coeff[j] = pre.float * coeff[j]
-
     return coeff
 
 proc bezier_line_poly*(self: BezierCurve, s0: Vec, s1: Vec): seq[float] =
@@ -329,6 +328,9 @@ proc bezier_line_poly*(self: BezierCurve, s0: Vec, s1: Vec): seq[float] =
         if i == 0:
             output[i] = output[i] - b
     return output
+
+method line_poly*(self: BezierCurve, s0: Vec, s1: Vec): array[IX, float] {.base.} =
+    return [0.0, 0.0]
 
 proc f*(self: BezierCurve, t: float): Vec =
     let c = self.coeff
@@ -349,7 +351,7 @@ proc btime_to_stime*(self: BezierCurve, seg: Segment, btime: float): float =
     return ilerp(seg.p0, seg.p1, eval)
 
 proc intersection_bt_st*(self: BezierCurve, seg: Segment): (float, float) =
-    let btimes = roots.roots(self.bezier_line_poly(seg.p0, seg.p1))
+    let btimes = roots(self.bezier_line_poly(seg.p0, seg.p1))
     if len(btimes) == 0:
         return (0.0, 0.0)
 
@@ -400,7 +402,7 @@ method center*(self: BezierCurve): Vec =
         c = c + point
     return c / len(self.points).float
 
-proc initBezierCurve*(self: BezierCurve, points: seq[array[2, float]], damp: float = 1.0, name: string = ""): BezierCurve =
+proc initBezierCurve*(self: BezierCurve, points: seq[Vec], damp: float = 1.0, name: string = ""): BezierCurve =
     self.points = points
     self.coeff = self.get_coeff()
     discard self.initObject(damp=damp, name=name)
@@ -416,7 +418,7 @@ proc initBezierCurveQuadratic*(self: BezierCurveQuadratic, points: seq[Vec], dam
 
 method `$`*(self: BezierCurveQuadratic): string = fmt"BezierCurveQuadratic {self.points.len}"
 
-proc get_coeff*(self: BezierCurveQuadratic): seq[Vec] =
+method get_coeff*(self: BezierCurveQuadratic): seq[Vec] =
     let p0 = self.points[0]
     let p1 = self.points[1]
     let p2 = self.points[2]
@@ -425,7 +427,6 @@ proc get_coeff*(self: BezierCurveQuadratic): seq[Vec] =
     poly[2] = p0 - 2.0*p1 + p2
     poly[1] = 2.0*(p1 - p0)
     poly[0] = p0
-
     return poly
 
 # ---------------------------------------------------------------
@@ -438,7 +439,7 @@ proc initBezierCurveCubic*(self: BezierCurveCubic, points: seq[Vec], damp: float
 
 method `$`*(self: BezierCurveCubic): string = fmt"BezierCurveCubic {self.points.len}"
 
-proc get_coeff*(self: BezierCurveCubic): seq[Vec] =
+method get_coeff*(self: BezierCurveCubic): seq[Vec] =
     let p0 = self.points[0]
     let p1 = self.points[1]
     let p2 = self.points[2]
@@ -449,7 +450,6 @@ proc get_coeff*(self: BezierCurveCubic): seq[Vec] =
     poly[2] = 3.0*(p0 + p2 - 2.0*p1)
     poly[1] = 3.0*(p1 - p0)
     poly[0] = p0
-
     return poly
 ]#
 
@@ -532,9 +532,12 @@ type
 type
     MaskedCircle* = ref object of Circle
         mask: MaskFunction
+        rotation: float
 
-proc initMaskedCircle*(self: MaskedCircle, pos: Vec, rad: float, mask: MaskFunction, damp: float = 1.0, name: string = ""): MaskedCircle =
+proc initMaskedCircle*(self: MaskedCircle, pos: Vec, rad: float, mask: MaskFunction, 
+        rotation: float = 0.0, damp: float = 1.0, name: string = ""): MaskedCircle =
     self.mask = mask
+    self.rotation = rotation
     discard self.initCircle(pos=pos, rad=rad, damp=damp)
     return self
 
@@ -547,17 +550,24 @@ method intersection*(self: MaskedCircle, seg: Segment): (Object, float) =
     let c = self.pos
     let theta = math.arctan2(c[1] - x[1], c[0] - x[0]) + PI
 
-    if self.mask(theta):
+    if self.mask(theta - self.rotation):
         return (self, time)
     return (nil, -1.0)
 
 method translate*(self: MaskedCircle, vec: Vec): Object =
-    return MaskedCircle().initMaskedCircle(pos=self.pos + vec, rad=self.rad, damp=self.damp, mask=self.mask)
+    return MaskedCircle().initMaskedCircle(pos=self.pos + vec, rad=self.rad, damp=self.damp, 
+        mask=self.mask, rotation=self.rotation)
 
 method scale*(self: MaskedCircle, s: float): Object = 
-    return MaskedCircle().initMaskedCircle(pos=self.pos, rad=self.rad * s, damp=self.damp, mask=self.mask)
+    return MaskedCircle().initMaskedCircle(pos=self.pos, rad=self.rad * s, damp=self.damp, 
+        mask=self.mask, rotation=self.rotation)
 
-method `$`*(self: MaskedCircle): string = fmt"MaskedCircle[{self.index}]: '{self.name}' {self.pos}, rad={self.rad},{self.radsq}, damp={self.damp}"
+method rotate*(self: MaskedCircle, s: float): Object =
+    return MaskedCircle().initMaskedCircle(pos=self.pos, rad=self.rad, rotation=self.rotation+s, 
+        damp=self.damp, mask=self.mask)
+
+method `$`*(self: MaskedCircle): string = 
+    fmt"MaskedCircle[{self.index}]: '{self.name}' {self.pos} rad={self.rad} damp={self.damp} rot={self.rotation}"
 
 proc circle_nholes*(nholes: int, eps: float, offset: float): MaskFunction =
     let angle = offset * PI
