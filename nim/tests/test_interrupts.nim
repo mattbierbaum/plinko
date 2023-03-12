@@ -1,6 +1,7 @@
 import ../interrupts
 import ../objects
 import ../observers
+import ../particles
 
 import std/unittest
 

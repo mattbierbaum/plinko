@@ -1,5 +1,6 @@
 # import nimprof
 import ../objects
+import ../particles
 import ../forces
 import ../simulation
 

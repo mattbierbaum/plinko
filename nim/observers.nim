@@ -3,6 +3,7 @@ import array2d
 import image
 import log
 import objects
+import particles
 import plotting
 import vector
 

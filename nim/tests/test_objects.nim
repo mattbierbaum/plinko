@@ -1,4 +1,5 @@
 import ../objects
+import ../particles
 import ../vector
 
 import std/math

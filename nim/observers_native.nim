@@ -2,6 +2,7 @@
 import array2d
 import objects
 import observers
+import particles
 import plotting
 
 import std/os

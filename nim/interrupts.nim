@@ -1,5 +1,6 @@
 import objects
 import observers
+import particles
 import vector
 
 import std/strformat

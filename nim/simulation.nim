@@ -2,6 +2,7 @@ import forces
 import neighborlist
 import observers
 import objects
+import particles
 import roots
 import vector
 

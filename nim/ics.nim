@@ -4,6 +4,7 @@ import interrupts
 import neighborlist
 import objects
 import observers
+import particles
 import plotting
 import simulation
 import vector

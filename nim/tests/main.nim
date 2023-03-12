@@ -1,9 +1,10 @@
 # import nimprof
-import objects
-import forces
-import neighborlist
-import observers
-import simulation
+import ../objects
+import ../forces
+import ../neighborlist
+import ../observers
+import ../particles
+import ../simulation
 
 import std/strformat
 import std/times

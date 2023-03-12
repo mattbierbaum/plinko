@@ -1,4 +1,4 @@
-import objects
+import particles
 import vector
 
 type IndependentForce* = proc(particle: PointParticle): Vec

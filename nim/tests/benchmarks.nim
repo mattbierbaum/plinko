@@ -1,6 +1,7 @@
 # import nimprof
 
 import ../objects
+import ../particles
 import ../roots
 import ../vector
 import ../simulation
