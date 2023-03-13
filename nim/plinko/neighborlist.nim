@@ -18,6 +18,7 @@ type
 method append*(self: Neighborlist, obj: Object): void {.base.} = self.objects.add(obj)
 method calculate*(self: Neighborlist): void {.base.} = return
 method near*(self: Neighborlist, seg: Segment): seq[Object] {.base.} = self.objects
+method contains*(self: Neighborlist, seg: Segment): bool {.base.} = true
 method show*(self: Neighborlist): void {.base.} = return
 method `$`*(self: Neighborlist): string {.base.} = ""
 
@@ -107,10 +108,16 @@ method calculate*(self: CellNeighborlist): void =
 proc addcell*(self: CellNeighborlist, i: int, j: int, objs: var seq[Object]): void =
     assert(i >= 0 or i <= self.ncells[0] or j >= 0 or j <= self.ncells[1])
     let ind = self.cell_ind(i, j)
+    if ind < 0 or ind > self.cells.len:
+        return
     for obj in self.cells[ind]:
         if not self.near_seen[obj.index]:
             self.near_seen[obj.index] = true
             objs.add(obj)
+
+method contains*(self: CellNeighborlist, seg: Segment): bool =
+    return (seg.p0 >= self.box.ll and seg.p0 <= self.box.uu and
+            seg.p1 >= self.box.ll and seg.p1 <= self.box.uu)
 
 method near*(self: CellNeighborlist, seg: Segment): seq[Object] =
     let box = self.box

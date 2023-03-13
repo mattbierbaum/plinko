@@ -93,10 +93,12 @@ proc set_integrator*(self: Simulation, integrator: Integrator): void =
 proc set_neighborlist*(self: Simulation, nbl: Neighborlist): void =
     self.nbl = nbl
 
-proc intersect_objects*(self: Simulation, seg: Segment): (float, Object) =
+proc intersect_objects*(self: Simulation, seg: Segment): (float, Object, bool) =
     var mint = 2.0
     var mino: Object = nil
 
+    if not self.nbl.contains(seg):
+        return (-1.0, nil, false)
     let objs = self.nbl.near(seg)
     for obj in objs:
         let (o, t) = obj.intersection(seg)
@@ -104,8 +106,8 @@ proc intersect_objects*(self: Simulation, seg: Segment): (float, Object) =
             mint = t
             mino = o
     if mint >= 0 and mint <= 1:
-        return (mint, mino)
-    return (-1.0, nil)
+        return (mint, mino, true)
+    return (-1.0, nil, true)
 
 proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointParticle, obj: Object, dt: float): float =
     var gs = objects.Segment()
@@ -123,28 +125,32 @@ proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointPa
         return lengthsq(project.pos - lerp(gs.p0, gs.p1, t))
     return roots.brent(f=f, bracket=[0.0, 2*dt], tol=1e-20, mintol=1e-20, maxiter=10)
 
-proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, Object, float) =
+proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, Object, float, bool) =
     var gparti = PointParticle().copy(part0)
     var gpseg = Segment(p0: part0.pos, p1: part1.pos)
-    var (mint, mino) = self.intersect_objects(gpseg)
+    var (mint, mino, ok) = self.intersect_objects(gpseg)
 
+    if not ok:
+        return (part0, nil, -1.0, false)
     if mint < 0 or mint > 1:
-        return (part0, nil, -1.0)
+        return (part0, nil, -1.0, true)
 
     if self.accuracy_mode:
         mint = self.refine_intersection(part0, part1, mino, self.dt)
         if mint < 0 or mint > 1:
-            return (part0, nil, -1.0)
+            return (part0, nil, -1.0, true)
         gparti = self.integrator(part0, (1 - mino.buffer_sign * self.eps)*mint)
     else:
         mint = (1 - mino.buffer_sign * self.eps) * mint
         gparti.pos = lerp(part0.pos, part1.pos, mint)
         gparti.vel = lerp(part0.vel, part1.vel, mint)
-    return (gparti, mino, mint)
+    return (gparti, mino, mint, true)
 
-proc step_collisions*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, bool) =
-    var (parti, mino, mint) = self.intersection(part0, part1)
+proc step_collisions*(self: Simulation, part0: PointParticle, part1: PointParticle, depth: int = 0): (PointParticle, bool) =
+    var (parti, mino, mint, ok) = self.intersection(part0, part1)
 
+    if not ok or depth > 10000:
+        return (part1, false)
     if mino == nil:
         return (part1, true)
 
@@ -159,7 +165,7 @@ proc step_collisions*(self: Simulation, part0: PointParticle, part1: PointPartic
     if self.linear:
         part1.pos = pseg.p1
         part1.vel = vseg.p1
-        return self.step_collisions(part0, part1)
+        return self.step_collisions(part0, part1, depth=depth+1)
     return (part0, true)
 
 proc step_particle*(self: Simulation, part0: PointParticle): void =

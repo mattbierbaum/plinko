@@ -19,6 +19,11 @@ proc `*`*(s: float, v: Vec): Vec {.inline.} = v * s
 proc `/`*(v: Vec, u: Vec): Vec {.inline.} = [v[0] / u[0], v[1] / u[1]]
 proc `/`*(v: Vec, s: float): Vec {.inline.} = v * (1/s)
 
+proc `>`*(v: Vec, u: Vec): bool {.inline.} = v[0] > u[0] and v[1] > u[1]
+proc `<`*(v: Vec, u: Vec): bool {.inline.} = v[0] < u[0] and v[1] < u[1]
+proc `>=`*(v: Vec, u: Vec): bool {.inline.} = v[0] >= u[0] and v[1] >= u[1]
+proc `<=`*(v: Vec, u: Vec): bool {.inline.} = v[0] <= u[0] and v[1] <= u[1]
+
 proc `dot`*(v: Vec, u: Vec): float {.inline.} = v[0] * u[0] + v[1] * u[1]
 proc length*(v: Vec): float {.inline.} = math.sqrt(v.dot(v))
 proc lengthsq*(v: Vec): float {.inline.} = v.dot(v)

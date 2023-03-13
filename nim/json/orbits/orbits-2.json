@@ -7,7 +7,8 @@
     "accuracy": false,
     "linear": false,
     "record_objects": false,
-    "verbose": false
+    "verbose": false,
+    "threads": 8
 },
 "objects": [ 
     { "type": "box", "ll": [ 0.0, 0.0], "uu": [1.0, 1.0], "damp": 1.0},

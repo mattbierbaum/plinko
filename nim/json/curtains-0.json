@@ -2,11 +2,12 @@
 "simulation": {
     "eps": 1e-6,
     "dt": 1e-3,
-    "max_steps": 15000000,
+    "max_steps": 40000000,
     "equal_time": false,
     "accuracy": false,
-    "linear": true,
-    "verbose": true
+    "linear": false,
+    "verbose": false,
+    "record_objects": false
 },
 "objects": [
     { 
@@ -14,8 +15,8 @@
         "object": { 
             "type": "masked_circle",
             "pos": [ 0.5, 0.5],
-            "rad": 0.4997,
-            "damp": 1.0,
+            "rad": 0.49972,
+            "damp": 0.999999,
             "mask": {
                 "type": "nholes",
                 "n": 1,
@@ -25,8 +26,9 @@
         }
     }
 ],
-"particles": [ { "type": "single", "pos": [4.5, 6.3], "vel": [0.1, 0.0] } ],
+"particles": [ { "type": "single", "pos": [4.5, 6.305], "vel": [0.1, 0.0] } ],
 "forces": [ { "type": "gravity", "g": -1.0 } ],
+"interrupts": [ {"type": "collision", "object": {"type": "ref", "name": "bottom"}}],
 "observers": [
     {
         "type": "pgm", 
@@ -36,7 +38,7 @@
         "box": { "type": "ref", "name": "boundary"},
         "resolution": 8000
     },
-    {"type": "step", "interval": 100000}
+    {"type": "step", "interval": 1000000}
 ],
 "neighborlist": {
     "type": "cell",
