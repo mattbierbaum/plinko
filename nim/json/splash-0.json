@@ -1,0 +1,53 @@
+{
+"simulation": {
+    "eps": 1e-6,
+    "dt": 1e-3,
+    "max_steps": 7500,
+    "equal_time": false,
+    "accuracy": false,
+    "linear": false,
+    "record_objects": false,
+    "verbose": false,
+    "threads": 8
+},
+"objects": [ 
+    { 
+        "type": "masked_circle", 
+        "pos": [ 0.25, 0.65], 
+        "rad": 0.35, 
+        "damp": 0.90,
+        "mask": {
+            "type": "nholes",
+            "n": 1,
+            "gap": 0.25,
+            "offset": 0.5
+        }
+ 
+    },
+    { "type": "box", "ll": [ 0.0, 0.0], "uu": [1.0,1.0], "damp": 0.8},
+    { "type": "segment", "p0": [0.0, 0.001], "p1": [1.0,0.001], "damp": 0.7}
+],
+"particles": [ 
+    { 
+        "type": "uniform", 
+        "p0": [0.15, 0.89], 
+        "p1": [0.15, 0.89], 
+        "v0": [-0.10, -0.75], 
+        "v1": [-0.15, -0.75], 
+        "N": 2000
+    }
+],
+"forces": [ { "type": "gravity", "g": -1.0 } ],
+"observers": [
+    {
+        "type": "pgm", 
+        "filename": "test.pgm", 
+        "format": "pgm5",
+        "blend": "add",
+        "norm": "eq_hist",
+        "box": { "type": "box", "ll": [0.0,0.0], "uu": [1.0,0.75] },
+        "resolution": 10000
+    },
+    {"type": "step", "interval": 500}
+]
+}
