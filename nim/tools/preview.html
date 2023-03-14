@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Previews</title>
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0px;
+            padding: 0px
+        }
+
+        div#box {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+
+        }
+        div.image {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        div.image > span{
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+
+    <script>
+        window.onload = function () {
+            fetch('thumbnails/list.txt')
+                .then(response => response.text())
+                .then((data) => {
+                    var lines = data.split("\n");
+                    for (const line of lines) {
+                        basename = line.split("/")[1]
+                        if (basename === undefined) continue;
+
+                        var box = document.getElementById('box');
+                        var d = document.createElement('div');
+                        d.className = "image";
+                        var a = document.createElement('a');
+                        a.href = basename;
+                        var i = document.createElement('img');
+                        i.src = "thumbnails/" + basename;
+                        i.height = 384;
+                        var s = document.createElement('span');
+                        s.innerHTML = basename;
+                        a.appendChild(i)
+                        d.appendChild(a);
+                        d.appendChild(s);
+                        box.appendChild(d);
+                    }
+                })
+        }
+    </script>
+</head>
+
+<body>
+    <div id="box">
+    </div>
+</body>
+
+</html>

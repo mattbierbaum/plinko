@@ -36,7 +36,7 @@ task debug, "build debug":
 
 task profile, "build profilable":
   set_common_options()
-  switch("d", "debug")
+  # switch("d", "debug")
   switch("profiler", "on")
   switch("stacktrace", "on")
   setCommand "c", main
