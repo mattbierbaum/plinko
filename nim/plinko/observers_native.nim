@@ -53,6 +53,22 @@ proc save_pgm5*(self: Array2D[uint8], filename: string): void =
 
     self.save_bin(filename, "a")
 
+proc save_bin*(self: seq[float], filename: string, mode: string = "w"): void =
+    let filesize:int = getFileSize(filename).int
+    var file: FileStream
+    if mode == "a":
+        file = newFileStream(filename, fmAppend)
+        file.setPosition(filesize)
+    else:
+        let f = open(filename, fmWrite)
+        f.close()
+        file = newFileStream(filename, fmWrite)
+
+    for i in 0 .. self.len-1:
+        file.write(self[i])
+    file.close()
+
+
 # =================================================================
 type
     StateFileRecorder* = ref object of Observer
@@ -175,3 +191,30 @@ method close*(self: NativeSVGLinePlot): void =
     self.buffer.write(self.footer)
     var file = open(self.filename, fmWrite)
     file.write(self.buffer.data)
+
+# =================================================================
+type
+    NativeCollisionCounter * = ref object of CollisionCounter
+
+proc initNativeCollisionCounter*(self: NativeCollisionCounter, filename: string, obj: Object=nil): NativeCollisionCounter =
+    discard self.CollisionCounter.initCollisionCounter(obj, filename)
+    return self
+
+method close*(self: NativeCollisionCounter): void =
+    var L = 0
+    for index, count in self.collisions:
+        if index >= L:
+            L = index
+
+    var c: seq[float] = newSeq[float](L+1)
+    for index, count in self.collisions:
+        c[index] = count.float
+
+    c.save_bin(self.filename)
+
+method clear_intermediates*(self: NativeCollisionCounter): void = return
+
+proc `+`*(self: NativeCollisionCounter, other: NativeCollisionCounter): Observer =
+    for index, count in other.collisions:
+        self.collisions[index] = count
+    return self

@@ -14,18 +14,17 @@ import std/math
 import std/random
 import std/tables
 
-proc GenericImageRecorder(): ImageRecorder = return ImageRecorder()
-proc GenericPeriodicImageRecorder(): PeriodicImageRecorder = return PeriodicImageRecorder()
-proc GenericSVGLinePlot(): SVGLinePlot = return SVGLinePlot()
-var ImageRecorderImpl = GenericImageRecorder
-var PeriodicImageRecorderImpl = GenericPeriodicImageRecorder
-var SVGLinePlotImpl = GenericSVGLinePlot
+var ImageRecorderImpl = proc(): ImageRecorder = return ImageRecorder()
+var PeriodicImageRecorderImpl = proc(): PeriodicImageRecorder = return PeriodicImageRecorder()
+var SVGLinePlotImpl = proc(): SVGLinePlot = return SVGLinePlot()
+var CollisionCounterImpl = proc(): CollisionCounter = return CollisionCounter()
 
 when not defined(js):
     import observers_native
     ImageRecorderImpl = proc(): ImageRecorder = return NativeImageRecorder()
     PeriodicImageRecorderImpl = proc(): PeriodicImageRecorder = return NativePeriodicImageRecorder()
     SVGLinePlotImpl = proc(): SVGLinePlot = return NativeSVGLinePlot()
+    CollisionCounterImpl = proc(): CollisionCounter = return NativeCollisionCounter()
 else:
     import observers_js
     ImageRecorderImpl = proc(): ImageRecorder = return JsImageRecorder()
@@ -316,6 +315,10 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
     if node{"type"}.getStr() == "step":
         let interval = node{"interval"}.getInt()
         return StepPrinter().initStepPrinter(interval)
+
+    if node{"type"}.getStr() == "collision_counter":
+        let filename = node{"filename"}.getStr()
+        return CollisionCounterImpl().initCollisionCounter(filename=filename)
 
     elif node{"type"}.getStr() == "svg":
         let filename = node{"filename"}.getStr()

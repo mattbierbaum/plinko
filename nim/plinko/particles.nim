@@ -1,5 +1,6 @@
 import vector
 
+import std/math
 import std/strformat
 import std/strutils
 
@@ -118,6 +119,18 @@ proc initUniformParticles*(self: UniformParticles, p0: Vec, p1: Vec, v0: Vec, v1
         let f: float = i / (N - 1)
         let pos = lerp(p0, p1, f)
         let vel = lerp(v0, v1, f)
+        self.particles.add(PointParticle().initPointParticle(pos, vel, [0.0, 0.0]))
+    return self
+
+# -------------------------------------------------------------
+type 
+    RadialUniformParticles* = ref object of ParticleList
+
+proc initRadialUniformParticles*(self: RadialUniformParticles, pos: Vec, v: float, a: array[2, float], N: int): RadialUniformParticles =
+    for i in 0 .. N - 1:
+        var f: float = i / (N - 1)
+        var a = PI * (f * (a[1] - a[0]) + a[0])
+        let vel = [v * math.sin(a), v * math.cos(a)]
         self.particles.add(PointParticle().initPointParticle(pos, vel, [0.0, 0.0]))
     return self
 

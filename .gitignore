@@ -19,6 +19,7 @@ c/plinko-nbounces
 *.csv
 *.bin
 *.svg
+*.collisions
 data/
 nim/js.js
 nim/web/js.js

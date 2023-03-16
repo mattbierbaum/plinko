@@ -375,11 +375,13 @@ method update_particle*(self: SVGLinePlot, particle: PointParticle): void =
 type
     CollisionCounter* = ref object of Observer
         obj*: Object
+        filename*: string
         collisions*: Table[int, int]
         seen*: Table[int, bool]
 
-proc initCollisionCounter*(self: CollisionCounter, obj: Object=nil): CollisionCounter =
+proc initCollisionCounter*(self: CollisionCounter, obj: Object=nil, filename: string=""): CollisionCounter =
     self.obj = obj
+    self.filename = filename
     self.seen = initTable[int, bool]()
     self.collisions = initTable[int, int]()
     return self

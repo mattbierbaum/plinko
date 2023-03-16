@@ -20,6 +20,8 @@ proc get_threads*(json: string): int =
 proc combine*(self: ObserverGroup, other: ObserverGroup): ObserverGroup =
     for i, obs0 in self.observers:
         for j, obs1 in other.observers:
+            if obs0 of NativeCollisionCounter and obs1 of NativeCollisionCounter:
+                self.observers[i] = obs0.NativeCollisionCounter + obs1.NativeCollisionCounter
             if obs0 of NativeImageRecorder and obs1 of NativeImageRecorder:
                 self.observers[i] = obs0.NativeImageRecorder + obs1.NativeImageRecorder
     return self
