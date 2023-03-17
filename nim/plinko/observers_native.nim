@@ -54,14 +54,16 @@ proc save_pgm5*(self: Array2D[uint8], filename: string): void =
     self.save_bin(filename, "a")
 
 proc save_bin*(self: seq[float], filename: string, mode: string = "w"): void =
+    if not fileExists(filename):
+        let f = open(filename, fmWrite)
+        f.close()
+
     let filesize:int = getFileSize(filename).int
     var file: FileStream
     if mode == "a":
         file = newFileStream(filename, fmAppend)
         file.setPosition(filesize)
     else:
-        let f = open(filename, fmWrite)
-        f.close()
         file = newFileStream(filename, fmWrite)
 
     for i in 0 .. self.len-1:

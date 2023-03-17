@@ -87,6 +87,21 @@ proc initialize*(self: Simulation): void =
         for obj in self.objects:
             self.observer_group.record_object(obj)
 
+proc partition*(self: Simulation, index: int): void =
+    # Chew through all threads < index to increment the particle index properly.
+    # Then, keep the particles for the correct partition index.
+    var original_particles: seq[ParticleGroup] = @[]
+    for p in self.particle_groups:
+        original_particles.add(p)
+
+    self.particle_index = 0
+    for i in 0 .. self.threads - 1:
+        self.particle_groups = @[]
+        for p in original_particles:
+            self.add_particle(p.partition(self.threads)[i])
+        if i == index:
+            break
+
 proc set_integrator*(self: Simulation, integrator: Integrator): void =
     self.integrator = integrator
 

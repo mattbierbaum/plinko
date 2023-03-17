@@ -384,8 +384,9 @@ proc json_to_simulation*(json: string, index: int = 0): Simulation =
 
     if cfg{"particles"} != nil:
         for node in cfg{"particles"}:
-            let partitions = json_to_particle(node, sim).partition(sim.threads)
-            sim.add_particle(partitions[index])
+            sim.add_particle(json_to_particle(node, sim))
+        if sim.threads > 1:
+            sim.partition(index)
 
     if cfg{"observers"} != nil:
         for node in cfg{"observers"}:
