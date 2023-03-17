@@ -144,9 +144,8 @@ proc initUniformParticles2D*(self: UniformParticles2D, p0: Vec, p1: Vec, v0: Vec
     let N = Nx * Ny
 
     for i in 0 .. N - 1:
-        let j = i - 1
-        let fx = (j mod Nx) div Nx
-        let fy = (j div Nx) div Ny
+        let fx = (i mod Nx).float / (Nx.float-1)
+        let fy = (i div Nx).float / (Ny.float-1)
         let fv: Vec = [fx.float, fy.float]
 
         let pos = vlerp(p0, p1, fv)

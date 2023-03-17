@@ -233,6 +233,13 @@ proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
         let p = PointParticle().initPointParticle(pos=pos, vel=vel)
         return SingleParticle().initSingleParticle(p)
 
+    if node{"type"}.getStr() == "radial":
+        let p = json_to_vec(node{"p"}) 
+        let a = json_to_vec(node{"a"}) 
+        let v = node{"v"}.getFloat(0.0)
+        let N = node{"N"}.getInt(0)
+        return RadialUniformParticles().initRadialUniformParticles(pos=p, v=v, a=a, N=N)
+
     if node{"type"}.getStr() == "uniform":
         let p0 = json_to_vec(node{"p0"}) 
         let p1 = json_to_vec(node{"p1"})
@@ -240,6 +247,14 @@ proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
         let v1 = json_to_vec(node{"v1"})
         let N = node{"N"}.getInt(0)
         return UniformParticles().initUniformParticles(p0=p0, p1=p1, v0=v0, v1=v1, N=N)
+
+    if node{"type"}.getStr() == "uniform2d":
+        let p0 = json_to_vec(node{"p0"}) 
+        let p1 = json_to_vec(node{"p1"})
+        let v0 = json_to_vec(node{"v0"}) 
+        let v1 = json_to_vec(node{"v1"})
+        let N = json_to_ivec(node{"N"})
+        return UniformParticles2D().initUniformParticles2D(p0=p0, p1=p1, v0=v0, v1=v1, N=N)
 
 proc json_to_interrupt(node: JsonNode, sim: Simulation): Interrupt =
     if node{"type"}.getStr() == "maxsteps":

@@ -2,7 +2,7 @@
 "simulation": {
     "eps": 1e-8,
     "dt": 1e-3,
-    "max_steps": 8000,
+    "max_steps": 10000,
     "equal_time": false,
     "accuracy": true,
     "linear": true,
@@ -18,32 +18,19 @@
 ],
 "particles": [ 
     { 
-        "type": "uniform", 
-        "p0": [2.00, 4.2], 
-        "p1": [2.00, 4.2], 
-        "v0": [-0.510000001, -0.4], 
-        "v1": [0.510000001, -0.4], 
-        "N": 80000
+        "type": "uniform2d", 
+        "p0": [1.998, 4.00], 
+        "p1": [2.002, 4.00], 
+        "v0": [0.0, -0.1], 
+        "v1": [0.0, -4.8], 
+        "N": [1000, 1000]
     }
 ],
 "forces": [ { "type": "gravity", "g": -1.0 } ],
 "interrupts": [ 
-    { "type": "collision", "object": { "type": "ref", "name": "bottom" } },
-    { "type": "max_collisions", "max": 3000 }
+    { "type": "collision", "object": { "type": "ref", "name": "bottom" } }
 ],
 "observers": [
-    {
-        "type": "pgm", 
-        "filename": "test.pgm", 
-        "format": "pgm5",
-        "blend": "add",
-        "norm": "eq_hist",
-        "box": { "type": "ref", "name": "boundary"},
-        "resolution": 4000,
-        "triggers": [
-            {"type": "max_collisions", "max": 1}
-        ]
-    },
     {"type": "collision_counter", "filename": "test.collisions"},
     {"type": "step", "interval": 500}
 ],
