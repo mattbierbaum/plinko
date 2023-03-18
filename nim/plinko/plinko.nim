@@ -24,6 +24,8 @@ proc combine*(self: ObserverGroup, other: ObserverGroup): ObserverGroup =
                 self.observers[i] = obs0.NativeCollisionCounter + obs1.NativeCollisionCounter
             if obs0 of NativeImageRecorder and obs1 of NativeImageRecorder:
                 self.observers[i] = obs0.NativeImageRecorder + obs1.NativeImageRecorder
+            if obs0 of NativeStopWatch and obs1 of NativeStopWatch:
+                self.observers[i] = obs0.NativeStopWatch + obs1.NativeStopWatch
     return self
 
 proc join*(sims: seq[Simulation]): Simulation =

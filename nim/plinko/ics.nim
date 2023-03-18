@@ -18,6 +18,7 @@ var ImageRecorderImpl = proc(): ImageRecorder = return ImageRecorder()
 var PeriodicImageRecorderImpl = proc(): PeriodicImageRecorder = return PeriodicImageRecorder()
 var SVGLinePlotImpl = proc(): SVGLinePlot = return SVGLinePlot()
 var CollisionCounterImpl = proc(): CollisionCounter = return CollisionCounter()
+var StopWatchImpl = proc(): StopWatch = return StopWatch()
 
 when not defined(js):
     import observers_native
@@ -25,6 +26,7 @@ when not defined(js):
     PeriodicImageRecorderImpl = proc(): PeriodicImageRecorder = return NativePeriodicImageRecorder()
     SVGLinePlotImpl = proc(): SVGLinePlot = return NativeSVGLinePlot()
     CollisionCounterImpl = proc(): CollisionCounter = return NativeCollisionCounter()
+    StopWatchImpl = proc(): StopWatch = return NativeStopWatch()
 else:
     import observers_js
     ImageRecorderImpl = proc(): ImageRecorder = return JsImageRecorder()
@@ -334,6 +336,10 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
     if node{"type"}.getStr() == "collision_counter":
         let filename = node{"filename"}.getStr()
         return CollisionCounterImpl().initCollisionCounter(filename=filename)
+
+    if node{"type"}.getStr() == "stop_watch":
+        let filename = node{"filename"}.getStr()
+        return StopWatchImpl().initStopWatch(filename=filename)
 
     elif node{"type"}.getStr() == "svg":
         let filename = node{"filename"}.getStr()

@@ -221,3 +221,25 @@ proc `+`*(self: NativeCollisionCounter, other: NativeCollisionCounter): Observer
     for index, count in other.collisions:
         self.collisions[index] = count
     return self
+
+# =================================================================
+type
+    NativeStopWatch* = ref object of StopWatch
+
+proc iniNativeStopWatch*(self: NativeStopWatch, filename: string): NativeStopWatch =
+    discard self.StopWatch.initStopWatch(filename=filename)
+
+method close*(self: NativeStopWatch): void =
+    var L = 0
+    for index, time in self.time:
+        if index >= L:
+            L = index
+    var c: seq[float] = newSeq[float](L+1)
+    for index, time in self.time:
+        c[index] = time
+    c.save_bin(self.filename)
+
+proc `+`*(self: NativeStopWatch, other: NativeStopWatch): Observer =
+    for index, count in other.time:
+        self.time[index] = count
+    return self

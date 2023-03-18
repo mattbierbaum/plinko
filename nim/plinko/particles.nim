@@ -8,6 +8,7 @@ import std/strutils
 type
     PointParticle* = ref object of RootObj
         pos*, vel*, acc*: Vec
+        time*: float
         active*: bool
         index*: int
 
@@ -22,6 +23,7 @@ proc initPointParticle*(
     self.pos = pos
     self.vel = vel
     self.acc = acc
+    self.time = 0
     self.active = true
     self.index = index
     return self
@@ -30,6 +32,7 @@ proc copy*(self: PointParticle, other: PointParticle): PointParticle {.discardab
     self.pos = other.pos
     self.vel = other.vel
     self.acc = other.acc
+    self.time = other.time
     self.index = other.index
     self.active = other.active
     return self

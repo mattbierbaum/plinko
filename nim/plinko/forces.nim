@@ -35,4 +35,5 @@ proc integrate_velocity_verlet*(p0: PointParticle, dt: float): PointParticle =
     var p1 = PointParticle().copy(p0)
     p1.pos = p0.pos + p0.vel * dt + 0.5 * p0.acc * dt * dt
     p1.vel = p0.vel + p0.acc * dt
+    p1.time = p0.time + dt
     return p1

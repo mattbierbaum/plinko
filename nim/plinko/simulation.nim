@@ -10,7 +10,7 @@ import std/strformat
 
 type
     Simulation* = ref object of RootObj
-        t, dt*, eps*: float
+        dt*, eps*: float
         max_steps*: int
         particle_steps*: int
         threads*: int
@@ -29,7 +29,6 @@ type
         nbl*: Neighborlist
 
 proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_steps: int = 1e6.int): Simulation = 
-    self.t = 0
     self.dt = dt
     self.eps = eps
     self.particle_steps = 0
@@ -218,10 +217,7 @@ proc step*(self: Simulation, steps: int = 1): void =
             for particle in particles.items():
                 self.step_particle(particle)
 
-        self.t = self.t + self.dt
-        self.observer_group.update_time(self.t)
         self.observer_group.update_step(step)
-
         if self.observer_group.is_triggered():
             break
 

@@ -420,6 +420,8 @@ proc initStopWatch*(self: StopWatch, filename: string=""): StopWatch =
     self.time = initTable[int, float]()
     return self
 
-method update_particle*(self: StopWatch, particle: PointParticle): void = return
+method update_particle*(self: StopWatch, particle: PointParticle): void = 
+    self.time[particle.index] = particle.time
+
 method reset*(self: StopWatch): void = return
 method `$`*(self: StopWatch): string = fmt"StopWatch"

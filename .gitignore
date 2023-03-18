@@ -20,6 +20,7 @@ c/plinko-nbounces
 *.bin
 *.svg
 *.collisions
+*.time
 data/
 nim/js.js
 nim/web/js.js

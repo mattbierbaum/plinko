@@ -1,0 +1,46 @@
+{
+"simulation": {
+    "eps": 1e-9,
+    "dt": 1e-1,
+    "max_steps": 350,
+    "equal_time": false,
+    "accuracy": true,
+    "linear": false,
+    "record_objects": false,
+    "verbose": false,
+    "threads": 8
+},
+"objects": [ 
+    { 
+        "type": "masked_circle", 
+        "pos": [ 0.5, 0.5], 
+        "rad": 0.5, 
+        "damp": 0.99,
+        "mask": {
+            "type": "nholes",
+            "n": 1,
+            "gap": 0.25,
+            "offset": 0.5
+        }
+    },
+    { "type": "box", "ll": [ 0.0, 0.0], "uu": [1.0,1.0], "damp": 0.8} 
+],
+"particles": [ 
+    { 
+        "type": "uniform2d", 
+        "p0": [0.15, 0.79], 
+        "p1": [0.15, 0.79], 
+        "v0": [-0.40, -0.3], 
+        "v1": [-0.45, -0.35], 
+        "N": [1024, 1024]
+    }
+],
+"interrupts": [
+    {"type": "max_collisions", "max": 20}
+],
+"forces": [ { "type": "gravity", "g": -1.0 } ],
+"observers": [
+    {"type": "stop_watch", "filename": "test.time"},
+    {"type": "step", "interval": 10}
+]
+}
