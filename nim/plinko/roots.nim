@@ -1,6 +1,6 @@
 import std/math
 
-proc sign(x: float): float =
+proc sign(x: float): float {.inline.} =
     return (if x > 0: 1 else: -1)
 
 proc cswap[IX, float](arr: var array[IX, float], i0: int, i1: int) =

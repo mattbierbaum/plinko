@@ -2,13 +2,13 @@
 "simulation": {
     "eps": 1e-8,
     "dt": 1e-1,
-    "max_steps": 100,
+    "max_steps": 400,
     "equal_time": false,
     "accuracy": true,
     "linear": false,
     "record_objects": true,
     "verbose": false,
-    "threads": 4
+    "threads": 8
 },
 "objects": [
     { 
@@ -23,7 +23,7 @@
         "p1": [2.002, 4.00], 
         "v0": [0.0, -0.1], 
         "v1": [0.0, -4.8], 
-        "N": [4000, 4000]
+        "N": [4096, 4096]
     }
 ],
 "forces": [ { "type": "gravity", "g": -1.0 } ],
