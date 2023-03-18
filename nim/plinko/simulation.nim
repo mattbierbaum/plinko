@@ -145,7 +145,7 @@ proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointPa
             if t < 0 or t > 1:
                 return -1.0
         return lengthsq(project.pos - lerp(gs.p0, gs.p1, t))
-    return roots.brent(f=f, bracket=[0.0, 2*dt], tol=1e-20, mintol=1e-20, maxiter=10)
+    return roots.brent(f=f, bracket=[0.0, 2*dt], tol=1e-30, mintol=1e-30, maxiter=30)
 
 proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, Object, float, bool) =
     var gparti = PointParticle().copy(part0)

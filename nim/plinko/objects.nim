@@ -61,6 +61,7 @@ proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0, name: string = "")
 
 method `$`*(self: Object): string {.base.} = "Object"
 method t*(self: Object, t: float): Vec {.base.} = [0.0, 0.0]
+method crosses*(self: Object, seg: Segment): bool {.base.} = false
 method normal*(self: Object, seg: Segment): Vec {.base.} = [0.0, 0.0]
 method center*(self: Object): Vec {.base.} = [0.0, 0.0]
 method translate*(self: Object, v: Vec): Object {.base.} = Object()
@@ -102,7 +103,7 @@ method intersection*(self: Segment, seg: Segment): (Object, float) =
 method center*(self: Segment): Vec =
     return lerp(self.p0, self.p1, 0.5)
 
-proc crosses*(self: Segment, seg: Segment): bool =
+method crosses*(self: Segment, seg: Segment): bool =
     return self.intersection(seg)[1] >= 0
 
 method normal*(self: Segment, seg: Segment): Vec =
@@ -344,7 +345,7 @@ proc circle_line_poly*(self: Circle, seg: Segment): array[3, float] =
     # poly[0] = lengthsq(dc) - self.radsq
     return poly
 
-proc crosses*(self: Circle, seg: Segment): bool =
+method crosses*(self: Circle, seg: Segment): bool =
     let p0 = seg.p0
     let p1 = seg.p1
     let dr0 = lengthsq(p0 - self.pos)
@@ -498,7 +499,7 @@ method normal*(self: Polygon, seg: Segment): Vec =
     let (line, _) = self.intersection(seg)
     return line.normal(seg)
 
-proc crosses*(self: Polygon, seg: Segment): bool =
+method crosses*(self: Polygon, seg: Segment): bool =
     return self.intersection(seg)[1] >= 0
 
 proc contains*(self: Polygon, pt: Vec): bool =
@@ -601,7 +602,7 @@ method normal*(self: Box, seg: Segment): Vec =
     let (line, _) = self.intersection(seg)
     return line.normal(seg)
 
-proc crosses*(self: Box, seg: Segment): bool =
+method crosses*(self: Box, seg: Segment): bool =
     let (bx0, bx1) = (self.ll[0], self.uu[0])
     let (by0, by1) = (self.ll[1], self.uu[1])
     let (p0, p1) = (seg.p0, seg.p1)
