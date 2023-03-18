@@ -19,6 +19,7 @@ proc set_common_options(): void =
 
 task release, "build standard release":
   set_common_options()
+  switch("stackTrace", "off")
   switch("d", "release")
   setCommand "c", main
 

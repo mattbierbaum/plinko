@@ -10,16 +10,31 @@ proc cswap[IX, float](arr: var array[IX, float], i0: int, i1: int) =
         arr[i1] = t
 
 proc sort[IX, float](arr: var array[IX, float]): array[IX, float] =
-    let sort_networks: seq[seq[array[2, int]]] = @[
-        @[[0,0]],
-        @[[0,1]],
-        @[[1,2], [0,2], [0,1]],
-        @[[0,1], [2,3], [0,2], [1,3], [1,2]],
-        @[[0,1], [3,4], [2,4], [2,3], [1,4], [0,3], [0,2], [1,3], [1,2]],
-    ]
+    # const sort_networks: seq[seq[array[2, int]]] = @[
+    #     @[[0,0]],
+    #     @[[0,1]],
+    #     @[[1,2], [0,2], [0,1]],
+    #     @[[0,1], [2,3], [0,2], [1,3], [1,2]],
+    #     @[[0,1], [3,4], [2,4], [2,3], [1,4], [0,3], [0,2], [1,3], [1,2]],
+    # ]
+    # for i, inds in sort_networks[arr.len-1]:
+    #     cswap(arr, inds[0], inds[1])
+    # return arr
 
-    for i, inds in sort_networks[arr.len-1]:
-        cswap(arr, inds[0], inds[1])
+    if arr.len == 1:
+        return arr
+    if arr.len == 2:
+        cswap(arr, 0, 1)
+    if arr.len == 3:
+        cswap(arr, 1, 2)
+        cswap(arr, 0, 2)
+        cswap(arr, 0, 1)
+    if arr.len == 4:
+        cswap(arr, 0, 1)
+        cswap(arr, 2, 3)
+        cswap(arr, 0, 2)
+        cswap(arr, 1, 3)
+        cswap(arr, 1, 2)
     return arr
 
 proc polyeval*[IX, float](poly: array[IX, float], x: float): float =

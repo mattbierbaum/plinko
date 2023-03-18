@@ -336,9 +336,12 @@ proc circle_line_poly*(self: Circle, seg: Segment): array[3, float] =
     let dc = seg.p0 - self.pos
 
     var poly: array[3, float]
-    poly[2] = lengthsq(dp)
-    poly[1] = 2.0 * dp.dot(dc)
-    poly[0] = lengthsq(dc) - self.radsq
+    poly[2] = dp[0]*dp[0] + dp[1]*dp[1]
+    poly[1] = 2.0 * (dp[0]*dc[0] + dp[1]*dc[1])
+    poly[0] = dc[0]*dc[0] + dc[1]*dc[1] - self.radsq
+    # poly[2] = lengthsq(dp)
+    # poly[1] = 2.0 * dp.dot(dc)
+    # poly[0] = lengthsq(dc) - self.radsq
     return poly
 
 proc crosses*(self: Circle, seg: Segment): bool =
@@ -351,9 +354,6 @@ proc crosses*(self: Circle, seg: Segment): bool =
 method intersection*(self: Circle, seg: Segment): (Object, float) =
     let poly = self.circle_line_poly(seg)
     let root = roots.quadratic(poly)
-
-    if len(root) == 0:
-        return (nil, -1.0)
 
     if root[0] < 0 or root[0] > 1:
         if root[1] < 0 or root[1] > 1:

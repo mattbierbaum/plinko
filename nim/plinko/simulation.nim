@@ -102,6 +102,13 @@ proc partition*(self: Simulation, index: int): void =
         if i == index:
             break
 
+proc clear_intermediates*(self: Simulation): void =
+    self.nbl = nil
+    self.objects = @[]
+    self.force_func = @[]
+    self.particle_groups = @[]
+    self.observer_group.clear_intermediates()
+
 proc set_integrator*(self: Simulation, integrator: Integrator): void =
     self.integrator = integrator
 

@@ -24,9 +24,9 @@ proc `<`*(v: Vec, u: Vec): bool {.inline.} = v[0] < u[0] and v[1] < u[1]
 proc `>=`*(v: Vec, u: Vec): bool {.inline.} = v[0] >= u[0] and v[1] >= u[1]
 proc `<=`*(v: Vec, u: Vec): bool {.inline.} = v[0] <= u[0] and v[1] <= u[1]
 
-proc `dot`*(v: Vec, u: Vec): float {.inline.} = v[0] * u[0] + v[1] * u[1]
-proc length*(v: Vec): float {.inline.} = math.sqrt(v.dot(v))
-proc lengthsq*(v: Vec): float {.inline.} = v.dot(v)
+proc dot*(v: Vec, u: Vec): float {.inline.} = v[0] * u[0] + v[1] * u[1]
+proc length*(v: Vec): float {.inline.} = math.sqrt(v[0] * v[0] + v[1] * v[1])
+proc lengthsq*(v: Vec): float {.inline.} = v[0] * v[0] + v[1] * v[1]
 proc cross*(v: Vec, u: Vec): float {.inline.} = v[0] * u[1] - v[1] * u[0]
 proc norm*(v: Vec): Vec {.inline.} = v / v.length
 proc reflect*(v: Vec, normal: Vec): Vec {.inline.} = v - (2.0 * v.dot(normal) * normal)

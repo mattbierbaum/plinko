@@ -214,7 +214,8 @@ method close*(self: NativeCollisionCounter): void =
 
     c.save_bin(self.filename)
 
-method clear_intermediates*(self: NativeCollisionCounter): void = return
+method clear_intermediates*(self: NativeCollisionCounter): void =
+    self.seen = initTable[int, bool]()
 
 proc `+`*(self: NativeCollisionCounter, other: NativeCollisionCounter): Observer =
     for index, count in other.collisions:

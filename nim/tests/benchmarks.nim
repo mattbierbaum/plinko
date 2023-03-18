@@ -1,10 +1,10 @@
 # import nimprof
 
-import ../objects
-import ../particles
-import ../roots
-import ../vector
-import ../simulation
+import ../plinko/objects
+import ../plinko/particles
+import ../plinko/roots
+import ../plinko/vector
+import ../plinko/simulation
 
 import std/times
 import std/strformat
@@ -99,10 +99,12 @@ proc circle_intersection(): (string, int, float) =
 proc circle_intersection_dispatch(): (string, int, float) =
     var sum = 0.0
     let steps = 1e7.int
+    var objects: seq[Object] = @[]
     var c: Object = Circle().initCircle(pos=[0.0, 0.0], rad=0.5)
     var s = Segment().initSegment(p0=[0.0,0.0], p1=[1.0,1.0])
+    objects.add(c)
     for i in 0 .. steps:
-        sum += c.intersection(s)[1]
+        sum += objects[0].intersection(s)[1]
     return ("circle_intersection_dispatch", steps, sum)
 
 proc simulation_collide(): (string, int, float) =
@@ -135,7 +137,7 @@ proc simulation_intersection(): (string, int, float) =
     var sum = 0.0
     let steps = 1e6.int
     for i in 0 .. steps:
-        let (t, _) = sim.intersect_objects(s)
+        let (t, _, _) = sim.intersect_objects(s)
         sum += t
     return ("simulation_intersection", steps, sum)
 

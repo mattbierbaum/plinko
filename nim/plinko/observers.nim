@@ -409,3 +409,17 @@ method reset*(self: CollisionCounter): void =
 
 method `$`*(self: CollisionCounter): string = fmt"CollisionCounter"
 
+# ================================================================
+type
+    StopWatch* = ref object of Observer
+        filename*: string
+        time*: Table[int, float]
+
+proc initStopWatch*(self: StopWatch, filename: string=""): StopWatch =
+    self.filename = filename
+    self.time = initTable[int, float]()
+    return self
+
+method update_particle*(self: StopWatch, particle: PointParticle): void = return
+method reset*(self: StopWatch): void = return
+method `$`*(self: StopWatch): string = fmt"StopWatch"

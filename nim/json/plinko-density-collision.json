@@ -1,14 +1,14 @@
 {
 "simulation": {
     "eps": 1e-8,
-    "dt": 1e-3,
-    "max_steps": 10000,
+    "dt": 1e-1,
+    "max_steps": 100,
     "equal_time": false,
     "accuracy": true,
-    "linear": true,
+    "linear": false,
     "record_objects": true,
     "verbose": false,
-    "threads": 8
+    "threads": 4
 },
 "objects": [
     { 
@@ -23,7 +23,7 @@
         "p1": [2.002, 4.00], 
         "v0": [0.0, -0.1], 
         "v1": [0.0, -4.8], 
-        "N": [1000, 1000]
+        "N": [4000, 4000]
     }
 ],
 "forces": [ { "type": "gravity", "g": -1.0 } ],
@@ -32,7 +32,7 @@
 ],
 "observers": [
     {"type": "collision_counter", "filename": "test.collisions"},
-    {"type": "step", "interval": 500}
+    {"type": "step", "interval": 1}
 ],
 "neighborlist": {
     "type": "cell",

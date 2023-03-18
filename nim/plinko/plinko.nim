@@ -40,8 +40,7 @@ proc run*(json: string, index: int=0): Simulation =
         echo $sim
 
     sim.run()
-    sim.nbl = nil
-    sim.observer_group.clear_intermediates()
+    sim.clear_intermediates()
     return sim
 
 proc run_parallel*(json: string): Simulation =
