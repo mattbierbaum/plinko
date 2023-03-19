@@ -1,0 +1,61 @@
+{
+"simulation": {
+    "eps": 1e-9,
+    "dt": 1e-1,
+    "max_steps": 100,
+    "equal_time": false,
+    "accuracy": true,
+    "linear": false,
+    "verbose": false,
+    "threads": 8
+},
+"objects": [
+    {
+        "type": "box",
+        "name": "boundary",
+        "ll": [0.0, 0.0],
+        "uu": [1.0, 1.0],
+        "damp": 1.0
+    },
+    {
+        "type": "circle",
+        "pos": [0.5, 0.5],
+        "rad": 0.42,
+        "damp": 0.95
+    },
+    {
+        "type": "segment",
+        "p0": [0.0,0.0001],
+        "p1": [1.0,0.0001],
+        "name": "bottom"
+    }
+],
+"particles": [
+    {
+        "type": "uniform2d",
+        "p0": [0.40, 0.94],
+        "p1": [0.60, 0.99],
+        "v0": [0.0, -0.46],
+        "v1": [0.0, -0.66],
+        "N": [4096, 4096]
+    }
+],
+"forces": [
+    { "type": "gravity", "g": -1.0 }
+],
+"interrupts": [
+    {"type": "collision", "object": { "type": "ref", "name": "bottom"}}
+],
+"observers": [
+    {"type": "collision_counter", "filename": "test.collisions"},
+    {"type": "stop_watch", "filename": "test.time"},
+    {"type": "last_state", "filename": "test.state"},
+    {"type": "step", "interval": 1}
+],
+"neighborlist": {
+    "type": "cell",
+    "ncells": [100, 100],
+    "buffer": 0.1,
+    "box": { "type": "box", "ll": [0.0,0.0], "uu": [1.0,1.0] }
+}
+}
