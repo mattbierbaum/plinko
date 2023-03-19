@@ -2,7 +2,6 @@
 
 import ics
 import simulation
-import observers
 import observers_native
 
 import std/cpuinfo
@@ -16,17 +15,6 @@ proc get_threads*(json: string): int =
     if threads <= 0:
         threads = countProcessors()
     return threads
-
-proc combine*(self: ObserverGroup, other: ObserverGroup): ObserverGroup =
-    for i, obs0 in self.observers:
-        for j, obs1 in other.observers:
-            if obs0 of NativeCollisionCounter and obs1 of NativeCollisionCounter:
-                self.observers[i] = obs0.NativeCollisionCounter + obs1.NativeCollisionCounter
-            if obs0 of NativeImageRecorder and obs1 of NativeImageRecorder:
-                self.observers[i] = obs0.NativeImageRecorder + obs1.NativeImageRecorder
-            if obs0 of NativeStopWatch and obs1 of NativeStopWatch:
-                self.observers[i] = obs0.NativeStopWatch + obs1.NativeStopWatch
-    return self
 
 proc join*(sims: seq[Simulation]): Simulation =
     for i in 1 .. sims.len-1:

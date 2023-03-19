@@ -4,6 +4,7 @@ import objects
 import observers
 import particles
 import plotting
+import vector
 
 import std/os
 import std/streams
@@ -53,7 +54,7 @@ proc save_pgm5*(self: Array2D[uint8], filename: string): void =
 
     self.save_bin(filename, "a")
 
-proc save_bin*(self: seq[float], filename: string, mode: string = "w"): void =
+proc save_bin*[T: int|float](self: seq[T], filename: string, mode: string = "w"): void =
     if not fileExists(filename):
         let f = open(filename, fmWrite)
         f.close()
@@ -70,6 +71,33 @@ proc save_bin*(self: seq[float], filename: string, mode: string = "w"): void =
         file.write(self[i])
     file.close()
 
+proc save_bin*(self: seq[Vec], filename: string, mode: string = "w"): void =
+    if not fileExists(filename):
+        let f = open(filename, fmWrite)
+        f.close()
+
+    let filesize:int = getFileSize(filename).int
+    var file: FileStream
+    if mode == "a":
+        file = newFileStream(filename, fmAppend)
+        file.setPosition(filesize)
+    else:
+        file = newFileStream(filename, fmWrite)
+
+    for i in 0 .. self.len-1:
+        for v in self[i]:
+            file.write(v)
+    file.close()
+
+proc save_bin*[T: int|float|Vec](self: Table[int, T], filename: string): void =
+    var L = 0
+    for index, value in self:
+        if index >= L:
+            L = index
+    var c: seq[T] = newSeq[T](L+1)
+    for index, value in self:
+        c[index] = value
+    c.save_bin(filename)
 
 # =================================================================
 type
@@ -113,29 +141,6 @@ method update_particle*(self: InitialStateRecorder, particle: PointParticle): vo
 
 method close*(self: InitialStateRecorder): void =
     var file = open(self.filename, fmWrite)
-
-    for i, p in self.particles:
-        file.write(fmt"{p.pos[0]}, {p.pos[1]}, {p.vel[0]}, {p.vel[1]}, {p.acc[0]}, {p.acc[1]}\n")
-
-    file.close()
-
-# =================================================================
-type
-    LastStateRecorder* = ref object of Observer
-        filename*: string
-        particles*: Table[int, PointParticle]
-
-proc initLastStateRecorder*(self: LastStateRecorder, filename: string): LastStateRecorder =
-    self.filename = filename
-    self.particles = initTable[int, PointParticle]()
-    return self
-
-method update_particle*(self: LastStateRecorder, particle: PointParticle): void =
-    let i = particle.index
-    self.particles[i] = particle
-
-method close*(self: LastStateRecorder): void =
-    let file = open(self.filename, fmWrite)
 
     for i, p in self.particles:
         file.write(fmt"{p.pos[0]}, {p.pos[1]}, {p.vel[0]}, {p.vel[1]}, {p.acc[0]}, {p.acc[1]}\n")
@@ -203,16 +208,7 @@ proc initNativeCollisionCounter*(self: NativeCollisionCounter, filename: string,
     return self
 
 method close*(self: NativeCollisionCounter): void =
-    var L = 0
-    for index, count in self.collisions:
-        if index >= L:
-            L = index
-
-    var c: seq[float] = newSeq[float](L+1)
-    for index, count in self.collisions:
-        c[index] = count.float
-
-    c.save_bin(self.filename)
+    self.collisions.save_bin(self.filename)
 
 method clear_intermediates*(self: NativeCollisionCounter): void =
     self.seen = initTable[int, bool]()
@@ -226,20 +222,64 @@ proc `+`*(self: NativeCollisionCounter, other: NativeCollisionCounter): Observer
 type
     NativeStopWatch* = ref object of StopWatch
 
-proc iniNativeStopWatch*(self: NativeStopWatch, filename: string): NativeStopWatch =
+proc initNativeStopWatch*(self: NativeStopWatch, filename: string): NativeStopWatch =
     discard self.StopWatch.initStopWatch(filename=filename)
+    return self
 
 method close*(self: NativeStopWatch): void =
-    var L = 0
-    for index, time in self.time:
-        if index >= L:
-            L = index
-    var c: seq[float] = newSeq[float](L+1)
-    for index, time in self.time:
-        c[index] = time
-    c.save_bin(self.filename)
+    self.time.save_bin(self.filename)
 
 proc `+`*(self: NativeStopWatch, other: NativeStopWatch): Observer =
     for index, count in other.time:
         self.time[index] = count
+    return self
+
+# =================================================================
+type
+    NativeLastStateRecorder* = ref object of LastStateRecorder
+
+proc initNativeLastStateRecorder*(self: NativeLastStateRecorder, filename: string): NativeLastStateRecorder =
+    discard self.LastStateRecorder.initLastStateRecorder(filename=filename)
+    return self
+
+method close*(self: NativeLastStateRecorder): void =
+    self.pos.save_bin(fmt"{self.filename}.pos")
+    self.vel.save_bin(fmt"{self.filename}.vel")
+
+proc `+`*(self: NativeLastStateRecorder, other: NativeLastStateRecorder): Observer =
+    for index, value in other.pos:
+        self.pos[index] = value 
+    for index, value in other.vel:
+        self.vel[index] = value 
+    return self
+
+# =================================================================
+type
+    NativeLastCollisionRecorder* = ref object of LastCollisionRecorder
+
+proc initNativeLastCollisionRecorder*(self: NativeLastCollisionRecorder, filename: string): NativeLastCollisionRecorder =
+    discard self.LastCollisionRecorder.initLastCollisionRecorder(filename=filename)
+    return self
+
+method close*(self: NativeLastCollisionRecorder): void =
+    self.obj.save_bin(self.filename)
+
+proc `+`*(self: NativeLastCollisionRecorder, other: NativeLastCollisionRecorder): Observer =
+    for index, value in other.obj:
+        self.obj[index] = value 
+    return self
+
+proc combine*(self: ObserverGroup, other: ObserverGroup): ObserverGroup =
+    for i, obs0 in self.observers:
+        for j, obs1 in other.observers:
+            if obs0 of NativeCollisionCounter and obs1 of NativeCollisionCounter:
+                self.observers[i] = obs0.NativeCollisionCounter + obs1.NativeCollisionCounter
+            if obs0 of NativeImageRecorder and obs1 of NativeImageRecorder:
+                self.observers[i] = obs0.NativeImageRecorder + obs1.NativeImageRecorder
+            if obs0 of NativeStopWatch and obs1 of NativeStopWatch:
+                self.observers[i] = obs0.NativeStopWatch + obs1.NativeStopWatch
+            if obs0 of NativeLastStateRecorder and obs1 of NativeLastStateRecorder:
+                self.observers[i] = obs0.NativeLastStateRecorder + obs1.NativeLastStateRecorder
+            if obs0 of NativeLastCollisionRecorder and obs1 of NativeLastCollisionRecorder:
+                self.observers[i] = obs0.NativeLastCollisionRecorder + obs1.NativeLastCollisionRecorder
     return self

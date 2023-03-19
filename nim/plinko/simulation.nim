@@ -146,6 +146,8 @@ proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointPa
         return lengthsq(project.pos - lerp(gs.p0, gs.p1, t))
     return roots.brent(f=f, bracket=[0.0, 2*dt], tol=1e-30, mintol=1e-30, maxiter=30)
 
+proc lerp*(a: float, b: float, t: float): float {.inline.} = (1-t)*a + t*b
+
 proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, Object, float, bool) =
     var gparti = PointParticle().copy(part0)
     var gpseg = Segment(p0: part0.pos, p1: part1.pos)
@@ -165,6 +167,7 @@ proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle)
         mint = (1 - mino.buffer_sign * self.eps) * mint
         gparti.pos = lerp(part0.pos, part1.pos, mint)
         gparti.vel = lerp(part0.vel, part1.vel, mint)
+        gparti.time = lerp(part0.time, part1.time, mint)
     return (gparti, mino, mint, true)
 
 proc step_collisions*(self: Simulation, part0: PointParticle, part1: PointParticle, depth: int = 0): (PointParticle, bool) =
@@ -179,6 +182,7 @@ proc step_collisions*(self: Simulation, part0: PointParticle, part1: PointPartic
     let (pseg, vseg) = mino.collide(part0, parti, part1)
     part0.pos = pseg.p0
     part0.vel = vseg.p0 
+    part0.time = parti.time
 
     if not self.equal_time:
         self.observer_group.update_particle(part0)
@@ -186,6 +190,7 @@ proc step_collisions*(self: Simulation, part0: PointParticle, part1: PointPartic
     if self.linear:
         part1.pos = pseg.p1
         part1.vel = vseg.p1
+        part1.time = part1.time
         return self.step_collisions(part0, part1, depth=depth+1)
     return (part0, true)
 

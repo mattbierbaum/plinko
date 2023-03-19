@@ -425,3 +425,48 @@ method update_particle*(self: StopWatch, particle: PointParticle): void =
 
 method reset*(self: StopWatch): void = return
 method `$`*(self: StopWatch): string = fmt"StopWatch"
+
+# ================================================================
+type
+    LastStateRecorder* = ref object of Observer
+        filename*: string
+        pos*: Table[int, Vec]
+        vel*: Table[int, Vec]
+
+proc initLastStateRecorder*(self: LastStateRecorder, filename: string=""): LastStateRecorder =
+    self.filename = filename
+    self.pos = initTable[int, Vec]()
+    self.vel = initTable[int, Vec]()
+    return self
+
+method update_particle*(self: LastStateRecorder, particle: PointParticle): void = 
+    let i = particle.index
+    self.pos[i] = particle.pos
+    self.vel[i] = particle.vel
+
+method reset*(self: LastStateRecorder): void = return
+method `$`*(self: LastStateRecorder): string = fmt"LastStateRecorder"
+
+# ================================================================
+type
+    LastCollisionRecorder* = ref object of Observer
+        filename*: string
+        obj_next*: Table[int, int]
+        obj*: Table[int, int]
+
+proc initLastCollisionRecorder*(self: LastCollisionRecorder, filename: string=""): LastCollisionRecorder =
+    self.filename = filename
+    self.obj = initTable[int, int]()
+    self.obj_next = initTable[int, int]()
+    return self
+
+method update_collision*(self: LastCollisionRecorder, particle: PointParticle, obj: Object, t: float): void = 
+    let i = particle.index
+    if self.obj_next.hasKey(i):
+        self.obj[i] = self.obj_next[i]
+    else:
+        self.obj[i] = 0
+    self.obj_next[i] = obj.index
+
+method reset*(self: LastCollisionRecorder): void = return
+method `$`*(self: LastCollisionRecorder): string = "LastCollisionRecorder"
