@@ -1,0 +1,68 @@
+{
+"simulation": {
+    "eps": 1e-9,
+    "dt": 1e-1,
+    "max_steps": 500,
+    "equal_time": false,
+    "accuracy": true,
+    "linear": false,
+    "verbose": false,
+    "threads": 8
+},
+"objects": [
+    { 
+        "type": "polygon",
+        "name": "boundary",
+        "N": 6,
+        "pos": [0.5, 0.5],
+        "rad": 0.5773502691896258,
+        "damp": 1.0,
+        "rotate": {
+            "type": "constant",
+            "value": 0.16666666666666666
+        }
+    },
+    { 
+        "type": "masked_circle",
+        "pos": [0.5, 0.5],
+        "rad": 0.50,
+        "damp": 1.0,
+        "mask": {
+            "type": "nholes",
+            "n": 6,
+            "gap": 3.30e-2,
+            "offset": 0.0
+        }
+    }
+],
+"particles": [ 
+    { 
+        "type": "uniform2d", 
+        "p0": [0.40, 0.59], 
+        "p1": [0.40, 0.59], 
+        "v0": [-0.428, -0.32], 
+        "v1": [-0.448, -0.37], 
+        "N": [128, 128]
+    }
+],
+"forces": [
+    { "type": "gravity", "g": -1.0 }
+],
+"interrupts": [
+    {"type": "collision", "object": { "type": "ref", "name": "boundary"}}
+],
+"observers": [
+    {"type": "collision_counter", "filename": "test.collisions"},
+    {"type": "stop_watch", "filename": "test.time"},
+    {"type": "last_state", "filename": "test.state"},
+    {"type": "last_collision", "filename": "test.last"},
+    {"type": "step", "interval": 10}
+],
+"neighborlist": {
+    "type": "cell",
+    "ncells": [50, 50],
+    "buffer": 0.1,
+    "box": { "type": "box", "ll": [0.0,0.0], "uu": [1.0,1.0] }
+}
+}
+

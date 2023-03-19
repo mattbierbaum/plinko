@@ -162,6 +162,14 @@ proc json_to_masked_circle(node: JsonNode, sim: Simulation): MaskedCircle =
     let mask = circle_nholes(nholes=n, eps=gap, offset=offset)
     return MaskedCircle().initMaskedCircle(pos=pos, rad=rad, damp=damp, name=name, mask=mask)
 
+proc json_to_polygon(node: JsonNode, sim: Simulation): RegularPolygon =
+    let pos = json_to_vec(node{"pos"})
+    let rad = node{"rad"}.getFloat()
+    let N = node{"N"}.getInt()
+    let damp = node{"damp"}.getFloat()
+    let name = node{"name"}.getStr("")
+    return RegularPolygon().initRegularPolygon(pos=pos, size=rad, N=N, damp=damp, name=name)
+
 proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
     var objs: seq[Object] = @[]
     if node{"type"}.getStr() == "circle":
@@ -177,6 +185,10 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
 
     if node{"type"}.getStr() == "segment":
         var o = json_to_segment(node, sim)
+        objs.add(json_to_transformer(node, o))
+
+    if node{"type"}.getStr() == "polygon":
+        var o = json_to_polygon(node, sim)
         objs.add(json_to_transformer(node, o))
 
     if node{"type"}.getStr() == "ref":

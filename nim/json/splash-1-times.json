@@ -2,7 +2,7 @@
 "simulation": {
     "eps": 1e-9,
     "dt": 1e-1,
-    "max_steps": 350,
+    "max_steps": 200,
     "equal_time": false,
     "accuracy": true,
     "linear": false,
@@ -30,17 +30,19 @@
         "type": "uniform2d", 
         "p0": [0.15, 0.79], 
         "p1": [0.15, 0.79], 
-        "v0": [-0.40, -0.3], 
-        "v1": [-0.45, -0.35], 
+        "v0": [-0.428, -0.32], 
+        "v1": [-0.448, -0.37], 
         "N": [1024, 1024]
     }
 ],
 "interrupts": [
-    {"type": "max_collisions", "max": 20}
+    {"type": "max_collisions", "max": 18}
 ],
 "forces": [ { "type": "gravity", "g": -1.0 } ],
 "observers": [
     {"type": "stop_watch", "filename": "test.time"},
+    {"type": "last_state", "filename": "test.state"},
+    {"type": "last_collision", "filename": "test.last"},
     {"type": "step", "interval": 10}
 ]
 }

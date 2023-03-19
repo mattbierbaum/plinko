@@ -460,7 +460,7 @@ proc wrap*(self: Polygon, pts: seq[Vec]): seq[Vec] =
 proc get_segments*(self: Polygon, pts: seq[Vec], damp: float): seq[Segment] =
     var segs: seq[Segment] = @[]
     for i, pt in pts[0 .. pts.len-2]:
-        let seg = Segment().initSegment(p0=pts[i], p1=pts[i+1], damp=damp)
+        let seg = Segment().initSegment(p0=pts[i], p1=pts[i+1], damp=damp, name=self.name)
         segs.add(seg)
     return segs
 
@@ -474,11 +474,11 @@ method center*(self: Polygon): Vec =
     return com / a
 
 proc initPolygon*(self: Polygon, points: seq[Vec], damp: float = 1.0, name: string = ""): Polygon =
+    discard self.initObject(damp=damp, name=name)
     self.N = len(points)
     self.points = self.wrap(points)
     self.segments = self.get_segments(self.points, damp)
     self.com = self.center()
-    discard self.initObject(damp=damp, name=name)
     return self
 
 method intersection*(self: Polygon, seg: Segment): (Object, float) =
@@ -510,7 +510,7 @@ method translate*(self: Polygon, vec: Vec): Object =
     var points: seq[Vec] = @[]
     for pt in self.points:
         points.add(pt + vec)
-    return Polygon().initPolygon(points, self.damp)
+    return Polygon().initPolygon(points, damp=self.damp, name=self.name)
 
 method rotate*(self: Polygon, theta: float): Object =
     let c = self.center()
@@ -518,7 +518,7 @@ method rotate*(self: Polygon, theta: float): Object =
     var points: seq[Vec] = @[]
     for pt in self.points:
         points.add(rotate(pt-c, theta)+c)
-    return Polygon().initPolygon(points, self.damp)
+    return Polygon().initPolygon(points, damp=self.damp, name=self.name)
 
 method scale*(self: Polygon, s: float): Object = 
     let c: Vec = self.center()
@@ -527,7 +527,7 @@ method scale*(self: Polygon, s: float): Object =
     var points: seq[Vec] = @[]
     for i, pt in self.points:
         points.add(vector.lerp(self.points[i], c, f))
-    return Polygon().initPolygon(points, self.damp)
+    return Polygon().initPolygon(points, damp=self.damp, name=self.name)
 
 method t*(self: Polygon, v: float): Vec =
     let n = self.segments.len
@@ -550,7 +550,7 @@ proc coordinate_bounding_box*(self: Polygon): Box =
     return Box().initBox([x0, y0], [x1, y1])
 
 method `$`*(self: Polygon): string =
-    var o = &"Polygon N={self.points.len-1}:\n"
+    var o = &"Polygon name={self.name} N={self.points.len-1}:\n"
     for seg in self.segments:
         o &= &"  {$seg}\n"
     return o
@@ -569,13 +569,13 @@ proc initRectangle*(self: Rectangle, ll: Vec, uu: Vec, damp: float = 1.0): Recta
 type 
     RegularPolygon* = ref object of Polygon
 
-proc initRegularPolygon*(self: RegularPolygon, N: int, pos: Vec, size: float, damp: float = 1.0): RegularPolygon =
+proc initRegularPolygon*(self: RegularPolygon, N: int, pos: Vec, size: float, damp: float = 1.0, name: string=""): RegularPolygon =
     var points: seq[Vec] = @[]
     for i in 0 .. N-1:
         let t: float = i.float * 2.0 * PI / N.float
         let v: Vec = [cos(t), sin(t)]
         points.add(pos + size * v)
-    discard self.initPolygon(points, damp)
+    discard self.initPolygon(points, damp=damp, name=name)
     return self
 
 # ---------------------------------------------------------------
