@@ -7,6 +7,10 @@ for i in `ls *.png`; do
     if [ ! -f "thumbnails/$i" ]; then
         convert -define png:size=${S}x${S} "$i" \
           -thumbnail "${S}x${S}>" "thumbnails/$i"
+        # convert \
+        #   -define png:size=${S}x${S} "$i" \
+        #   -thumbnail "${S}x${S}>" -background white \
+        #   -gravity center -extent ${S}x${S} "thumbnails/$i"
     fi
 done
 
