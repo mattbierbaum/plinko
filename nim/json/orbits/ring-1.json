@@ -1,0 +1,48 @@
+{
+"simulation": {
+    "eps": 1e-6,
+    "dt": 3e-3,
+    "max_steps": 4095,
+    "equal_time": false,
+    "accuracy": false,
+    "linear": false,
+    "record_objects": false,
+    "verbose": false,
+    "threads": 8
+},
+"objects": [ 
+    { "type": "box", "ll": [ 0.0, 0.0], "uu": [1.0,1.0], "damp": 0.8} 
+],
+"particles": [ 
+    { 
+        "type": "random_uniform2d", 
+        "p0": [0.25, 0.21], 
+        "p1": [0.25, 0.24], 
+        "v0": [0.300, 0.22], 
+        "v1": [0.405, 0.10], 
+        "N": [100,100]
+    },
+    { 
+        "type": "random_uniform2d", 
+        "p0": [0.65, 0.20], 
+        "p1": [0.65, 0.23], 
+        "v0": [-0.300, 0.29], 
+        "v1": [-0.405, 0.12], 
+        "N": [100,100]
+    }
+
+],
+"forces": [ { "type": "central", "k": 1.0, "pos": [0.5,0.5] } ],
+"observers": [
+    {
+        "type": "pgm", 
+        "filename": "test.pgm", 
+        "format": "pgm5",
+        "blend": "add",
+        "norm": "eq_hist",
+        "box": { "type": "box", "ll": [0.0,0.0], "uu": [1.0,1.0] },
+        "resolution": 4000
+    },
+    {"type": "step", "interval": 100}
+]
+}
