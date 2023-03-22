@@ -1,6 +1,7 @@
 import vector
 
 import std/math
+import std/random
 import std/strformat
 import std/strutils
 
@@ -149,6 +150,37 @@ proc initUniformParticles2D*(self: UniformParticles2D, p0: Vec, p1: Vec, v0: Vec
     for i in 0 .. N - 1:
         let fx = (i mod Nx).float / (Nx.float-1)
         let fy = (i div Nx).float / (Ny.float-1)
+        let fv: Vec = [fx.float, fy.float]
+
+        let pos = vlerp(p0, p1, fv)
+        let vel = vlerp(v0, v1, fv)
+        self.particles.add(PointParticle().initPointParticle(pos, vel, [0.0, 0.0]))
+    return self
+
+# -------------------------------------------------------------
+type 
+    UniformRandomParticles* = ref object of ParticleList
+
+proc initUniformRandomParticles*(self: UniformRandomParticles, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: int): UniformRandomParticles =
+    for i in 0 .. N - 1:
+        let f: float = rand(1.0)
+        let pos = lerp(p0, p1, f)
+        let vel = lerp(v0, v1, f)
+        self.particles.add(PointParticle().initPointParticle(pos, vel, [0.0, 0.0]))
+    return self
+
+# -------------------------------------------------------------
+type 
+    UniformRandomParticles2D* = ref object of ParticleList
+
+proc initUniformRandomParticles2D*(self: UniformRandomParticles2D, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: array[2, int]): UniformRandomParticles2D =
+    let Nx = N[0]
+    let Ny = N[1]
+    let N = Nx * Ny
+
+    for i in 0 .. N - 1:
+        let fx = rand(1.0)
+        let fy = rand(1.0)
         let fv: Vec = [fx.float, fy.float]
 
         let pos = vlerp(p0, p1, fv)
