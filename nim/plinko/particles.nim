@@ -1,3 +1,4 @@
+import util
 import vector
 
 import std/math
@@ -101,7 +102,7 @@ method set_indices*(self: ParticleList, ind: int): int =
 method `$`*(self: ParticleList): string =
     var o = "ParticleList: \n"
     for particle in self.particles:
-        o &= fmt"  {$particle}" & "\n"
+        o &= indent($particle)
     return o.strip()
 
 method partition*(self: ParticleList, total: int): seq[ParticleGroup] =

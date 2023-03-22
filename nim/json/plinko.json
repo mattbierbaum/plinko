@@ -6,7 +6,8 @@
     "equal_time": false,
     "accuracy": false,
     "linear": false,
-    "record_objects": true
+    "record_objects": true,
+    "verbose": true
 },
 "objects": [
     { 

@@ -5,6 +5,7 @@ import log
 import objects
 import particles
 import plotting
+import util
 import vector
 
 import std/math
@@ -106,7 +107,7 @@ method clear_intermediates*(self: ObserverGroup): void =
 method `$`*(self: ObserverGroup): string =
     var o = "ObserverGroup:\n"
     for obs in self.observers:
-        o &= &"{$obs}\n"
+        o &= indent($obs)
     return o
 
 # =================================================================

@@ -4,6 +4,7 @@ import observers
 import objects
 import particles
 import roots
+import util
 import vector
 
 import std/strformat
@@ -232,9 +233,9 @@ proc `$`*(self: Simulation): string =
     for obj in self.objects:
         o &= &"  o: {$obj}\n"
     for obj in self.particle_groups:
-        o &= &"{$obj}\n"
-    o &= $self.observer_group
-    o &= $self.nbl
+        o &= indent($obj)
+    o &= indent($self.observer_group)
+    o &= indent($self.nbl)
     return o
 
 proc run*(self: Simulation): void =
