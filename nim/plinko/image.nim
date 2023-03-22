@@ -10,14 +10,33 @@
 
 import array2d
 
+import std/algorithm
 import std/lenientops
 import std/math
+import std/stats
 
 type BlendFunction* = proc(a: float, b: float): float
 type NormFunction* = proc(data: seq[float]): seq[float]
 type CmapFunction* = proc(data: seq[float]): seq[uint8]
 
 proc clip*(x: float): float {.inline.} = return max(0.0, min(x, 1.0))
+
+proc mean*(data: seq[float]): float =
+    var stats = RunningStat()
+    for d in data:
+        stats.push(d)
+    return stats.mean()
+
+proc median*(data: seq[float]): float =
+    var s = deepCopy(data)
+    s.sort()
+    return s[s.len div 2]
+
+proc sub*(data: seq[float], v: float): seq[float] =
+    var s = deepCopy(data)
+    for i, d in s:
+        s[i] -= v
+    return s
 
 proc gw3c*(a: float): float {.inline.} = 
     if a < 0.25:
@@ -117,6 +136,20 @@ proc clip_norm*(data: seq[float], vmin: float=1.0, vmax: float=1.0): seq[float] 
 
     min = vmin * min
     max = vmax * max
+
+    for i, v in data:
+        arr[i] = clip((v - min) / (max - min))
+    return arr
+
+proc clip_mad*(data: seq[float], factor: float=1.0): seq[float] =
+    var arr = newSeq[float](data.len)
+    var (min, max) = data.minmax()
+
+    var med = median(data)
+    var mad = median(sub(data, med))
+    var mean = mean(data)
+    min = mean - factor * mad
+    max = mean + factor * mad
 
     for i, v in data:
         arr[i] = clip((v - min) / (max - min))
