@@ -12,7 +12,6 @@ proc set_common_options(): void =
   switch("threadAnalysis", "off")
   switch("opt", "speed")
   switch("gc", "markAndSweep")
-  switch("passC", "-flto")
   #switch("passL", "-s")
   #switch("passL", "-static")
   switch("o", output)
@@ -21,6 +20,7 @@ task release, "build standard release":
   set_common_options()
   switch("stackTrace", "off")
   switch("d", "release")
+  switch("passC", "-flto")
   setCommand "c", main
 
 task musl, "build musl release":
@@ -33,6 +33,13 @@ task musl, "build musl release":
 task debug, "build debug":
   set_common_options()
   switch("d", "debug")
+  setCommand "c", main
+
+# perf record -o original.data --call-graph dwarf -- plinko json
+task flame, "build flame profile":
+  set_common_options()
+  switch("stackTrace", "off")
+  switch("passC", "-Og -ggdb -g3 -fno-omit-frame-pointer")
   setCommand "c", main
 
 task profile, "build profilable":
