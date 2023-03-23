@@ -248,8 +248,8 @@ proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
     if node{"type"}.getStr() == "single":
         let pos = json_to_vec(node{"pos"})
         let vel = json_to_vec(node{"vel"})
-        let p = PointParticle().initPointParticle(pos=pos, vel=vel)
-        return SingleParticle().initSingleParticle(p)
+        var p = PointParticle()
+        return SingleParticle().initSingleParticle(p.initPointParticle(pos=pos, vel=vel))
 
     if node{"type"}.getStr() == "radial":
         let p = json_to_vec(node{"p"}) 

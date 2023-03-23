@@ -3,6 +3,10 @@ import std/strformat
 
 type Vec* = array[2, float]
 
+type
+    Seg* = object
+        p0*, p1*: Vec
+
 proc `+`*(v: Vec, u: Vec): Vec {.inline.} = [v[0] + u[0], v[1] + u[1]]
 proc `+`*(v: Vec, u: float): Vec {.inline.} = [v[0] + u, v[1] + u]
 proc `+`*(u: float, v: Vec): Vec {.inline.} = v + u

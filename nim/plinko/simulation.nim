@@ -115,7 +115,7 @@ proc set_integrator*(self: Simulation, integrator: Integrator): void =
 proc set_neighborlist*(self: Simulation, nbl: Neighborlist): void =
     self.nbl = nbl
 
-proc intersect_objects*(self: Simulation, seg: Segment): (float, Object, bool) =
+proc intersect_objects*(self: Simulation, seg: Seg): (float, Object, bool) =
     var mint = 2.0
     var mino: Object = nil
 
@@ -132,27 +132,30 @@ proc intersect_objects*(self: Simulation, seg: Segment): (float, Object, bool) =
     return (-1.0, nil, true)
 
 proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointParticle, obj: Object, dt: float): float =
-    var gs = objects.Segment()
+    var seg = Seg()
     proc f(dt: float): float =
         let project = self.integrator(part0, dt)
-        gs.p0 = part0.pos
-        gs.p1 = project.pos
-        var (o, t) = obj.intersection(gs)
+        seg.p0 = part0.pos
+        seg.p1 = project.pos
+        var (o, t) = obj.intersection(seg)
         if t < 0 or t > 1:
-            gs.p0 = project.pos
-            gs.p1 = part1.pos
-            (o, t) = obj.intersection(gs)
+            seg.p0 = project.pos
+            seg.p1 = part1.pos
+            (o, t) = obj.intersection(seg)
             if t < 0 or t > 1:
                 return -1.0
-        return lengthsq(project.pos - lerp(gs.p0, gs.p1, t))
+        return lengthsq(project.pos - lerp(seg.p0, seg.p1, t))
     return roots.brent(f=f, bracket=[0.0, 2*dt], tol=1e-30, mintol=1e-30, maxiter=30)
 
 proc lerp*(a: float, b: float, t: float): float {.inline.} = (1-t)*a + t*b
 
 proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, Object, float, bool) =
-    var gparti = PointParticle().copy(part0)
-    var gpseg = Segment(p0: part0.pos, p1: part1.pos)
-    var (mint, mino, ok) = self.intersect_objects(gpseg)
+    var gparti = PointParticle()
+    gparti.copy(part0)
+    var seg = Seg()
+    seg.p0 = part0.pos
+    seg.p1 = part1.pos
+    var (mint, mino, ok) = self.intersect_objects(seg)
 
     if not ok:
         return (part0, nil, -1.0, false)
@@ -172,6 +175,8 @@ proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle)
     return (gparti, mino, mint, true)
 
 proc step_collisions*(self: Simulation, part0: PointParticle, part1: PointParticle, depth: int = 0): (PointParticle, bool) =
+    var parta = PointParticle()
+    var partb = PointParticle()
     var (parti, mino, mint, ok) = self.intersection(part0, part1)
 
     if not ok or depth > 10000:
@@ -181,21 +186,23 @@ proc step_collisions*(self: Simulation, part0: PointParticle, part1: PointPartic
 
     self.observer_group.update_collision(parti, mino, mint)
     let (pseg, vseg) = mino.collide(part0, parti, part1)
-    part0.pos = pseg.p0
-    part0.vel = vseg.p0 
-    part0.time = parti.time
+    parta.copy(part0)
+    parta.pos = pseg.p0
+    parta.vel = vseg.p0 
+    parta.time = parti.time
 
     if not self.equal_time:
-        self.observer_group.update_particle(part0)
+        self.observer_group.update_particle(parta)
 
     if self.linear:
-        part1.pos = pseg.p1
-        part1.vel = vseg.p1
-        part1.time = part1.time
-        return self.step_collisions(part0, part1, depth=depth+1)
-    return (part0, true)
+        partb.copy(part1)
+        partb.pos = pseg.p1
+        partb.vel = vseg.p1
+        partb.time = part1.time
+        return self.step_collisions(parta, partb, depth=depth+1)
+    return (parta, true)
 
-proc step_particle*(self: Simulation, part0: PointParticle): void =
+proc step_particle*(self: Simulation, part0: var PointParticle): void =
     self.observer_group.set_particle(part0)
 
     if not part0.active:
@@ -217,11 +224,11 @@ proc step_particle*(self: Simulation, part0: PointParticle): void =
 proc step*(self: Simulation, steps: int = 1): void =
     for step in 0 .. steps:
         for particles in self.particle_groups:
-            for particle in particles.items():
-                particle.acc = self.force_func[0](particle)
-
-            for particle in particles.items():
-                self.step_particle(particle)
+            for i, particle in particles.items():
+                var p = particle
+                p.acc = self.force_func[0](particle)
+                self.step_particle(p)
+                particles.copy(i, p)
 
         self.observer_group.update_step(step)
         if self.observer_group.is_triggered():

@@ -17,8 +17,8 @@ type
 
 method append*(self: Neighborlist, obj: Object): void {.base.} = self.objects.add(obj)
 method calculate*(self: Neighborlist): void {.base.} = return
-method near*(self: Neighborlist, seg: Segment): seq[Object] {.base.} = self.objects
-method contains*(self: Neighborlist, seg: Segment): bool {.base.} = true
+method near*(self: Neighborlist, seg: Seg): seq[Object] {.base.} = self.objects
+method contains*(self: Neighborlist, seg: Seg): bool {.base.} = true
 method show*(self: Neighborlist): void {.base.} = return
 method `$`*(self: Neighborlist): string {.base.} = ""
 
@@ -95,7 +95,8 @@ method calculate*(self: CellNeighborlist): void =
             for k in 0 .. box.segments.len-1:
                 let seg = box.segments[k]
                 for l, obj in self.objects:
-                    let t = obj.intersection(seg)[1]
+                    let s = Seg(p0:seg.p0, p1:seg.p1)
+                    let t = obj.intersection(s)[1]
                     if t >= 0 and t <= 1:
                         self.add_to_cell(i, j, l, obj)
 
@@ -115,11 +116,11 @@ proc addcell*(self: CellNeighborlist, i: int, j: int, objs: var seq[Object]): vo
             self.near_seen[obj.index] = true
             objs.add(obj)
 
-method contains*(self: CellNeighborlist, seg: Segment): bool =
+method contains*(self: CellNeighborlist, seg: Seg): bool =
     return (seg.p0 >= self.box.ll and seg.p0 <= self.box.uu and
             seg.p1 >= self.box.ll and seg.p1 <= self.box.uu)
 
-method near*(self: CellNeighborlist, seg: Segment): seq[Object] =
+method near*(self: CellNeighborlist, seg: Seg): seq[Object] =
     let box = self.box
     let cell = self.cell
     var x0 = (seg.p0[0] - box.ll[0]) / cell[0]

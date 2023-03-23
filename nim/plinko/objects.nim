@@ -61,13 +61,13 @@ proc initBox*(self: Box, ll: Vec, uu: Vec, damp: float = 1.0, name: string = "")
 
 method `$`*(self: Object): string {.base.} = "Object"
 method t*(self: Object, t: float): Vec {.base.} = [0.0, 0.0]
-method crosses*(self: Object, seg: Segment): bool {.base.} = false
-method normal*(self: Object, seg: Segment): Vec {.base.} = [0.0, 0.0]
+method crosses*(self: Object, seg: Seg): bool {.base.} = false
+method normal*(self: Object, seg: Seg): Vec {.base.} = [0.0, 0.0]
 method center*(self: Object): Vec {.base.} = [0.0, 0.0]
 method translate*(self: Object, v: Vec): Object {.base.} = Object()
 method scale*(self: Object, s: float): Object {.base.} = Object()
 method rotate*(self: Object, a: float): Object {.base.} = Object()
-method intersection*(self: Object, seg: Segment): (Object, float) {.base.} = (nil, -1.0)
+method intersection*(self: Object, seg: Seg): (Object, float) {.base.} = (nil, -1.0)
 method boundary*(self: Object): Box {.base.} = Box()
 method by_name*(self: Object, name: string): Object {.base.} =
     if self.name == name:
@@ -82,7 +82,7 @@ proc set_index*(self: Object, i: int) =
 proc `-`*(self: Segment): Segment = Segment().initSegment(self.p1, self.p0)
 method `$`*(self: Segment): string = fmt"Segment: '{self.name}' {self.p0} -> {self.p1}"
 
-method intersection*(self: Segment, seg: Segment): (Object, float) =
+method intersection*(self: Segment, seg: Seg): (Object, float) =
     # returns the length along seg1 when the intersection occurs (0, 1)
     let s0 = self.p0
     let e0 = self.p1
@@ -103,10 +103,10 @@ method intersection*(self: Segment, seg: Segment): (Object, float) =
 method center*(self: Segment): Vec =
     return lerp(self.p0, self.p1, 0.5)
 
-method crosses*(self: Segment, seg: Segment): bool =
+method crosses*(self: Segment, seg: Seg): bool =
     return self.intersection(seg)[1] >= 0
 
-method normal*(self: Segment, seg: Segment): Vec =
+method normal*(self: Segment, seg: Seg): Vec =
     let c = self.center()
     let newp0 = c + rot90(self.p0 - c)
     let newp1 = c + rot90(self.p1 - c)
@@ -332,7 +332,7 @@ proc initCircle*(self: Circle, pos: Vec, rad: float, damp: float = 1.0, name: st
 
 method `$`*(self: Circle): string = fmt"Circle[{self.index}]: '{self.name}' {self.pos}, rad={self.rad},{self.radsq}, damp={self.damp}"
 
-proc circle_line_poly*(self: Circle, seg: Segment): array[3, float] =
+proc circle_line_poly*(self: Circle, seg: Seg): array[3, float] =
     let dp = seg.p1 - seg.p0
     let dc = seg.p0 - self.pos
 
@@ -345,14 +345,14 @@ proc circle_line_poly*(self: Circle, seg: Segment): array[3, float] =
     # poly[0] = lengthsq(dc) - self.radsq
     return poly
 
-method crosses*(self: Circle, seg: Segment): bool =
+method crosses*(self: Circle, seg: Seg): bool =
     let p0 = seg.p0
     let p1 = seg.p1
     let dr0 = lengthsq(p0 - self.pos)
     let dr1 = lengthsq(p1 - self.pos)
     return (dr0 < self.radsq and dr1 > self.radsq) or (dr0 > self.radsq and dr1 < self.radsq)
 
-method intersection*(self: Circle, seg: Segment): (Object, float) =
+method intersection*(self: Circle, seg: Seg): (Object, float) =
     let poly = self.circle_line_poly(seg)
     let root = roots.quadratic(poly)
 
@@ -362,7 +362,7 @@ method intersection*(self: Circle, seg: Segment): (Object, float) =
         return (self, root[1])
     return (self, root[0])
 
-method normal*(self:Circle, seg: Segment): Vec =
+method normal*(self:Circle, seg: Seg): Vec =
     let dr0 = seg.p0 - self.pos
     let dr1 = seg.p1 - self.pos
     let norm = norm(dr1)
@@ -404,7 +404,7 @@ proc initMaskedCircle*(self: MaskedCircle, pos: Vec, rad: float, mask: MaskFunct
     discard self.initCircle(pos=pos, rad=rad, damp=damp)
     return self
 
-method intersection*(self: MaskedCircle, seg: Segment): (Object, float) =
+method intersection*(self: MaskedCircle, seg: Seg): (Object, float) =
     let (_, time) = procCall intersection(self.Circle, seg)
     if time < 0:
         return (nil, -1.0)
@@ -481,7 +481,7 @@ proc initPolygon*(self: Polygon, points: seq[Vec], damp: float = 1.0, name: stri
     self.com = self.center()
     return self
 
-method intersection*(self: Polygon, seg: Segment): (Object, float) =
+method intersection*(self: Polygon, seg: Seg): (Object, float) =
     var min_time = 1e100
     var min_obj: Segment
 
@@ -495,11 +495,11 @@ method intersection*(self: Polygon, seg: Segment): (Object, float) =
         return (min_obj, min_time)
     return (nil, -1.0)
 
-method normal*(self: Polygon, seg: Segment): Vec =
+method normal*(self: Polygon, seg: Seg): Vec =
     let (line, _) = self.intersection(seg)
     return line.normal(seg)
 
-method crosses*(self: Polygon, seg: Segment): bool =
+method crosses*(self: Polygon, seg: Seg): bool =
     return self.intersection(seg)[1] >= 0
 
 proc contains*(self: Polygon, pt: Vec): bool =
@@ -584,7 +584,7 @@ method `$`*(self: Box): string = fmt"Box[{self.index}]: '{self.name}' {$self.ll}
 method center*(self: Box): Vec =
     return (self.ll + self.uu)/2.0
 
-method intersection*(self: Box, seg: Segment): (Object, float) =
+method intersection*(self: Box, seg: Seg): (Object, float) =
     var min_time = 1e100
     var min_obj: Segment
 
@@ -598,11 +598,11 @@ method intersection*(self: Box, seg: Segment): (Object, float) =
         return (min_obj, min_time)
     return (nil, -1.0)
 
-method normal*(self: Box, seg: Segment): Vec =
+method normal*(self: Box, seg: Seg): Vec =
     let (line, _) = self.intersection(seg)
     return line.normal(seg)
 
-method crosses*(self: Box, seg: Segment): bool =
+method crosses*(self: Box, seg: Seg): bool =
     let (bx0, bx1) = (self.ll[0], self.uu[0])
     let (by0, by1) = (self.ll[1], self.uu[1])
     let (p0, p1) = (seg.p0, seg.p1)
@@ -653,10 +653,10 @@ method t*(self: Box, v: float): Vec =
         return self.segments[3].t((v - 0.75) / 0.25)
 
 # -------------------------------------------------------------
-method collide*(self: Object, part0: PointParticle, parti: PointParticle, part1: PointParticle): (Segment, Segment) {.base.} =
-    let scoll = Segment(p0: part0.pos, p1: parti.pos)
-    let stotal = Segment(p0: parti.pos, p1: part1.pos)
-    let vseg = Segment(p0:parti.vel, p1:part1.vel)
+method collide*(self: Object, part0: PointParticle, parti: PointParticle, part1: PointParticle): (Seg, Seg) {.base.} =
+    var scoll = Seg(p0: part0.pos, p1: parti.pos)
+    var stotal = Seg(p0: parti.pos, p1: part1.pos)
+    var vseg = Seg(p0:parti.vel, p1:part1.vel)
 
     if self.damp < 0:
         vseg.p0 = vseg.p0 * abs(self.damp)
