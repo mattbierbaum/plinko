@@ -463,6 +463,6 @@ proc json_to_simulation*(json: string, index: int = 0): Simulation =
     if cfg{"neighborlist"} != nil:
         sim.set_neighborlist(json_to_neighborlist(cfg{"neighborlist"}, sim))
     else:
-        sim.set_neighborlist(Neighborlist())
+        sim.set_neighborlist(Neighborlist().initNeighborList())
 
     return sim

@@ -119,7 +119,7 @@ proc plot_line*(self: DensityPlot, ix0: float, iy0: float, ix1: float, iy1: floa
            self.plot(x, ipart(intery)+1, fpart(intery))
            intery = intery + gradient
 
-proc draw_segment*(self: DensityPlot, seg: Segment): void =
+proc draw_segment*(self: DensityPlot, seg: Seg): void =
     let ll = self.box.ll
     let uu = self.box.uu
 

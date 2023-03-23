@@ -46,7 +46,7 @@ proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_
     self.force_func = @[]
     self.observers = @[]
     self.integrator = integrate_velocity_verlet
-    self.nbl = Neighborlist()
+    self.nbl = Neighborlist().initNeighborList()
     return self
 
 proc object_by_name*(self: Simulation, name: string): Object =
@@ -121,9 +121,9 @@ proc intersect_objects*(self: Simulation, seg: Seg): (float, Object, bool) =
 
     if not self.nbl.contains(seg):
         return (-1.0, nil, false)
-    let objs = self.nbl.near(seg)
-    for obj in objs:
-        let (o, t) = obj.intersection(seg)
+    let nblobj = self.nbl.near(seg)
+    for i in 0 .. nblobj.count - 1:
+        let (o, t) = nblobj.objs[i].intersection(seg)
         if t < mint and t <= 1 and t >= 0:
             mint = t
             mino = o
@@ -152,9 +152,7 @@ proc lerp*(a: float, b: float, t: float): float {.inline.} = (1-t)*a + t*b
 proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle): (PointParticle, Object, float, bool) =
     var gparti = PointParticle()
     gparti.copy(part0)
-    var seg = Seg()
-    seg.p0 = part0.pos
-    seg.p1 = part1.pos
+    var seg = Seg(p0: part0.pos, p1: part1.pos)
     var (mint, mino, ok) = self.intersect_objects(seg)
 
     if not ok:
@@ -175,8 +173,8 @@ proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle)
     return (gparti, mino, mint, true)
 
 proc step_collisions*(self: Simulation, part0: PointParticle, part1: PointParticle, depth: int = 0): (PointParticle, bool) =
-    var parta = PointParticle()
-    var partb = PointParticle()
+    var parta = part0
+    var partb = part1
     var (parti, mino, mint, ok) = self.intersection(part0, part1)
 
     if not ok or depth > 10000:
@@ -186,7 +184,6 @@ proc step_collisions*(self: Simulation, part0: PointParticle, part1: PointPartic
 
     self.observer_group.update_collision(parti, mino, mint)
     let (pseg, vseg) = mino.collide(part0, parti, part1)
-    parta.copy(part0)
     parta.pos = pseg.p0
     parta.vel = vseg.p0 
     parta.time = parti.time
@@ -195,7 +192,6 @@ proc step_collisions*(self: Simulation, part0: PointParticle, part1: PointPartic
         self.observer_group.update_particle(parta)
 
     if self.linear:
-        partb.copy(part1)
         partb.pos = pseg.p1
         partb.vel = vseg.p1
         partb.time = part1.time
@@ -224,9 +220,9 @@ proc step_particle*(self: Simulation, part0: var PointParticle): void =
 proc step*(self: Simulation, steps: int = 1): void =
     for step in 0 .. steps:
         for particles in self.particle_groups:
-            for i, particle in particles.items():
-                var p = particle
-                p.acc = self.force_func[0](particle)
+            for i in 0 .. particles.count()-1:
+                var p = particles.index(i)
+                p.acc = self.force_func[0](p)
                 self.step_particle(p)
                 particles.copy(i, p)
 

@@ -9,15 +9,29 @@ import std/lenientops
 proc swap*(a: float, b: float): (float, float) = return (b, a)
 proc swap*(a: int, b: int): (int, int) = return (b, a)
 
+# ==============================================
+type
+    RetObjects* = ref object of RootObj
+        objs*: seq[Object]
+        count*: int
 
 # ==============================================
 type
     Neighborlist* = ref object of RootObj
-        objects*: seq[Object]
+        robjects*: RetObjects
 
-method append*(self: Neighborlist, obj: Object): void {.base.} = self.objects.add(obj)
+proc initNeighborlist*(self: Neighborlist): Neighborlist =
+    self.robjects = RetObjects()
+    self.robjects.objs = newSeq[Object]()
+    self.robjects.count = 0
+    return self
+
+method append*(self: Neighborlist, obj: Object): void {.base.} = 
+    self.robjects.objs.add(obj)
+    self.robjects.count += 1
+
 method calculate*(self: Neighborlist): void {.base.} = return
-method near*(self: Neighborlist, seg: Seg): seq[Object] {.base.} = self.objects
+method near*(self: Neighborlist, seg: Seg): RetObjects {.base.} = self.robjects
 method contains*(self: Neighborlist, seg: Seg): bool {.base.} = true
 method show*(self: Neighborlist): void {.base.} = return
 method `$`*(self: Neighborlist): string {.base.} = ""
@@ -28,10 +42,12 @@ type
         buffer*: float
         cell*: Vec
         ncells*: array[2, int]
-        cells*: Table[int, seq[Object]]
+        cells*: seq[seq[Object]]
         seen*: Table[int, Table[int, bool]]
+        objects*: seq[Object]
         box*: Box
         near_seen*: seq[bool]
+        output*: RetObjects
 
 proc initCellNeighborlist*(self: CellNeighborlist, box: Box, ncells: array[2, int], buffer: float = -1): CellNeighborlist =
     let sidelength: float = max(box.uu[0] - box.ll[0], box.uu[1] - box.ll[1])
@@ -45,10 +61,11 @@ proc initCellNeighborlist*(self: CellNeighborlist, box: Box, ncells: array[2, in
         (self.box.uu[1] - self.box.ll[1]) / self.ncells[1].float
     ]
 
+    let N = (self.ncells[0]+1)*(self.ncells[1]+1)
     self.objects = @[]
     self.seen = initTable[int, Table[int, bool]]()
-    self.cells = initTable[int, seq[Object]]()
-    for i in 0 .. (self.ncells[0]+1)*(self.ncells[1]+1):
+    self.cells = newSeq[seq[Object]](N+1)
+    for i in 0 .. N:
         self.seen[i] = initTable[int, bool]()
         self.cells[i] = @[]
     return self
@@ -106,7 +123,11 @@ method calculate*(self: CellNeighborlist): void =
             max_index = obj.index
     self.near_seen = newSeq[bool](max_index+1)
 
-proc addcell*(self: CellNeighborlist, i: int, j: int, objs: var seq[Object]): void =
+    self.output = RetObjects()
+    self.output.objs = newSeq[Object](max_index+1)
+    self.output.count = 0
+
+proc addcell*(self: CellNeighborlist, i: int, j: int, output: RetObjects): void =
     assert(i >= 0 or i <= self.ncells[0] or j >= 0 or j <= self.ncells[1])
     let ind = self.cell_ind(i, j)
     if ind < 0 or ind > self.cells.len:
@@ -114,13 +135,19 @@ proc addcell*(self: CellNeighborlist, i: int, j: int, objs: var seq[Object]): vo
     for obj in self.cells[ind]:
         if not self.near_seen[obj.index]:
             self.near_seen[obj.index] = true
-            objs.add(obj)
+            output.objs[output.count] = obj
+            output.count += 1
 
 method contains*(self: CellNeighborlist, seg: Seg): bool =
     return (seg.p0 >= self.box.ll and seg.p0 <= self.box.uu and
             seg.p1 >= self.box.ll and seg.p1 <= self.box.uu)
 
-method near*(self: CellNeighborlist, seg: Seg): seq[Object] =
+proc clear_cache*(self: CellNeighborlist): void =
+    for i in 0 .. self.output.count-1:
+        let obj = self.output.objs[i]
+        self.near_seen[obj.index] = false
+
+method near*(self: CellNeighborlist, seg: Seg): RetObjects =
     let box = self.box
     let cell = self.cell
     var x0 = (seg.p0[0] - box.ll[0]) / cell[0]
@@ -134,10 +161,13 @@ method near*(self: CellNeighborlist, seg: Seg): seq[Object] =
     var iy1 = floor(y1).int
 
     var steep = abs(y1 - y0) > abs(x1 - x0)
+    self.output.count = 0
 
     # short-circuit things that don't leave a single cell
     if (ix0 == ix1 and iy0 == iy1):
-        return self.cells[self.cell_ind(ix0, iy0)]
+        self.addcell(ix0, iy0, self.output)
+        self.clear_cache()
+        return self.output
 
     if steep:
         (x0, y0) = swap(x0, y0)
@@ -153,29 +183,25 @@ method near*(self: CellNeighborlist, seg: Seg): seq[Object] =
     ix0 = floor(x0).int
     ix1 = ceil(x1).int
 
-    var objs: seq[Object] = @[]
     for x in  ix0 .. ix1:
         let iy0 = floor(dydx * (x - x0) + y0).int
         let iy1 = floor(dydx * (x + 1 - x0) + y0).int
 
         if steep:
             if iy0 == iy1:
-                self.addcell(iy0, x, objs)
+                self.addcell(iy0, x, self.output)
             else:
-                self.addcell(iy0, x, objs)
-                self.addcell(iy1, x, objs)
+                self.addcell(iy0, x, self.output)
+                self.addcell(iy1, x, self.output)
         else:
             if iy0 == iy1:
-                self.addcell(x, iy0, objs)
+                self.addcell(x, iy0, self.output)
             else:
-                self.addcell(x, iy0, objs)
-                self.addcell(x, iy1, objs)
+                self.addcell(x, iy0, self.output)
+                self.addcell(x, iy1, self.output)
 
-    for obj in objs:
-        if obj == nil:
-            break
-        self.near_seen[obj.index] = false
-    return objs
+    self.clear_cache()
+    return self.output
 
 method `$`*(self: CellNeighborlist): string =
     var o = "CellNeighborlist: \n"

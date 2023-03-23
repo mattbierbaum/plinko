@@ -47,7 +47,6 @@ type
 
 method index*(self: ParticleGroup, index: int): PointParticle {.base.} = result
 method count*(self: ParticleGroup): int {.base.} = result
-method items*(self: ParticleGroup): seq[PointParticle] {.base.} = @[PointParticle()]
 method copy*(self: ParticleGroup, index: int, p: PointParticle): void {.base.} = return
 method set_indices*(self: ParticleGroup, ind: int): int {.base.} = return ind
 method `$`*(self: ParticleGroup): string {.base.} = ""
@@ -71,7 +70,6 @@ method index*(self: SingleParticle, index: int): PointParticle =
         return self.particles[0]
 
 method count*(self: SingleParticle): int = 1
-method items*(self: SingleParticle): seq[PointParticle] = return self.particles
 method copy*(self: SingleParticle, index: int, p: PointParticle): void = self.particles[0].copy(p)
 
 method set_indices*(self: SingleParticle, ind: int): int =
@@ -91,7 +89,6 @@ proc initParticleList*(self: ParticleList, particles: seq[PointParticle]): Parti
 
 method index*(self: ParticleList, index: int): PointParticle = result = self.particles[index]
 method count*(self: ParticleList): int = len(self.particles)
-method items*(self: ParticleList): seq[PointParticle] = self.particles
 method copy*(self: ParticleList, index: int, p: PointParticle): void = self.particles[index].copy(p)
 
 method set_indices*(self: ParticleList, ind: int): int =

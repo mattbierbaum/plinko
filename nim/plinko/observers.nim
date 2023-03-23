@@ -192,7 +192,7 @@ method record_object*(self: ImageRecorder, obj: Object): void =
     for t in 0 .. s-1:
         var t0 = t.float / s.float
         var t1 = (t.float + 1.float) / s.float
-        var s0 = Segment().initSegment(p0=obj.t(t0), p1=obj.t(t1))
+        var s0 = Seg(p0:obj.t(t0), p1:obj.t(t1))
         self.plotter.draw_segment(s0)
 
 method update_step*(self: ImageRecorder, step: int): void =
@@ -210,7 +210,7 @@ method update_particle*(self: ImageRecorder, particle: PointParticle): void =
     let ind = particle.index
     if self.lastposition.hasKey(ind):
         var lastposition = self.lastposition[ind]
-        var segment = Segment().initSegment(lastposition, particle.pos)
+        var segment = Seg(p0:lastposition, p1:particle.pos)
         if self.triggers.len == 0 or self.triggers.is_triggered_particle(particle):
             self.plotter.draw_segment(segment)
         self.lastposition[ind] = particle.pos
