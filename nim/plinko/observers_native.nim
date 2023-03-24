@@ -199,6 +199,16 @@ method close*(self: NativeSVGLinePlot): void =
     var file = open(self.filename, fmWrite)
     file.write(self.buffer.data)
 
+# TODO: use an intermediate table to generate the joint set.
+proc join*[T](s0, s1: seq[T], f0, f1: seq[bool]): seq[T] =
+    var o = newSeq[T](max(s0.len, s1.len))
+    for i in 0 .. s0.len-1:
+        o[i] = s0[i]
+    for i in 0 .. o.len-1:
+        if i < f1.len and f1[i]:
+            o[i] = s1[i]
+    return o
+
 # =================================================================
 type
     NativeCollisionCounter * = ref object of CollisionCounter
@@ -210,12 +220,8 @@ proc initNativeCollisionCounter*(self: NativeCollisionCounter, filename: string,
 method close*(self: NativeCollisionCounter): void =
     self.collisions.save_bin(self.filename)
 
-method clear_intermediates*(self: NativeCollisionCounter): void =
-    self.seen = initTable[int, bool]()
-
 proc `+`*(self: NativeCollisionCounter, other: NativeCollisionCounter): Observer =
-    for index, count in other.collisions:
-        self.collisions[index] = count
+    self.collisions = join(self.collisions, other.collisions, self.seen, other.seen)
     return self
 
 # =================================================================
@@ -230,8 +236,7 @@ method close*(self: NativeStopWatch): void =
     self.time.save_bin(self.filename)
 
 proc `+`*(self: NativeStopWatch, other: NativeStopWatch): Observer =
-    for index, count in other.time:
-        self.time[index] = count
+    self.time = join(self.time, other.time, self.seen, other.seen)
     return self
 
 # =================================================================
@@ -247,10 +252,8 @@ method close*(self: NativeLastStateRecorder): void =
     self.vel.save_bin(fmt"{self.filename}.vel")
 
 proc `+`*(self: NativeLastStateRecorder, other: NativeLastStateRecorder): Observer =
-    for index, value in other.pos:
-        self.pos[index] = value 
-    for index, value in other.vel:
-        self.vel[index] = value 
+    self.pos = join(self.pos, other.pos, self.seen, other.seen)
+    self.vel = join(self.vel, other.vel, self.seen, other.seen)
     return self
 
 # =================================================================

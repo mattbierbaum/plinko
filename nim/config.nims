@@ -49,6 +49,13 @@ task profile, "build profilable":
   switch("stacktrace", "on")
   setCommand "c", main
 
+task memprofile, "build mem-profilable":
+  set_common_options()
+  switch("profiler", "off")
+  switch("stacktrace", "on")
+  switch("d", "memProfiler")
+  setCommand "c", main
+
 task js, "build javascript version":
   switch("d", "release")
   switch("o", "web/js.js")

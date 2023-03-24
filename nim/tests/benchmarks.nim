@@ -91,7 +91,7 @@ proc circle_intersection(): (string, int, float) =
     var sum = 0.0
     let steps = 1e7.int
     var c = Circle().initCircle(pos=[0.0, 0.0], rad=0.5)
-    var s = Segment().initSegment(p0=[0.0,0.0], p1=[1.0,1.0])
+    var s = Seg(p0:[0.0,0.0], p1:[1.0,1.0])
     for i in 0 .. steps:
         sum += c.intersection(s)[1]
     return ("circle_intersection", steps, sum)
@@ -101,7 +101,7 @@ proc circle_intersection_dispatch(): (string, int, float) =
     let steps = 1e7.int
     var objects: seq[Object] = @[]
     var c: Object = Circle().initCircle(pos=[0.0, 0.0], rad=0.5)
-    var s = Segment().initSegment(p0=[0.0,0.0], p1=[1.0,1.0])
+    var s = Seg(p0:[0.0,0.0], p1:[1.0,1.0])
     objects.add(c)
     for i in 0 .. steps:
         sum += objects[0].intersection(s)[1]
@@ -110,13 +110,15 @@ proc circle_intersection_dispatch(): (string, int, float) =
 proc simulation_collide(): (string, int, float) =
     var circle: Object = Circle().initCircle(pos=[0.5, 0.5], rad=0.5)
     var sim: Simulation = Simulation().initSimulation(max_steps=1)
+    sim.linear = false
+    sim.accuracy_mode = false
     sim.add_object(circle)
     sim.initialize()
 
-    var p0 = PointParticle().initPointParticle(
-        pos=[0.5, 0.001], vel=[0.0, 0.0], acc=[0.0, 0.0])
-    var p1 = PointParticle().initPointParticle(
-        pos=[0.5, -0.001], vel=[0.0, 0.0], acc=[0.0, 0.0])
+    var p0 = PointParticle()
+    discard p0.initPointParticle(pos=[0.5, 0.001], vel=[0.0, 0.0], acc=[0.0, 0.0])
+    var p1 = PointParticle()
+    discard p1.initPointParticle(pos=[0.5, -0.001], vel=[0.0, 0.0], acc=[0.0, 0.0])
 
     var sum = 0.0
     let steps = 1e6.int
@@ -133,7 +135,7 @@ proc simulation_intersection(): (string, int, float) =
     sim.add_object(circle)
     sim.initialize()
 
-    var s = Segment().initSegment([0.5,0.001], [0.5,-0.001])
+    var s = Seg(p0:[0.5,0.001], p1:[0.5,-0.001])
     var sum = 0.0
     let steps = 1e6.int
     for i in 0 .. steps:

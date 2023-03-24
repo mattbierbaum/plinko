@@ -81,6 +81,7 @@ proc initialize*(self: Simulation): void =
     self.nbl.calculate()
 
     self.observer_group = ObserverGroup().initObserverGroup(self.observers)
+    self.observer_group.set_particle_count(self.particle_index)
     self.observer_group.begin()
 
     if self.record_objects:

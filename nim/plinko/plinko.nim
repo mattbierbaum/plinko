@@ -1,4 +1,5 @@
-# import nimprof
+when compileOption("profiler"):
+    import nimprof
 
 import ics
 import simulation
