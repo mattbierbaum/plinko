@@ -92,14 +92,14 @@ proc partition*(self: Simulation, index: int): void =
     # Chew through all threads < index to increment the particle index properly.
     # Then, keep the particles for the correct partition index.
     var original_particles: seq[ParticleGroup] = @[]
-    for p in self.particle_groups:
-        original_particles.add(p)
+    for i in 0 .. self.particle_groups.len-1:
+        original_particles.add(self.particle_groups[i])
 
     self.particle_index = 0
     for i in 0 .. self.threads - 1:
         self.particle_groups = @[]
-        for p in original_particles:
-            self.add_particle(p.partition(self.threads)[i])
+        for j in 0 .. original_particles.len-1:
+            self.add_particle(original_particles[j].partition(self.threads)[i])
         if i == index:
             break
 
@@ -220,12 +220,12 @@ proc step_particle*(self: Simulation, part0: var PointParticle): void =
 
 proc step*(self: Simulation, steps: int = 1): void =
     for step in 0 .. steps:
-        for particles in self.particle_groups:
-            for i in 0 .. particles.count()-1:
-                var p = particles.index(i)
+        for j in 0 .. self.particle_groups.len-1:
+            for i in 0 .. self.particle_groups[j].count()-1:
+                var p = self.particle_groups[j].index(i)
                 p.acc = self.force_func[0](p)
                 self.step_particle(p)
-                particles.copy(i, p)
+                self.particle_groups[j].copy(i, p)
 
         self.observer_group.update_step(step)
         if self.observer_group.is_triggered():

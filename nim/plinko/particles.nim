@@ -83,8 +83,8 @@ type
     ParticleList* = ref object of ParticleGroup
         particles*: seq[PointParticle]
 
-proc initParticleList*(self: ParticleList, particles: seq[PointParticle]): ParticleList = 
-    self.particles = particles
+proc initParticleList*(self: ParticleList, particles: sink seq[PointParticle]): ParticleList = 
+    `=sink`(self.particles, particles)
     return self
 
 method index*(self: ParticleList, index: int): PointParticle = result = self.particles[index]
@@ -93,7 +93,7 @@ method copy*(self: ParticleList, index: int, p: PointParticle): void = self.part
 
 method set_indices*(self: ParticleList, ind: int): int =
     var tmp_index = ind
-    for i in 0 .. self.particles.len-1:#particle in self.particles:
+    for i in 0 .. self.particles.len-1:
         self.particles[i].index = tmp_index
         tmp_index += 1
     return tmp_index
@@ -108,10 +108,12 @@ method partition*(self: ParticleList, total: int): seq[ParticleGroup] =
     let size = (self.count() div total)
     var list: seq[ParticleGroup] = @[]
     for i in 0 .. total-1:
-        var particles: seq[PointParticle] = @[]
+        var particles: seq[PointParticle] = newSeq[PointParticle](size)
+        var ii = 0
         for ind in i*size .. (i+1)*size-1:
-            particles.add(self.particles[ind])
-        list.add(ParticleList().initParticleList(particles))
+            particles[ii].copy(self.particles[ind])
+            ii += 1
+        list.add(ParticleList().initParticleList(move(particles)))
     return list
 
 # -------------------------------------------------------------

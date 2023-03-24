@@ -11,7 +11,7 @@ proc set_common_options(): void =
   switch("threads", "on")
   switch("threadAnalysis", "off")
   switch("opt", "speed")
-  switch("gc", "markAndSweep")
+  switch("gc", "arc")
   #switch("passL", "-s")
   #switch("passL", "-static")
   switch("o", output)
