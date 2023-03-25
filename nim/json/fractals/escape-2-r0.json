@@ -1,0 +1,67 @@
+{
+"simulation": {
+    "eps": 1e-9,
+    "dt": 1e-1,
+    "max_steps": 120,
+    "equal_time": false,
+    "accuracy": true,
+    "linear": false,
+    "verbose": false,
+    "threads": 8
+},
+"objects": [
+    {
+        "type": "circle",
+        "name": "boundary",
+        "pos": [0.5, 0.5],
+        "rad": 0.50000001,
+        "damp": 1.0
+    },
+    {
+        "type": "masked_circle",
+        "pos": [0.5, 0.5],
+        "rad": 0.50,
+        "damp": 0.97,
+        "mask": {
+            "type": "nholes",
+            "n": 20,
+            "gap": 2.0e-2,
+            "offset": 0.0
+        }
+    }
+],
+"particles": [
+    {
+        "type": "uniform2d",
+        "p0": [0.40, 0.61],
+        "p1": [0.40, 0.61],
+        "v0": [-1.0, -1.0],
+        "v1": [ 1.0,  1.0],
+        "N": [8000, 8000]
+    }
+],
+"forces": [
+    { "type": "central", "k": -1.0, "pos": [0.45,0.45] }
+],
+"interrupts": [
+    {"type": "collision", "object": { "type": "ref", "name": "boundary"}},
+    {"type": "max_collisions", "max": 50}
+],
+"observers": [
+    {
+        "type": "stop_watch", 
+        "format": "pgm",
+        "img": {
+            "type": "pgm", 
+            "filename": "test.pgm", 
+            "format": "pgm5",
+            "blend": "add",
+            "cmap": "gray",
+            "norm": "none",
+            "box": { "type": "box", "ll": [0.0,0.0], "uu": [1.0,1.0] },
+            "resolution": 8000
+        }
+    },
+    {"type": "step", "interval": 1}
+]
+}

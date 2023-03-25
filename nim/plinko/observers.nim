@@ -204,6 +204,9 @@ method record_object*(self: ImageRecorder, obj: Object): void =
         var s0 = Seg(p0:obj.t(t0), p1:obj.t(t1))
         self.plotter.draw_segment(s0)
 
+proc record_value*(self: ImageRecorder, index: int, value: float): void =
+    self.plotter.draw_pixel(index, value)
+
 method update_step*(self: ImageRecorder, step: int): void =
     self.triggers.update_step(step)
 
@@ -414,10 +417,14 @@ method `$`*(self: CollisionCounter): string = fmt"CollisionCounter"
 type
     StopWatch* = ref object of Observer
         filename*: string
+        format*: string
+        img*: ImageRecorder
         time*: Pmt[float]
 
-proc initStopWatch*(self: StopWatch, filename: string=""): StopWatch =
+proc initStopWatch*(self: StopWatch, filename: string="", format: string="bin", img: ImageRecorder=nil): StopWatch =
     self.filename = filename
+    self.format = format
+    self.img = img
     self.time = Pmt[float]()
     return self
 

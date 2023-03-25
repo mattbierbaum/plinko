@@ -321,7 +321,7 @@ proc json_to_interrupt_group*(node: JsonNode, sim: Simulation): ObserverGroup =
         interrupts.add(json_to_interrupt(n, sim))
     return ObserverGroup().initObserverGroup(interrupts, op)
 
-proc json_to_image_recorder*(img: ImageRecorder, node: JsonNode, sim: Simulation): Observer =
+proc json_to_image_recorder*(img: ImageRecorder, node: JsonNode, sim: Simulation): ImageRecorder =
     let eqhist: NormFunction = proc(data: seq[float]): seq[float] =
         return image.eq_hist(data, nbins=256*256)
     let none: NormFunction = proc(data: seq[float]): seq[float] =
@@ -371,7 +371,11 @@ proc json_to_observer(node: JsonNode, sim: Simulation): Observer =
 
     if node{"type"}.getStr() == "stop_watch":
         let filename = node{"filename"}.getStr()
-        return StopWatchImpl().initStopWatch(filename=filename)
+        let format = node{"format"}.getStr("bin")
+        var img: ImageRecorder = nil
+        if node{"img"} != nil:
+            img = json_to_image_recorder(ImageRecorderImpl(), node{"img"}, sim)
+        return StopWatchImpl().initStopWatch(filename=filename, format=format, img=img)
 
     if node{"type"}.getStr() == "last_state":
         let filename = node{"filename"}.getStr()

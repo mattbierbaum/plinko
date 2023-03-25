@@ -134,6 +134,9 @@ proc draw_point*(self: DensityPlot, p: Vec): void =
     let y = (self.dpi * (p[1] - self.box.ll[1]))
     self.plot(x, y, 1.0)
 
+proc draw_pixel*(self: DensityPlot, index: int, value: float): void =
+    self.grid.data[index] = value
+
 proc get_array*(self: DensityPlot): Array2D[float] = return self.grid
 
 proc show*(self: DensityPlot): void =

@@ -232,12 +232,19 @@ proc `+`*(self: NativeCollisionCounter, other: NativeCollisionCounter): Observer
 type
     NativeStopWatch* = ref object of StopWatch
 
-proc initNativeStopWatch*(self: NativeStopWatch, filename: string): NativeStopWatch =
+proc initNativeStopWatch*(self: NativeStopWatch, filename: string, format: string="bin", img: ImageRecorder=nil): NativeStopWatch =
     discard self.StopWatch.initStopWatch(filename=filename)
     return self
 
 method close*(self: NativeStopWatch): void =
-    self.time.save_bin(self.filename)
+    if self.format == "bin":
+        self.time.save_bin(self.filename)
+        return
+
+    if self.format == "pgm" and self.img != nil:
+        for index, time in self.time.iter():
+            self.img.record_value(index, time)
+        self.img.close()
 
 proc `+`*(self: NativeStopWatch, other: NativeStopWatch): Observer =
     self.time = self.time.join(other.time)
