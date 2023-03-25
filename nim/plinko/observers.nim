@@ -23,7 +23,7 @@ type
 
 method init*(self: Observer): void {.base.} = return
 method begin*(self: Observer): void {.base.} = return
-method set_particle_count*(self: Observer, count: int): void {.base.} = return
+method set_particle_count*(self: Observer, offset: int, count: int): void {.base.} = return
 method set_particle*(self: Observer, particle: PointParticle): void {.base.} = return
 method record_object*(self: Observer, obj: Object): void {.base.} = return
 method update_particle*(self: Observer, particle: PointParticle): void {.base.} = return
@@ -59,9 +59,9 @@ method record_object*(self: ObserverGroup, obj: Object): void =
     for obs in self.observers:
         obs.record_object(obj)
 
-method set_particle_count*(self: ObserverGroup, count: int): void =
+method set_particle_count*(self: ObserverGroup, offset: int, count: int): void =
     for obs in self.observers:
-        obs.set_particle_count(count)
+        obs.set_particle_count(offset, count)
 
 method update_particle*(self: ObserverGroup, particle: PointParticle): void =
     for obs in self.observers:
@@ -166,8 +166,7 @@ type
         format*: string
         filename*: string
         plotter*: DensityPlot
-        lastposition*: seq[Vec]
-        hasposition*: seq[bool]
+        lastposition*: Pmt[Vec]
         cmap*: CmapFunction
         norm*: NormFunction
         triggers*: ObserverGroup
@@ -183,8 +182,7 @@ proc initImageRecorder*(
     self.format = format
     self.filename = filename
     self.plotter = plotter
-    self.lastposition = newSeq[Vec]()
-    self.hasposition = newSeq[bool]()
+    self.lastposition = Pmt[Vec]()
 
     if triggers == nil:
         self.triggers = TriggeredObserverGroup().initObserverGroup()
@@ -194,10 +192,9 @@ proc initImageRecorder*(
     self.norm = norm
     return self
 
-method set_particle_count*(self: ImageRecorder, count: int): void =
-    self.lastposition = newSeq[Vec](count)
-    self.hasposition = newSeq[bool](count)
-    self.triggers.set_particle_count(count)
+method set_particle_count*(self: ImageRecorder, offset: int, count: int): void =
+    self.lastposition = Pmt[Vec]().initPmt(offset, count)
+    self.triggers.set_particle_count(offset, count)
 
 method record_object*(self: ImageRecorder, obj: Object): void =
     let s = 1000
@@ -220,18 +217,17 @@ method update_particle*(self: ImageRecorder, particle: PointParticle): void =
     self.triggers.update_particle(particle)
 
     let ind = particle.index
-    if ind < self.lastposition.len and self.hasposition[ind]:
-        var lastposition = self.lastposition[ind]
+    if self.lastposition.contains(ind) and self.lastposition.seen(ind):
+        var lastposition = self.lastposition.get(ind)
         var segment = Seg(p0:lastposition, p1:particle.pos)
         if self.triggers.len == 0 or self.triggers.is_triggered_particle(particle):
             self.plotter.draw_segment(segment)
-        self.lastposition[ind] = particle.pos
+        self.lastposition.set(ind, particle.pos)
     else:
-        self.lastposition[ind] = particle.pos
-        self.hasposition[ind] = true
+        self.lastposition.set(ind, particle.pos)
 
 method reset*(self: ImageRecorder): void = 
-    self.lastposition = newSeq[Vec]()
+    self.lastposition = Pmt[Vec]()
     self.triggers.reset()
 
 proc tone*(self: ImageRecorder): Array2D[uint8] = 
@@ -390,34 +386,27 @@ type
     CollisionCounter* = ref object of Observer
         obj*: Object
         filename*: string
-        seen*: seq[bool]
-        collisions*: seq[int]
+        collisions*: Pmt[int]
 
 proc initCollisionCounter*(self: CollisionCounter, obj: Object=nil, filename: string=""): CollisionCounter =
     self.obj = obj
     self.filename = filename
-    self.collisions = newSeq[int]()
-    self.seen = newSeq[bool]()
+    self.collisions = Pmt[int]()
     return self
 
 proc num_collisions*(self: CollisionCounter, particle: PointParticle): int =
-    return self.collisions[particle.index]
+    return self.collisions.get(particle.index)
 
-method set_particle_count*(self: CollisionCounter, count: int): void =
-    self.collisions = newSeq[int](count)
-    self.seen = newSeq[bool](count)
-    for i in 0 .. count-1:
-        self.collisions[i] = 0
-        self.seen[i] = false
+method set_particle_count*(self: CollisionCounter, offset: int, count: int): void =
+    self.collisions = Pmt[int]().initPmt(offset, count)
 
 method update_collision*(self: CollisionCounter, particle: PointParticle, obj: Object, time: float): void =
     let i = particle.index
     if self.obj == nil or obj.name == self.obj.name:
-        self.collisions[i] = self.collisions[i] + 1
-        self.seen[i] = true
+        self.collisions.set(i, self.collisions.get(i) + 1)
 
 method reset*(self: CollisionCounter): void =
-    self.collisions = newSeq[int]()
+    self.collisions = Pmt[int]()
 
 method `$`*(self: CollisionCounter): string = fmt"CollisionCounter"
 
@@ -425,25 +414,18 @@ method `$`*(self: CollisionCounter): string = fmt"CollisionCounter"
 type
     StopWatch* = ref object of Observer
         filename*: string
-        seen*: seq[bool]
-        time*: seq[float]
+        time*: Pmt[float]
 
 proc initStopWatch*(self: StopWatch, filename: string=""): StopWatch =
     self.filename = filename
-    self.time = newSeq[float]()
-    self.seen = newSeq[bool]()
+    self.time = Pmt[float]()
     return self
 
-method set_particle_count*(self: StopWatch, count: int): void =
-    self.time = newSeq[float](count)
-    self.seen = newSeq[bool](count)
-    for i in 0 .. count-1:
-        self.time[i] = 0.0
-        self.seen[i] = false
+method set_particle_count*(self: StopWatch, offset: int, count: int): void =
+    self.time = Pmt[float]().initPmt(offset, count)
 
 method update_particle*(self: StopWatch, particle: PointParticle): void = 
-    self.time[particle.index] = particle.time
-    self.seen[particle.index] = true
+    self.time.set(particle.index, particle.time)
 
 method reset*(self: StopWatch): void = return
 method `$`*(self: StopWatch): string = fmt"StopWatch"
@@ -452,31 +434,23 @@ method `$`*(self: StopWatch): string = fmt"StopWatch"
 type
     LastStateRecorder* = ref object of Observer
         filename*: string
-        pos*: seq[Vec]
-        vel*: seq[Vec]
-        seen*: seq[bool]
+        pos*: Pmt[Vec]
+        vel*: Pmt[Vec]
 
 proc initLastStateRecorder*(self: LastStateRecorder, filename: string=""): LastStateRecorder =
     self.filename = filename
-    self.pos = newSeq[Vec]()
-    self.vel = newSeq[Vec]()
-    self.seen = newSeq[bool]()
+    self.pos = Pmt[Vec]()
+    self.vel = Pmt[Vec]()
     return self
 
-method set_particle_count*(self: LastStateRecorder, count: int): void =
-    self.pos = newSeq[Vec](count)
-    self.vel = newSeq[Vec](count)
-    self.seen = newSeq[bool](count)
-    for i in 0 .. count-1:
-        self.pos[i] = [0.0, 0.0]
-        self.vel[i] = [0.0, 0.0]
-        self.seen[i] = false
+method set_particle_count*(self: LastStateRecorder, offset: int, count: int): void =
+    self.pos = Pmt[Vec]().initPmt(offset, count)
+    self.vel = Pmt[Vec]().initPmt(offset, count)
 
 method update_particle*(self: LastStateRecorder, particle: PointParticle): void = 
     let i = particle.index
-    self.pos[i] = particle.pos
-    self.vel[i] = particle.vel
-    self.seen[i] = true
+    self.pos.set(i, particle.pos)
+    self.vel.set(i, particle.vel)
 
 method reset*(self: LastStateRecorder): void = return
 method `$`*(self: LastStateRecorder): string = fmt"LastStateRecorder"

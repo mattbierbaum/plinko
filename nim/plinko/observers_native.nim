@@ -4,6 +4,7 @@ import objects
 import observers
 import particles
 import plotting
+import util
 import vector
 
 import std/os
@@ -98,6 +99,9 @@ proc save_bin*[T: int|float|Vec](self: Table[int, T], filename: string): void =
     for index, value in self:
         c[index] = value
     c.save_bin(filename)
+
+proc save_bin*[T: int|float|Vec](self: Pmt[T], filename: string): void =
+    self.value.save_bin(filename)
 
 # =================================================================
 type
@@ -221,7 +225,7 @@ method close*(self: NativeCollisionCounter): void =
     self.collisions.save_bin(self.filename)
 
 proc `+`*(self: NativeCollisionCounter, other: NativeCollisionCounter): Observer =
-    self.collisions = join(self.collisions, other.collisions, self.seen, other.seen)
+    self.collisions = self.collisions.join(other.collisions)
     return self
 
 # =================================================================
@@ -236,7 +240,7 @@ method close*(self: NativeStopWatch): void =
     self.time.save_bin(self.filename)
 
 proc `+`*(self: NativeStopWatch, other: NativeStopWatch): Observer =
-    self.time = join(self.time, other.time, self.seen, other.seen)
+    self.time = self.time.join(other.time)
     return self
 
 # =================================================================
@@ -252,8 +256,8 @@ method close*(self: NativeLastStateRecorder): void =
     self.vel.save_bin(fmt"{self.filename}.vel")
 
 proc `+`*(self: NativeLastStateRecorder, other: NativeLastStateRecorder): Observer =
-    self.pos = join(self.pos, other.pos, self.seen, other.seen)
-    self.vel = join(self.vel, other.vel, self.seen, other.seen)
+    self.pos = self.pos.join(other.pos)
+    self.vel = self.vel.join(other.vel)
     return self
 
 # =================================================================

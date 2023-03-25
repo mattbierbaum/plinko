@@ -1,6 +1,7 @@
 import objects
 import observers
 import particles
+import util
 import vector
 
 import std/strformat
@@ -31,23 +32,17 @@ method update_step*(self: MaxSteps, step: int): void =
 # ================================================================
 type
     PerParticleInterrupt* = ref object of Interrupt
-        seen*: seq[bool]
-        triggered*: seq[bool]
-        active*: int
+        triggered*: Pmt[bool]
+        active: int
         any_seen: bool
 
 proc initPerParticleInterrupt*(self: PerParticleInterrupt): PerParticleInterrupt =
-    self.seen = newSeq[bool]()
-    self.triggered = newSeq[bool]()
-    self.active = 0
+    self.triggered = Pmt[bool]()
     self.any_seen = false
+    self.active = 0
 
-method set_particle_count*(self: PerParticleInterrupt, count: int): void =
-    self.seen = newSeq[bool](count)
-    self.triggered = newSeq[bool](count)
-    for i in 0 .. count-1:
-        self.seen[i] = false
-        self.triggered[i] = false
+method set_particle_count*(self: PerParticleInterrupt, offset: int, count: int): void =
+    self.triggered = Pmt[bool]().initPmt(offset, count)
 
 method is_triggered*(self: PerParticleInterrupt): bool = 
     if self.any_seen and self.active == 0:
@@ -56,19 +51,18 @@ method is_triggered*(self: PerParticleInterrupt): bool =
 
 method is_triggered_particle*(self: PerParticleInterrupt, particle: PointParticle): bool = 
     let i = particle.index
-    if not self.seen[i]:
+    if not self.triggered.seen(i):
         self.active += 1
-        self.seen[i] = true
+        self.triggered.set(i, false)
     else:
         self.any_seen = true
-    return self.triggered[i]
+    return self.triggered.get(i)
 
 proc trigger*(self: PerParticleInterrupt, particle: PointParticle): void =
     let i = particle.index
-    if self.seen[i] and not self.triggered[i]:
+    if self.triggered.seen(i) and not self.triggered.get(i):
         self.active -= 1
-        self.seen[i] = true
-        self.triggered[i] = true
+        self.triggered.set(i, true)
 
 # ================================================================
 type
@@ -82,9 +76,9 @@ proc initMaxCollisions*(self: MaxCollisions, max: int): MaxCollisions =
     discard self.initPerParticleInterrupt()
     return self
 
-method set_particle_count*(self: MaxCollisions, count: int): void =
-    procCall self.PerParticleInterrupt.set_particle_count(count)
-    self.counter.set_particle_count(count)
+method set_particle_count*(self: MaxCollisions, offset: int, count: int): void =
+    procCall self.PerParticleInterrupt.set_particle_count(offset, count)
+    self.counter.set_particle_count(offset, count)
 
 method update_collision*(self: MaxCollisions, particle: PointParticle, obj: Object, time: float): void =
     self.counter.update_collision(particle, obj, time)
@@ -107,9 +101,9 @@ proc initCollision*(self: Collision, obj: Object): Collision =
     discard self.initPerParticleInterrupt()
     return self
 
-method set_particle_count*(self: Collision, count: int): void =
-    procCall self.PerParticleInterrupt.set_particle_count(count)
-    self.counter.set_particle_count(count)
+method set_particle_count*(self: Collision, offset: int, count: int): void =
+    procCall self.PerParticleInterrupt.set_particle_count(offset, count)
+    self.counter.set_particle_count(offset, count)
 
 method update_collision*(self: Collision, particle: PointParticle, obj: Object, time: float): void =
     self.counter.update_collision(particle, obj, time)

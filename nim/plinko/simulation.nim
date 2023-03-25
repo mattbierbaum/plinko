@@ -76,29 +76,32 @@ proc add_observer*(self: Simulation, observer: Observer): void {.discardable.} =
 proc add_interrupt*(self: Simulation, interrupt: Observer): void {.discardable.} =
     self.observers.add(interrupt)
 
-proc partition*(self: Simulation): void =
+proc partition*(self: Simulation): (int, int)=
     # Calculate the total number of particles up to the current thread index
     # to find the offset for particle labels.
+    var start = 0
     var offset = 0
     for i in 0 .. self.thread_index - 1:
         for j in 0 .. self.particle_groups.len-1:
             self.particle_groups[j].partition(i, self.threads)
             offset += self.particle_groups[j].count()
+    start = offset
 
     for j in 0 .. self.particle_groups.len-1:
         self.particle_groups[j].partition(self.thread_index, self.threads)
         offset = self.particle_groups[j].generate(offset)
     self.particle_index = offset
+    return (start, offset - start)
 
 proc initialize*(self: Simulation): void =
-    self.partition()
+    let (offset, count) = self.partition()
 
     for obj in self.objects:
         self.nbl.append(obj)
     self.nbl.calculate()
 
     self.observer_group = ObserverGroup().initObserverGroup(self.observers)
-    self.observer_group.set_particle_count(self.particle_index)
+    self.observer_group.set_particle_count(offset, count)
     self.observer_group.begin()
 
     if self.record_objects:
