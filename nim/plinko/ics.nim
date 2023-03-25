@@ -436,6 +436,7 @@ proc json_to_simulation*(json: string, index: int = 0): Simulation =
         sim.equal_time = s{"equal_time"}.getBool(false)
         sim.accuracy_mode = s{"accuracy"}.getBool(false)
         sim.record_objects = s{"record_objects"}.getBool(false)
+        sim.thread_index = index
         randomize(s{"seed"}.getInt(1))
 
     if cfg{"objects"} != nil:
@@ -446,8 +447,6 @@ proc json_to_simulation*(json: string, index: int = 0): Simulation =
     if cfg{"particles"} != nil:
         for node in cfg{"particles"}:
             sim.add_particle(json_to_particle(node, sim))
-        if sim.threads > 1:
-            sim.partition(index)
 
     if cfg{"observers"} != nil:
         for node in cfg{"observers"}:

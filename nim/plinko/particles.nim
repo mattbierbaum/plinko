@@ -45,58 +45,33 @@ proc `$`*(self: PointParticle): string = fmt"Particle[{self.index}] <pos={$self.
 type
     ParticleGroup* = ref object of RootObj
 
+method count*(self: ParticleGroup): int {.base.} = return 0
 method index*(self: ParticleGroup, index: int): PointParticle {.base.} = result
-method count*(self: ParticleGroup): int {.base.} = result
 method copy*(self: ParticleGroup, index: int, p: PointParticle): void {.base.} = return
-method set_indices*(self: ParticleGroup, ind: int): int {.base.} = return ind
 method `$`*(self: ParticleGroup): string {.base.} = ""
-method partition*(self: ParticleGroup, num: int): seq[ParticleGroup] {.base.} = 
-    var parts = newSeq[ParticleGroup](num)
-    parts[0] = self
-    return parts
-
-# -------------------------------------------------------------
-type
-    SingleParticle* = ref object of ParticleGroup
-        particle*: PointParticle
-        particles*: seq[PointParticle]
-
-proc initSingleParticle*(self: SingleParticle, particle: PointParticle): SingleParticle = 
-    self.particles = @[particle]
-    return self
-
-method index*(self: SingleParticle, index: int): PointParticle = 
-    if index == 0:
-        return self.particles[0]
-
-method count*(self: SingleParticle): int = 1
-method copy*(self: SingleParticle, index: int, p: PointParticle): void = self.particles[0].copy(p)
-
-method set_indices*(self: SingleParticle, ind: int): int =
-    self.particles[0].index = ind
-    return ind + 1
-
-method `$`*(self: SingleParticle): string = return fmt"SingleParticle: {$self.particle}"
+method partition*(self: ParticleGroup, index: int, num: int): void {.base.} = return
+method generate*(self: ParticleGroup, offset: int): int {.base.} = return
 
 # -------------------------------------------------------------
 type
     ParticleList* = ref object of ParticleGroup
         particles*: seq[PointParticle]
+        p_count*: int  # Num of partitions
+        p_index*: int  # Partition index
+        p_size*: int  # Number of particles in the partition
+        N*: int  # Number of total particles in the group
 
-proc initParticleList*(self: ParticleList, particles: sink seq[PointParticle]): ParticleList = 
-    `=sink`(self.particles, particles)
+proc initParticleList*(self: ParticleList, N: int): ParticleList = 
+    self.N = N
+    self.particles = @[]
     return self
 
-method index*(self: ParticleList, index: int): PointParticle = result = self.particles[index]
-method count*(self: ParticleList): int = len(self.particles)
-method copy*(self: ParticleList, index: int, p: PointParticle): void = self.particles[index].copy(p)
+method create*(self: ParticleList, index: int): PointParticle {.base.} =
+    return PointParticle()
 
-method set_indices*(self: ParticleList, ind: int): int =
-    var tmp_index = ind
-    for i in 0 .. self.particles.len-1:
-        self.particles[i].index = tmp_index
-        tmp_index += 1
-    return tmp_index
+method count*(self: ParticleList): int = self.p_size
+method index*(self: ParticleList, index: int): PointParticle = return self.particles[index]
+method copy*(self: ParticleList, index: int, p: PointParticle): void = self.particles[index].copy(p)
 
 method `$`*(self: ParticleList): string =
     var o = "ParticleList: \n"
@@ -104,98 +79,140 @@ method `$`*(self: ParticleList): string =
         o &= indent($particle)
     return o.strip()
 
-method partition*(self: ParticleList, total: int): seq[ParticleGroup] =
-    let size = (self.count() div total)
-    var list: seq[ParticleGroup] = @[]
-    for i in 0 .. total-1:
-        var particles: seq[PointParticle] = newSeq[PointParticle](size)
-        var ii = 0
-        for ind in i*size .. (i+1)*size-1:
-            particles[ii].copy(self.particles[ind])
-            ii += 1
-        list.add(ParticleList().initParticleList(move(particles)))
-    return list
+method partition*(self: ParticleList, index: int, num: int): void =
+    self.p_count = num
+    self.p_index = index
+    self.p_size = self.N div self.p_count
+
+method generate*(self: ParticleList, offset: int): int =
+    self.particles = newSeq[PointParticle](self.p_size)
+    for i in 0 .. self.p_size-1:
+        let ind = self.p_index * self.p_size + i
+        self.particles[i].copy(self.create(ind))
+        self.particles[i].index = i + offset
+    return offset + self.p_size
+
+# -------------------------------------------------------------
+type
+    SingleParticle* = ref object of ParticleList
+        particle*: PointParticle
+
+proc initSingleParticle*(self: SingleParticle, particle: PointParticle): SingleParticle = 
+    self.particle = particle
+    self.particles = @[]
+    self.N = 1
+    return self
+
+method count*(self: SingleParticle): int = return if self.p_index == 0: self.p_size else: 0
+method `$`*(self: SingleParticle): string = return fmt"SingleParticle: {$self.particle}"
+
+method generate*(self: SingleParticle, offset: int): int =
+    if self.p_index == 0:
+        self.particles = @[self.particle]
+        self.particles[0].index = offset
+        return offset + 1
+    return offset
 
 # -------------------------------------------------------------
 type 
     UniformParticles* = ref object of ParticleList
+        p0, p1, v0, v1: Vec
 
 proc initUniformParticles*(self: UniformParticles, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: int): UniformParticles =
-    self.particles = newSeq[PointParticle](N)
-    var p = PointParticle()
-    for i in 0 .. N - 1:
-        let f: float = i / (N - 1)
-        let pos = lerp(p0, p1, f)
-        let vel = lerp(v0, v1, f)
-        self.particles[i].copy(p.initPointParticle(pos, vel, [0.0, 0.0]))
+    self.p0 = p0
+    self.p1 = p1
+    self.v0 = v0
+    self.v1 = v1
+    self.N = N
+    self.particles = @[]
     return self
 
-# -------------------------------------------------------------
-type 
-    RadialUniformParticles* = ref object of ParticleList
-
-proc initRadialUniformParticles*(self: RadialUniformParticles, pos: Vec, v: float, a: array[2, float], N: int): RadialUniformParticles =
-    self.particles = newSeq[PointParticle](N)
+method create*(self: UniformParticles, i: int): PointParticle =
+    let f: float = i / (self.N - 1)
+    let pos = lerp(self.p0, self.p1, f)
+    let vel = lerp(self.v0, self.v1, f)
     var p = PointParticle()
-    for i in 0 .. N - 1:
-        var f: float = i / (N - 1)
-        var a = PI * (f * (a[1] - a[0]) + a[0])
-        let vel = [v * math.sin(a), v * math.cos(a)]
-        self.particles[i].copy(p.initPointParticle(pos, vel, [0.0, 0.0]))
-    return self
+    return p.initPointParticle(pos, vel, [0.0, 0.0])
 
 # -------------------------------------------------------------
 type 
     UniformParticles2D* = ref object of ParticleList
+        p0, p1, v0, v1: Vec
+        n2d: array[2, int]
 
 proc initUniformParticles2D*(self: UniformParticles2D, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: array[2, int]): UniformParticles2D =
-    let Nx = N[0]
-    let Ny = N[1]
-    let N = Nx * Ny
-
-    self.particles = newSeq[PointParticle](N)
-    var p = PointParticle()
-    for i in 0 .. N - 1:
-        let fx = (i mod Nx).float / (Nx.float-1)
-        let fy = (i div Nx).float / (Ny.float-1)
-        let fv: Vec = [fx.float, fy.float]
-
-        let pos = vlerp(p0, p1, fv)
-        let vel = vlerp(v0, v1, fv)
-        self.particles[i].copy(p.initPointParticle(pos, vel, [0.0, 0.0]))
+    self.p0 = p0
+    self.p1 = p1
+    self.v0 = v0
+    self.v1 = v1
+    self.n2d = N
+    self.N = self.n2d[0] * self.n2d[1]
+    self.particles = @[]
     return self
+
+method create*(self: UniformParticles2D, i: int): PointParticle =
+    let Nx = self.n2d[0]
+    let Ny = self.n2d[1]
+
+    var p = PointParticle()
+    let fx = (i mod Nx).float / (Nx.float-1)
+    let fy = (i div Nx).float / (Ny.float-1)
+    let fv: Vec = [fx.float, fy.float]
+
+    let pos = vlerp(self.p0, self.p1, fv)
+    let vel = vlerp(self.v0, self.v1, fv)
+    return p.initPointParticle(pos, vel, [0.0, 0.0])
 
 # -------------------------------------------------------------
 type 
-    UniformRandomParticles* = ref object of ParticleList
+    UniformRandomParticles* = ref object of UniformParticles
 
 proc initUniformRandomParticles*(self: UniformRandomParticles, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: int): UniformRandomParticles =
-    self.particles = newSeq[PointParticle](N)
-    var p = PointParticle()
-    for i in 0 .. N - 1:
-        let f: float = rand(1.0)
-        let pos = lerp(p0, p1, f)
-        let vel = lerp(v0, v1, f)
-        self.particles[i].copy(p.initPointParticle(pos, vel, [0.0, 0.0]))
+    discard procCall self.UniformParticles.initUniformParticles(p0, p1, v0, v1, N)
     return self
+
+method create*(self: UniformRandomParticles, i: int): PointParticle =
+    var p = PointParticle()
+    let f: float = rand(1.0)
+    let pos = lerp(self.p0, self.p1, f)
+    let vel = lerp(self.v0, self.v1, f)
+    return p.initPointParticle(pos, vel, [0.0, 0.0])
 
 # -------------------------------------------------------------
 type 
-    UniformRandomParticles2D* = ref object of ParticleList
+    UniformRandomParticles2D* = ref object of UniformParticles2D
 
 proc initUniformRandomParticles2D*(self: UniformRandomParticles2D, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: array[2, int]): UniformRandomParticles2D =
-    let Nx = N[0]
-    let Ny = N[1]
-    let N = Nx * Ny
-
-    self.particles = newSeq[PointParticle](N)
-    var p = PointParticle()
-    for i in 0 .. N - 1:
-        let fx = rand(1.0)
-        let fy = rand(1.0)
-        let fv: Vec = [fx.float, fy.float]
-
-        let pos = vlerp(p0, p1, fv)
-        let vel = vlerp(v0, v1, fv)
-        self.particles[i].copy(p.initPointParticle(pos, vel, [0.0, 0.0]))
+    discard procCall self.UniformParticles2D.initUniformParticles2D(p0, p1, v0, v1, N)
     return self
+
+method create*(self: UniformRandomParticles2D, i: int): PointParticle =
+    var p = PointParticle()
+    let fx = rand(1.0)
+    let fy = rand(1.0)
+    let fv: Vec = [fx.float, fy.float]
+
+    let pos = vlerp(self.p0, self.p1, fv)
+    let vel = vlerp(self.v0, self.v1, fv)
+    return p.initPointParticle(pos, vel, [0.0, 0.0])
+
+# -------------------------------------------------------------
+type 
+    RadialUniformParticles* = ref object of ParticleList
+        pos, a: Vec
+        v: float
+
+proc initRadialUniformParticles*(self: RadialUniformParticles, pos: Vec, v: float, a: array[2, float], N: int): RadialUniformParticles =
+    self.pos = pos
+    self.a = a
+    self.v = v
+    self.N = N
+    self.particles = @[]
+    return self
+
+method create*(self: RadialUniformParticles, i: int): PointParticle =
+    var f: float = i / (self.N - 1)
+    var a = PI * (f * (self.a[1] - self.a[0]) + self.a[0])
+    let vel = [self.v * math.sin(a), self.v * math.cos(a)]
+    var p = PointParticle()
+    return p.initPointParticle(self.pos, vel, [0.0, 0.0])

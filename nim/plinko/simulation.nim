@@ -15,6 +15,7 @@ type
         max_steps*: int
         particle_steps*: int
         threads*: int
+        thread_index*: int
         verbose*: bool
         linear*: bool
         equal_time*: bool
@@ -35,6 +36,7 @@ proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_
     self.particle_steps = 0
     self.max_steps = max_steps
     self.threads = 1
+    self.thread_index = 0
     self.verbose = true
     self.linear = true
     self.equal_time = false
@@ -63,7 +65,6 @@ proc add_object*(self: Simulation, obj: Object): void =
 proc add_particle*(self: Simulation, particle_group: ParticleGroup): void {.discardable.} =
     if particle_group == nil:
         return
-    self.particle_index = particle_group.set_indices(self.particle_index)
     self.particle_groups.add(particle_group)
 
 proc add_force*(self: Simulation, force: IndependentForce): void {.discardable.} =
@@ -75,7 +76,23 @@ proc add_observer*(self: Simulation, observer: Observer): void {.discardable.} =
 proc add_interrupt*(self: Simulation, interrupt: Observer): void {.discardable.} =
     self.observers.add(interrupt)
 
+proc partition*(self: Simulation): void =
+    # Calculate the total number of particles up to the current thread index
+    # to find the offset for particle labels.
+    var offset = 0
+    for i in 0 .. self.thread_index - 1:
+        for j in 0 .. self.particle_groups.len-1:
+            self.particle_groups[j].partition(i, self.threads)
+            offset += self.particle_groups[j].count()
+
+    for j in 0 .. self.particle_groups.len-1:
+        self.particle_groups[j].partition(self.thread_index, self.threads)
+        offset = self.particle_groups[j].generate(offset)
+    self.particle_index = offset
+
 proc initialize*(self: Simulation): void =
+    self.partition()
+
     for obj in self.objects:
         self.nbl.append(obj)
     self.nbl.calculate()
@@ -87,21 +104,6 @@ proc initialize*(self: Simulation): void =
     if self.record_objects:
         for obj in self.objects:
             self.observer_group.record_object(obj)
-
-proc partition*(self: Simulation, index: int): void =
-    # Chew through all threads < index to increment the particle index properly.
-    # Then, keep the particles for the correct partition index.
-    var original_particles: seq[ParticleGroup] = @[]
-    for i in 0 .. self.particle_groups.len-1:
-        original_particles.add(self.particle_groups[i])
-
-    self.particle_index = 0
-    for i in 0 .. self.threads - 1:
-        self.particle_groups = @[]
-        for j in 0 .. original_particles.len-1:
-            self.add_particle(original_particles[j].partition(self.threads)[i])
-        if i == index:
-            break
 
 proc clear_intermediates*(self: Simulation): void =
     self.nbl = nil

@@ -28,12 +28,12 @@ proc mean*(data: seq[float]): float =
     return stats.mean()
 
 proc median*(data: seq[float]): float =
-    var s = deepCopy(data)
+    var s = data
     s.sort()
     return s[s.len div 2]
 
 proc sub*(data: seq[float], v: float): seq[float] =
-    var s = deepCopy(data)
+    var s = data
     for i, d in s:
         s[i] -= v
     return s
