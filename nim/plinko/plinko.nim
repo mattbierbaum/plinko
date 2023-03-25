@@ -8,22 +8,30 @@ import observers_native
 import std/cpuinfo
 import std/os
 import std/strformat
+import std/strutils
 import std/times
 import std/threadpool
 
-proc get_threads*(json: string): int =
+proc transform_json(json: string, subs: string): string =
+    var o = json
+    for sub in subs.split(","):
+        var (key, value) = (sub.split("=")[0], sub.split("=")[1])
+        o = o.replace(fmt"${key}", value)
+    return o
+
+proc get_threads(json: string): int =
     var threads = json_to_threads(json)
     if threads <= 0:
         threads = countProcessors()
     return threads
 
-proc join*(sims: seq[Simulation]): Simulation =
+proc join(sims: seq[Simulation]): Simulation =
     for i in 1 .. sims.len-1:
         sims[0].observer_group = sims[0].observer_group.combine(sims[i].observer_group)
         sims[0].particle_steps = sims[0].particle_steps + sims[i].particle_steps
     return sims[0]
 
-proc run*(json: string, index: int=0): Simulation =
+proc run(json: string, index: int=0): Simulation =
     var sim = json_to_simulation(json, index)
     sim.initialize()
 
@@ -34,7 +42,7 @@ proc run*(json: string, index: int=0): Simulation =
     sim.clear_intermediates()
     return sim
 
-proc run_parallel*(json: string): Simulation =
+proc run_parallel(json: string): Simulation =
     echo "Launching parallel..."
     let threads = get_threads(json)
     var flowsims: seq[FlowVar[Simulation]] = @[]
@@ -53,10 +61,12 @@ proc run_parallel*(json: string): Simulation =
     return o
 
 let params = commandLineParams()
-if len(params) != 1:
-    echo "Usage: plinko <simulation.json>"
+if len(params) < 2:
+    echo "Usage: plinko <simulation.json> \"replacement=value,other=othervalue\""
 else:
-    let json = open(params[0], fmRead).readAll()
+    echo fmt"Args: {params}"
+    let subs = params[1]
+    var json = transform_json(open(params[0], fmRead).readAll(), subs)
     let threads = get_threads(json)
 
     var time_start = times.getTime()
