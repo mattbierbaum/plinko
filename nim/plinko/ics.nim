@@ -259,20 +259,22 @@ proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
         return RadialUniformParticles().initRadialUniformParticles(pos=p, v=v, a=a, N=N)
 
     if node{"type"}.getStr() == "uniform":
+        let d = node{"dither"}.getFloat(0.0)
         let p0 = json_to_vec(node{"p0"}) 
         let p1 = json_to_vec(node{"p1"})
         let v0 = json_to_vec(node{"v0"}) 
         let v1 = json_to_vec(node{"v1"})
         let N = node{"N"}.getInt(0)
-        return UniformParticles().initUniformParticles(p0=p0, p1=p1, v0=v0, v1=v1, N=N)
+        return UniformParticles().initUniformParticles(p0=p0, p1=p1, v0=v0, v1=v1, N=N, d=d)
 
     if node{"type"}.getStr() == "uniform2d":
+        let d = node{"dither"}.getFloat(0.0)
         let p0 = json_to_vec(node{"p0"}) 
         let p1 = json_to_vec(node{"p1"})
         let v0 = json_to_vec(node{"v0"}) 
         let v1 = json_to_vec(node{"v1"})
         let N = json_to_ivec(node{"N"})
-        return UniformParticles2D().initUniformParticles2D(p0=p0, p1=p1, v0=v0, v1=v1, N=N)
+        return UniformParticles2D().initUniformParticles2D(p0=p0, p1=p1, v0=v0, v1=v1, N=N, d=d)
 
     if node{"type"}.getStr() == "random_uniform":
         let p0 = json_to_vec(node{"p0"}) 

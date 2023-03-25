@@ -117,20 +117,23 @@ method generate*(self: SingleParticle, offset: int): int =
 type 
     UniformParticles* = ref object of ParticleList
         p0, p1, v0, v1: Vec
+        d: float
 
-proc initUniformParticles*(self: UniformParticles, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: int): UniformParticles =
+proc initUniformParticles*(self: UniformParticles, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: int, d: float=0.0): UniformParticles =
     self.p0 = p0
     self.p1 = p1
     self.v0 = v0
     self.v1 = v1
     self.N = N
+    self.d = d
     self.particles = @[]
     return self
 
 method create*(self: UniformParticles, i: int): PointParticle =
+    let d = (self.d * 2 * (rand(1.0) - 0.5)) / self.N.float
     let f: float = i / (self.N - 1)
-    let pos = lerp(self.p0, self.p1, f)
-    let vel = lerp(self.v0, self.v1, f)
+    let pos = lerp(self.p0, self.p1, f+d)
+    let vel = lerp(self.v0, self.v1, f+d)
     var p = PointParticle()
     return p.initPointParticle(pos, vel, [0.0, 0.0])
 
@@ -139,13 +142,15 @@ type
     UniformParticles2D* = ref object of ParticleList
         p0, p1, v0, v1: Vec
         n2d: array[2, int]
+        d: float
 
-proc initUniformParticles2D*(self: UniformParticles2D, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: array[2, int]): UniformParticles2D =
+proc initUniformParticles2D*(self: UniformParticles2D, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: array[2, int], d: float=0.0): UniformParticles2D =
     self.p0 = p0
     self.p1 = p1
     self.v0 = v0
     self.v1 = v1
     self.n2d = N
+    self.d = d
     self.N = self.n2d[0] * self.n2d[1]
     self.particles = @[]
     return self
@@ -153,14 +158,16 @@ proc initUniformParticles2D*(self: UniformParticles2D, p0: Vec, p1: Vec, v0: Vec
 method create*(self: UniformParticles2D, i: int): PointParticle =
     let Nx = self.n2d[0]
     let Ny = self.n2d[1]
+    let dx = (self.d * 2 * (rand(1.0) - 0.5)) / Nx.float
+    let dy = (self.d * 2 * (rand(1.0) - 0.5)) / Ny.float
 
     var p = PointParticle()
     let fx = (i mod Nx).float / (Nx.float-1)
     let fy = (i div Nx).float / (Ny.float-1)
     let fv: Vec = [fx.float, fy.float]
 
-    let pos = vlerp(self.p0, self.p1, fv)
-    let vel = vlerp(self.v0, self.v1, fv)
+    let pos = vlerp(self.p0, self.p1, fv+dx)
+    let vel = vlerp(self.v0, self.v1, fv+dy)
     return p.initPointParticle(pos, vel, [0.0, 0.0])
 
 # -------------------------------------------------------------
