@@ -269,10 +269,14 @@ proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
 
     if node{"type"}.getStr() == "uniform2d":
         let d = node{"dither"}.getFloat(0.0)
-        let p0 = json_to_vec(node{"p0"}) 
-        let p1 = json_to_vec(node{"p1"})
-        let v0 = json_to_vec(node{"v0"}) 
-        let v1 = json_to_vec(node{"v1"})
+        let z = node{"zoom"}.getFloat(0.0)
+        let e = node{"exp"}.getFloat(2.0)
+        var p0 = json_to_vec(node{"p0"}) 
+        var p1 = json_to_vec(node{"p1"})
+        var v0 = json_to_vec(node{"v0"}) 
+        var v1 = json_to_vec(node{"v1"})
+        (p0, p1) = zoom_center(p0, p1, z, e)
+        (v0, v1) = zoom_center(v0, v1, z, e)
         let N = json_to_ivec(node{"N"})
         return UniformParticles2D().initUniformParticles2D(p0=p0, p1=p1, v0=v0, v1=v1, N=N, d=d)
 

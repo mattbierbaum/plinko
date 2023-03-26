@@ -21,7 +21,7 @@
         "type": "masked_circle",
         "pos": [0.5, 0.5],
         "rad": 0.50,
-        "damp": $damp,
+        "damp": 0.95,
         "mask": {
             "type": "nholes",
             "n": 20,
@@ -37,11 +37,11 @@
         "p1": [0.40, 0.61],
         "v0": [-1.0, -1.0],
         "v1": [ 1.0,  1.0],
-        "N": [512, 512]
+        "N": [2048, 2048]
     }
 ],
 "forces": [
-    { "type": "central", "k": -1.0, "pos": [0.45,0.45] }
+    { "type": "central", "k": -1.0, "pos": [$p,$p] }
 ],
 "interrupts": [
     {"type": "collision", "object": { "type": "ref", "name": "boundary"}},
@@ -59,7 +59,7 @@
             "cmap": "gray",
             "norm": "none",
             "box": { "type": "box", "ll": [0.0,0.0], "uu": [1.0,1.0] },
-            "resolution": 512
+            "resolution": 2048
         }
     },
     {"type": "step", "interval": 10}

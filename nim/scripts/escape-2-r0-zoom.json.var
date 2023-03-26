@@ -1,0 +1,69 @@
+{
+"simulation": {
+    "eps": 1e-9,
+    "dt": 1e-1,
+    "max_steps": 160,
+    "equal_time": false,
+    "accuracy": false,
+    "linear": false,
+    "verbose": false,
+    "threads": 1
+},
+"objects": [
+    {
+        "type": "circle",
+        "name": "boundary",
+        "pos": [0.5, 0.5],
+        "rad": 0.50000001,
+        "damp": 1.0
+    },
+    {
+        "type": "masked_circle",
+        "pos": [0.5, 0.5],
+        "rad": 0.50,
+        "damp": 0.95,
+        "mask": {
+            "type": "nholes",
+            "n": 20,
+            "gap": 2.0e-2,
+            "offset": 0.0
+        }
+    }
+],
+"particles": [
+    {
+        "type": "uniform2d",
+        "p0": [0.683, 0.683],
+        "p1": [0.683, 0.683],
+        "v0": [-1.0, -1.0],
+        "v1": [ 1.0,  1.0],
+        "zoom": $zoom,
+        "exp": 1.04,
+        "N": [2048, 2048]
+    }
+],
+"forces": [
+    { "type": "central", "k": -1.0, "pos": [0.67,0.67] }
+],
+"interrupts": [
+    {"type": "collision", "object": { "type": "ref", "name": "boundary"}},
+    {"type": "max_collisions", "max": 50}
+],
+"observers": [
+    {
+        "type": "stop_watch", 
+        "format": "pgm",
+        "img": {
+            "type": "pgm", 
+            "filename": "test-$count.pgm", 
+            "format": "pgm5",
+            "blend": "add",
+            "cmap": "gray",
+            "norm": "none",
+            "box": { "type": "box", "ll": [0.0,0.0], "uu": [1.0,1.0] },
+            "resolution": 2048
+        }
+    },
+    {"type": "step", "interval": 10}
+]
+}

@@ -58,3 +58,10 @@ proc min*(v0: Vec, v1: Vec): Vec {.inline.} =
 
 proc max*(v0: Vec, v1: Vec): Vec {.inline.} =
     return [max(v0[0], v1[0]), max(v0[1], v1[1])]
+
+proc zoom_center*(v0: Vec, v1: Vec, z: float, exp: float): (Vec, Vec) =
+    let c = (v0 + v1) / 2
+    let d = v1 - v0
+    let n0 = c - (d/pow(exp,z) / 2)
+    let n1 = c + (d/pow(exp,z) / 2)
+    return (n0, n1)
