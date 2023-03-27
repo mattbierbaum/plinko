@@ -15,6 +15,8 @@ import std/threadpool
 proc transform_json(json: string, subs: string): string =
     var o = json
     for sub in subs.split(","):
+        if not sub.contains("="):
+            continue
         var (key, value) = (sub.split("=")[0], sub.split("=")[1])
         o = o.replace(fmt"${key}", value)
     return o
@@ -61,11 +63,13 @@ proc run_parallel(json: string): Simulation =
     return o
 
 let params = commandLineParams()
-if len(params) < 2:
+if len(params) < 1:
     echo "Usage: plinko <simulation.json> \"replacement=value,other=othervalue\""
 else:
     echo fmt"Args: {params}"
-    let subs = params[1]
+    var subs = ""
+    if len(params) == 2:
+        subs = params[1]
     var json = transform_json(open(params[0], fmRead).readAll(), subs)
     let threads = get_threads(json)
 

@@ -12,6 +12,8 @@ import std/strformat
 type
     Simulation* = ref object of RootObj
         dt*, eps*: float
+        brent_tol*, brent_mintol*: float
+        brent_maxiter*: int
         max_steps*: int
         particle_steps*: int
         threads*: int
@@ -33,6 +35,9 @@ type
 proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_steps: int = 1e6.int): Simulation = 
     self.dt = dt
     self.eps = eps
+    self.brent_tol = 1e-15
+    self.brent_mintol = 1e-30
+    self.brent_maxiter = 30
     self.particle_steps = 0
     self.max_steps = max_steps
     self.threads = 1
@@ -151,7 +156,7 @@ proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointPa
             if t < 0 or t > 1:
                 return -1.0
         return lengthsq(project.pos - lerp(seg.p0, seg.p1, t))
-    return roots.brent(f=f, bracket=[0.0, 2*dt], tol=1e-30, mintol=1e-30, maxiter=30)
+    return roots.brent(f=f, bracket=[0.0, 2*dt], tol=self.brent_tol, mintol=self.brent_mintol, maxiter=self.brent_maxiter)
 
 proc lerp*(a: float, b: float, t: float): float {.inline.} = (1-t)*a + t*b
 
@@ -178,18 +183,35 @@ proc intersection*(self: Simulation, part0: PointParticle, part1: PointParticle)
         gparti.time = lerp(part0.time, part1.time, mint)
     return (gparti, mino, mint, true)
 
+proc collide*(self: Object, part0: PointParticle, parti: PointParticle, part1: PointParticle): (Seg, Seg) =
+    var scoll = Seg(p0: part0.pos, p1: parti.pos)
+    var stotal = Seg(p0: parti.pos, p1: part1.pos)
+    var vseg = Seg(p0:parti.vel, p1:part1.vel)
+
+    if self.damp < 0:
+        vseg.p0 = vseg.p0 * abs(self.damp)
+        vseg.p1 = vseg.p1 * abs(self.damp)
+        return (stotal, vseg)
+
+    let norm = self.normal(scoll)
+    let dir = reflect(part1.pos - parti.pos, norm)
+    stotal.p1 = parti.pos + dir
+    vseg.p0 = reflect(vseg.p0, norm) * self.damp
+    vseg.p1 = reflect(vseg.p1, norm) * self.damp
+    return (stotal, vseg)
+
 proc step_collisions*(self: Simulation, part0: PointParticle, part1: PointParticle, depth: int = 0): (PointParticle, bool) =
     var parta = part0
     var partb = part1
-    var (parti, mino, mint, ok) = self.intersection(part0, part1)
+    var (parti, mino, mint, ok) = self.intersection(parta, partb)
 
     if not ok or depth > 10000:
-        return (part1, false)
+        return (partb, false)
     if mino == nil:
-        return (part1, true)
+        return (partb, true)
 
     self.observer_group.update_collision(parti, mino, mint)
-    let (pseg, vseg) = mino.collide(part0, parti, part1)
+    let (pseg, vseg) = mino.collide(parta, parti, partb)
     parta.pos = pseg.p0
     parta.vel = vseg.p0 
     parta.time = parti.time

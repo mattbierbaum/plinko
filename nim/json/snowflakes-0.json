@@ -5,6 +5,9 @@
     "max_steps": 20000000,
     "equal_time": false,
     "accuracy": true,
+    "brent_tol": 1e-20,
+    "brent_maxiter": 10,
+    "brent_mintol": 1e-20,
     "linear": false,
     "verbose": false,
     "record_objects": false

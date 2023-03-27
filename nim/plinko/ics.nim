@@ -439,6 +439,9 @@ proc json_to_simulation*(json: string, index: int = 0): Simulation =
         var s = cfg["simulation"]
         sim.eps = s{"eps"}.getFloat(1e-6)
         sim.dt = s{"dt"}.getFloat(1e-2)
+        sim.brent_tol = s{"brent_tol"}.getFloat(1e-15)
+        sim.brent_mintol = s{"brent_mintol"}.getFloat(1e-30)
+        sim.brent_maxiter = s{"brent_maxiter"}.getInt(30)
         sim.max_steps = s{"max_steps"}.getInt(1)
         sim.threads = s{"threads"}.getInt(1)
         sim.verbose = s{"verbose"}.getBool(true)

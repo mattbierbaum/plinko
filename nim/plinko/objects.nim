@@ -2,7 +2,6 @@
 import std/math
 import std/strformat
 
-import particles
 import roots
 import vector
 
@@ -651,21 +650,3 @@ method t*(self: Box, v: float): Vec =
         return self.segments[2].t((v - 0.50) / 0.25)
     if v >= 0.75 and v <= 1.00:
         return self.segments[3].t((v - 0.75) / 0.25)
-
-# -------------------------------------------------------------
-method collide*(self: Object, part0: PointParticle, parti: PointParticle, part1: PointParticle): (Seg, Seg) {.base.} =
-    var scoll = Seg(p0: part0.pos, p1: parti.pos)
-    var stotal = Seg(p0: parti.pos, p1: part1.pos)
-    var vseg = Seg(p0:parti.vel, p1:part1.vel)
-
-    if self.damp < 0:
-        vseg.p0 = vseg.p0 * abs(self.damp)
-        vseg.p1 = vseg.p1 * abs(self.damp)
-        return (stotal, vseg)
-
-    let norm = self.normal(scoll)
-    let dir = reflect(part1.pos - parti.pos, norm)
-    stotal.p1 = parti.pos + dir
-    vseg.p0 = reflect(vseg.p0, norm) * self.damp
-    vseg.p1 = reflect(vseg.p1, norm) * self.damp
-    return (stotal, vseg)
