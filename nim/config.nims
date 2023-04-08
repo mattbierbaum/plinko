@@ -12,8 +12,6 @@ proc set_common_options(): void =
   switch("threadAnalysis", "off")
   switch("opt", "speed")
   switch("gc", "arc")
-  switch("passL", "-s")
-  switch("passL", "-static")
   switch("o", output)
 
 task release, "build standard release":
@@ -21,6 +19,21 @@ task release, "build standard release":
   switch("stackTrace", "off")
   switch("d", "release")
   switch("passC", "-flto")
+  switch("passL", "-s")
+  switch("passL", "-static")
+  setCommand "c", main
+
+task danger, "built for speed":
+  set_common_options()
+  switch("stackTrace", "off")
+  switch("d", "danger")
+  switch("passC", "-flto -ffast-math -march=native")
+  #switch("passC", "-ffast-math")
+  #switch("passC", "-march=native")
+  switch("passL", "-s")
+  switch("passL", "-static")
+  switch("checks", "off")
+  switch("panics", "on")
   setCommand "c", main
 
 task musl, "build musl release":
@@ -35,7 +48,10 @@ task debug, "build debug":
   switch("d", "debug")
   setCommand "c", main
 
+# echo "1" | sudo tee /proc/sys/kernel/perf_event_paranoid 
 # perf record -o original.data --call-graph dwarf -- plinko json
+# perf stat -e task-clock,cycles,instructions,cache-references,cache-misses plinko json
+# perf record -e cache-misses
 task flame, "build flame profile":
   set_common_options()
   switch("stackTrace", "off")

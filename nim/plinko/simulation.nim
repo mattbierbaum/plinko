@@ -16,6 +16,7 @@ type
         brent_maxiter*: int
         max_steps*: int
         particle_steps*: int
+        particle_collisions*: int
         threads*: int
         thread_index*: int
         verbose*: bool
@@ -39,6 +40,7 @@ proc initSimulation*(self: Simulation, dt: float = 1e-2, eps: float = 1e-6, max_
     self.brent_mintol = 1e-30
     self.brent_maxiter = 30
     self.particle_steps = 0
+    self.particle_collisions = 0
     self.max_steps = max_steps
     self.threads = 1
     self.thread_index = 0
@@ -135,6 +137,7 @@ proc intersect_objects*(self: Simulation, seg: Seg): (float, Object, bool) =
     let nblobj = self.nbl.near(seg)
     for i in 0 .. nblobj.count - 1:
         let (o, t) = nblobj.objs[i].intersection(seg)
+        self.particle_collisions += 1
         if t < mint and t <= 1 and t >= 0:
             mint = t
             mino = o
@@ -149,10 +152,12 @@ proc refine_intersection*(self: Simulation, part0: PointParticle, part1: PointPa
         seg.p0 = part0.pos
         seg.p1 = project.pos
         var (o, t) = obj.intersection(seg)
+        self.particle_collisions += 1
         if t < 0 or t > 1:
             seg.p0 = project.pos
             seg.p1 = part1.pos
             (o, t) = obj.intersection(seg)
+            self.particle_collisions += 1
             if t < 0 or t > 1:
                 return -1.0
         return lengthsq(project.pos - lerp(seg.p0, seg.p1, t))

@@ -31,6 +31,7 @@ proc join(sims: seq[Simulation]): Simulation =
     for i in 1 .. sims.len-1:
         sims[0].observer_group = sims[0].observer_group.combine(sims[i].observer_group)
         sims[0].particle_steps = sims[0].particle_steps + sims[i].particle_steps
+        sims[0].particle_collisions = sims[0].particle_collisions + sims[i].particle_collisions
     return sims[0]
 
 proc run(json: string, index: int=0): Simulation =
@@ -82,6 +83,7 @@ else:
     var time_end = times.getTime()
     var dt = (time_end - time_start).inNanoseconds.float / 1e9
     echo fmt"Step rate (M/sec): {sim.particle_steps.float/dt/1e6} ({dt} sec)"
+    echo fmt"Collision rate (M/sec): {sim.particle_collisions.float/dt/1e6} ({dt} sec)"
 
     time_start = times.getTime()
     sim.close()
