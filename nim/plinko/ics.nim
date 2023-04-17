@@ -244,6 +244,24 @@ proc json_to_object(node: JsonNode, sim: Simulation): seq[Object] =
 
     return objs
 
+proc json_to_pdist(node: JsonNode): DistFunc =
+    if node{"dist"} == nil:
+        return pdist_uniform
+    else:
+        let n = node{"dist"}
+        if n{"type"}.getStr() == "uniform":
+            return pdist_uniform
+        if n{"type"}.getStr() == "cosine":
+            return pdist_cosine
+        if n{"type"}.getStr() == "cubic":
+            return pdist_cubic
+        if n{"type"}.getStr() == "logistic":
+            return pdist_logistic
+        if n{"type"}.getStr() == "steps":
+            let steps = n{"steps"}.getInt(1)
+            let iters = n{"iters"}.getInt(1)
+            return gen_steps(steps, iters)
+
 proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
     if node{"type"}.getStr() == "single":
         let pos = json_to_vec(node{"pos"})
@@ -265,7 +283,8 @@ proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
         let v0 = json_to_vec(node{"v0"}) 
         let v1 = json_to_vec(node{"v1"})
         let N = node{"N"}.getInt(0)
-        return UniformParticles().initUniformParticles(p0=p0, p1=p1, v0=v0, v1=v1, N=N, d=d)
+        let dist = json_to_pdist(node)
+        return UniformParticles().initUniformParticles(p0=p0, p1=p1, v0=v0, v1=v1, N=N, dither=d, dist=dist)
 
     if node{"type"}.getStr() == "uniform2d":
         let d = node{"dither"}.getFloat(0.0)
@@ -278,7 +297,7 @@ proc json_to_particle(node: JsonNode, sim: Simulation): ParticleGroup =
         (p0, p1) = zoom_center(p0, p1, z, e)
         (v0, v1) = zoom_center(v0, v1, z, e)
         let N = json_to_ivec(node{"N"})
-        return UniformParticles2D().initUniformParticles2D(p0=p0, p1=p1, v0=v0, v1=v1, N=N, d=d)
+        return UniformParticles2D().initUniformParticles2D(p0=p0, p1=p1, v0=v0, v1=v1, N=N, dither=d)
 
     if node{"type"}.getStr() == "random_uniform":
         let p0 = json_to_vec(node{"p0"}) 

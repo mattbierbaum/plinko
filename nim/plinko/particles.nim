@@ -6,6 +6,32 @@ import std/random
 import std/strformat
 import std/strutils
 
+type DistFunc* = proc(x: float): float
+
+proc f(x: float): float = 
+    return (2*PI*x - math.sin(2*PI*x)) / (2*PI)
+
+proc pdist_steps*(x: float, steps: int = 1, iters: int = 1): float =
+    var d = steps.float*x
+    for i in 0 .. iters-1:
+        d = f(d)
+    return d / steps.float
+
+proc gen_steps*(steps: int = 1, iters: int = 1): proc(x: float): float = 
+    return proc(x: float): float =
+        pdist_steps(x, steps, iters)
+
+proc pdist_logistic*(x: float): float =
+    return 1.0/(1.0+math.exp(-(x-0.5)/0.1))
+
+proc pdist_cubic*(x: float): float =
+    return pow(x-0.5, 3) + 0.5
+
+proc pdist_cosine*(x: float): float =
+    return math.cos(x*PI)/2.0 + 0.5
+
+proc pdist_uniform*(x: float): float = x
+
 # -------------------------------------------------------------
 type
     PointParticle* = object
@@ -117,21 +143,24 @@ method generate*(self: SingleParticle, offset: int): int =
 type 
     UniformParticles* = ref object of ParticleList
         p0, p1, v0, v1: Vec
-        d: float
+        dither: float
+        dist: DistFunc
 
-proc initUniformParticles*(self: UniformParticles, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: int, d: float=0.0): UniformParticles =
+proc initUniformParticles*(self: UniformParticles, p0: Vec, p1: Vec, v0: Vec, v1: Vec, 
+        N: int, dither: float=0.0, dist: DistFunc = pdist_uniform): UniformParticles =
     self.p0 = p0
     self.p1 = p1
     self.v0 = v0
     self.v1 = v1
     self.N = N
-    self.d = d
+    self.dither = dither
+    self.dist = dist
     self.particles = @[]
     return self
 
 method create*(self: UniformParticles, i: int): PointParticle =
-    let d = (self.d * 2 * (rand(1.0) - 0.5)) / self.N.float
-    let f: float = i / (self.N - 1)
+    let d = (self.dither * 2 * (rand(1.0) - 0.5)) / self.N.float
+    let f: float = self.dist(i / (self.N - 1))
     let pos = lerp(self.p0, self.p1, f+d)
     let vel = lerp(self.v0, self.v1, f+d)
     var p = PointParticle()
@@ -142,15 +171,15 @@ type
     UniformParticles2D* = ref object of ParticleList
         p0, p1, v0, v1: Vec
         n2d: array[2, int]
-        d: float
+        dither: float
 
-proc initUniformParticles2D*(self: UniformParticles2D, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: array[2, int], d: float=0.0): UniformParticles2D =
+proc initUniformParticles2D*(self: UniformParticles2D, p0: Vec, p1: Vec, v0: Vec, v1: Vec, N: array[2, int], dither: float=0.0): UniformParticles2D =
     self.p0 = p0
     self.p1 = p1
     self.v0 = v0
     self.v1 = v1
     self.n2d = N
-    self.d = d
+    self.dither = dither
     self.N = self.n2d[0] * self.n2d[1]
     self.particles = @[]
     return self
@@ -158,8 +187,8 @@ proc initUniformParticles2D*(self: UniformParticles2D, p0: Vec, p1: Vec, v0: Vec
 method create*(self: UniformParticles2D, i: int): PointParticle =
     let Nx = self.n2d[0]
     let Ny = self.n2d[1]
-    let dx = (self.d * 2 * (rand(1.0) - 0.5)) / Nx.float
-    let dy = (self.d * 2 * (rand(1.0) - 0.5)) / Ny.float
+    let dx = (self.dither * 2 * (rand(1.0) - 0.5)) / Nx.float
+    let dy = (self.dither * 2 * (rand(1.0) - 0.5)) / Ny.float
 
     var p = PointParticle()
     let fx = (i mod Nx).float / (Nx.float-1)
